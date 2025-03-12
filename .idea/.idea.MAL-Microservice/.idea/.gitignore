@@ -7,6 +7,7 @@
 /projectSettingsUpdater.xml
 /modules.xml
 /contentModel.xml
+/.idea/
 
 # Editor-based HTTP Client requests
 /httpRequests/
