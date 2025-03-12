@@ -2,16 +2,19 @@
   "name": "MAL-Microservice Dev Environment",
   "build": {
     "dockerfile": "../Dockerfile",
-    "context": ".."
+    "context": "..",
+    "args": {
+      "GIT_USER_NAME": "${localEnv:GIT_USER_NAME}",
+      "GIT_USER_EMAIL": "${localEnv:GIT_USER_EMAIL}"
+    }
   },
   "workspaceFolder": "/src",
-  "settings": {
-    "terminal.integrated.shell.linux": "/bin/sh"
-  },
-  "extensions": [
-    "ms-dotnettools.csharp"
-  ],
   "forwardPorts": [8080, 8081],
-  "postCreateCommand": "dotnet restore",
-  "remoteUser": "root"
+  "postCreateCommand": "echo 'Dependencies already restored in Dockerfile'",
+  "remoteUser": "root",
+  "customizations": {
+    "jetbrains": {
+      "backend": "Rider"
+    }
+  }
 }
