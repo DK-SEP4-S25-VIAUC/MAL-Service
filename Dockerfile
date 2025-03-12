@@ -69,7 +69,7 @@ ENV ASPNETCORE_Kestrel__Certificates__Default__Password=devpassword
 WORKDIR /src/MAL-Api-Service
 
 #Define a VOLUME so workdata is persisted across containers and images:
-VOLUME rider_sep4_mal_volume
+VOLUME /rider_sep4_mal_volume
 
 #HTTP port
 EXPOSE 8080 
