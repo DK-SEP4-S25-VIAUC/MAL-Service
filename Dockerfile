@@ -4,13 +4,14 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 # Set the working directory inside the container
 WORKDIR /src
 
-# Install system dependencies
+# Install system dependencies, including python3-venv
 RUN apt-get update && apt-get install -y \
     curl \
     unzip \
     git \
     python3 \
     python3-pip \
+    python3-venv \
     build-essential \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
@@ -20,6 +21,7 @@ COPY MAL-Microservice.sln .
 COPY MAL-Api-Service/MAL-Api-Service.csproj MAL-Api-Service/
 COPY MAL-Api-Service/appsettings.json MAL-Api-Service/
 COPY MAL-Api-Service.Tests/MAL-Api-Service.Tests.csproj MAL-Api-Service.Tests/
+# TODO: Add any more projects to the list here.
 
 # Restore dependencies for the solution
 RUN dotnet restore MAL-Microservice.sln
