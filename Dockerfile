@@ -68,7 +68,10 @@ ENV ASPNETCORE_Kestrel__Certificates__Default__Password=devpassword
 
 WORKDIR /src/MAL-Api-Service
 
-EXPOSE 8080 #HTTP port
-EXPOSE 8081 #HTTPS port
+#HTTP port
+EXPOSE 8080 
+
+#HTTPS port
+EXPOSE 8081 
 
 CMD ["dotnet", "run", "--project", "MAL-Api-Service.csproj", "--urls", "http://0.0.0.0:8080;https://0.0.0.0:8081"]
