@@ -1,12 +1,19 @@
-﻿# Use the lightweight .NET 8.0 SDK Alpine image as the base
-FROM mcr.microsoft.com/dotnet/sdk:8.0-alpine AS build
+﻿# Use the .NET 8.0 SDK image based on Ubuntu
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 
 # Set the working directory inside the container
 WORKDIR /src
 
-# Install system dependencies (including ca-certificates for SSL)
-RUN apk add --no-cache curl unzip git python3 py3-pip build-base ca-certificates \
-    && update-ca-certificates
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    unzip \
+    git \
+    python3 \
+    python3-pip \
+    build-essential \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 
 # Copy the solution, project files, and appsettings.json
 COPY MAL-Microservice.sln .
@@ -33,11 +40,10 @@ RUN dotnet add MAL-Api-Service.Tests/MAL-Api-Service.Tests.csproj package xunit 
     && dotnet add MAL-Api-Service.Tests/MAL-Api-Service.Tests.csproj package Moq --version 4.20.72 \
     && dotnet add MAL-Api-Service.Tests/MAL-Api-Service.Tests.csproj package FluentAssertions --version 8.1.1
 
-# Create a virtual environment for Python
-RUN python3 -m venv /venv
-
-# Activate the virtual environment and install pythonnet
-RUN . /venv/bin/activate && pip install pythonnet==3.0.5
+# Create a virtual environment for Python and install pythonnet
+RUN python3 -m venv /venv \
+    && . /venv/bin/activate \
+    && pip install pythonnet==3.0.5
 
 # Create the /https directory for the certificate
 RUN mkdir -p /https
