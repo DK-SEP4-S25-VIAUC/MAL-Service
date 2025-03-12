@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MAL-Api-Service", "MAL-Api-Service\MAL-Api-Service.csproj", "{11239057-52C0-4C63-9AAF-37BCE2EC383A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MAL-Api-Service.Tests", "MAL-Api-Service.Tests\MAL-Api-Service.Tests.csproj", "{C5F6E6C3-6B4B-48F3-9B67-92F69495541C}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{11239057-52C0-4C63-9AAF-37BCE2EC383A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{11239057-52C0-4C63-9AAF-37BCE2EC383A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{11239057-52C0-4C63-9AAF-37BCE2EC383A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{11239057-52C0-4C63-9AAF-37BCE2EC383A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C5F6E6C3-6B4B-48F3-9B67-92F69495541C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C5F6E6C3-6B4B-48F3-9B67-92F69495541C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C5F6E6C3-6B4B-48F3-9B67-92F69495541C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C5F6E6C3-6B4B-48F3-9B67-92F69495541C}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

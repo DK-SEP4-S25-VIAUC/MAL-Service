@@ -1,0 +1,11 @@
+﻿{
+  "name": "MAL API Dev Container",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "devcontainer",
+  "workspaceFolder": "/app",
+  "extensions": [
+    "JetBrains.rider",
+    "ms-dotnettools.csharp"
+  ],
+  "postCreateCommand": "dotnet restore"
+}
