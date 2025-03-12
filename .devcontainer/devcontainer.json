@@ -1,11 +1,17 @@
-﻿{
-  "name": "MAL API Dev Container",
-  "dockerComposeFile": "docker-compose.yml",
-  "service": "devcontainer",
-  "workspaceFolder": "/app",
+{
+  "name": "MAL-Microservice Dev Environment",
+  "build": {
+    "dockerfile": "../Dockerfile",
+    "context": ".."
+  },
+  "workspaceFolder": "/src",
+  "settings": {
+    "terminal.integrated.shell.linux": "/bin/sh"
+  },
   "extensions": [
-    "JetBrains.rider",
     "ms-dotnettools.csharp"
   ],
-  "postCreateCommand": "dotnet restore"
+  "forwardPorts": [8080, 8081],
+  "postCreateCommand": "dotnet restore",
+  "remoteUser": "root"
 }
