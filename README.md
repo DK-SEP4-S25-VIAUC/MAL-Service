@@ -1,10 +1,35 @@
 # MAL-Service
 The Machine Learning Microservice module for the SEP4 Smart Greenhouse Project
 
+## Standard Libraries included in the Dev environment:
+- Main Project: MAL-Api-Service initialized with:
+  - AspNetCore (Swashbuckle): Generates an Swagger/OpenAPI documenation and UI for the ASP.NET Core API Endpoints
+  - AspNetCore.Hosting: Provides core hosting infrastructure for ASP.Net Core apps. Useful when deploying to Azure AKS (or other), since this package provides a self-contained hosting model which is required by several Azure services.
+  - EntityFrameworkCore: An ORM for database access, enabling LINQ queries and migrations in .NET. Can be used with Azure SQL cloud hosted databases.
+  - Newtonsoft.JSON: A high-performance JSON serializer/deserializer for complex object handling in .NET.
+  - RestSharp: Simplifies HTTP requests (e.g., REST API calls) with a fluent client interface.
+  
+
+- Testing Project: MAL-Api-Service.Tests initialized with:
+  - xunit: A modern unit testing framework for writing and running tests in .NET.
+  - Moq: A mocking library for creating fake objects to isolate and test dependencies.
+  - FluentAssertions: Enhances test readability with expressive assertion syntax (e.g., result.Should().Be(5)).
+  - Coverlet.Collector: Collects code coverage data during dotnet test runs, allowing easy evaluation of how much of the code base was tested.
+  - AspNetCore.Mvc.Testing: Facilitates integration testing of ASP.NET Core MVC apps with an in-memory test server.
+  - .Net.Test.Sdk: Provides the core testing infrastructure for .NET test projects (required by test runners).
+  
+
+- Special dependencies available inside the ubuntu container: These are very much up for grabs. If they end out not needed, we should delete them.
+Initially these are included so that the devcontainer can interact with python based code/projects and vice-versa.
+  - pythonnet: Enables calling .NET code from Python (interop between Python and C#).
+  - azureml-core: Core SDK for Azure Machine Learning, used for managing ML workflows and experiments.
+  - azureml-mlflow: Integrates MLflow (tracking ML experiments) with Azure Machine Learning.
+
+
 ## Running the Development Environment:
 After initially installing / setting up the environment, as described further down, you will be able to simply launch the development environment from the 'Remote Development' -> 'Dev Containers' Pane in Rider:
 
-![SecondTime_Run](https://github.com/user-attachments/assets/25ab95de-2358-4e08-b0cd-c814dcc9a2bf)
+![SecondTime_Run](https://github.com/user-attachments/assets/25ab95de-2358-4e08-b0cd-c814dcc9a2bf )
 
 
 
