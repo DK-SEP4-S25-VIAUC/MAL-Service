@@ -50,6 +50,7 @@ RUN dotnet add MAL-Api-Service.Tests/MAL-Api-Service.Tests.csproj package xunit 
     && dotnet add MAL-Api-Service/MAL-Api-Service.csproj package Microsoft.AspNetCore.Mvc.Testing --version 8.0.14 \
     && dotnet add MAL-Api-Service/MAL-Api-Service.csproj package Microsoft.Net.Test.Sdk --version 17.8.0
 
+# Packages relevant for machine learning and Azure:
 RUN python3 -m venv /venv \
     && . /venv/bin/activate \
     && pip install pythonnet==3.0.5 azureml-core azureml-mlflow
@@ -57,8 +58,9 @@ RUN python3 -m venv /venv \
 RUN mkdir -p /https
 
 # SSL Certificates should be defined in the lines below here:
-RUN dotnet dev-certs https --export-path /https/aspnetapp.pfx --password "devpassword" \
-    && chmod 644 /https/aspnetapp.pfx
+COPY .certs/aspnetapp.pfx /https/aspnetapp.pfx
+COPY .certs/aspnetapp.crt /src/aspnetapp.crt
+RUN chmod 644 /https/aspnetapp.pfx
 
 COPY . .
 
