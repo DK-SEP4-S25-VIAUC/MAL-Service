@@ -1,6 +1,8 @@
 # MAL-Service
 The Machine Learning Microservice module for the SEP4 Smart Greenhouse Project
 
+<br><br><br>
+
 ## Standard Libraries included in the Dev environment:
 - Main Project: MAL-Api-Service initialized with:
   - AspNetCore (Swashbuckle): Generates an Swagger/OpenAPI documenation and UI for the ASP.NET Core API Endpoints
@@ -25,18 +27,21 @@ Initially these are included so that the devcontainer can interact with python b
   - azureml-core: Core SDK for Azure Machine Learning, used for managing ML workflows and experiments.
   - azureml-mlflow: Integrates MLflow (tracking ML experiments) with Azure Machine Learning.
 
+<br><br><br>
 
 ## Running the Development Environment:
 After initially installing / setting up the environment, as described further down, you will be able to simply launch the development environment from the 'Remote Development' -> 'Dev Containers' Pane in Rider:
 
-![SecondTime_Run](https://github.com/user-attachments/assets/25ab95de-2358-4e08-b0cd-c814dcc9a2bf )
+![SecondTime_Run_red](https://github.com/user-attachments/assets/d7bf3516-e389-45ee-a33e-4fec3d739a59)  
 
-
-
-
+  <br><br><br>
+  
+  
+  
 ## Setting up the Development Environment:
 
-### Import Git username/email automatically during container build:
+### OPTIONAL: Import Git username/email automatically during container build:  
+
 If these options are not set, you just need to manually enter your git user_name and git user_email manually in the container before being allowed to commit anything to the shared GitHub repo.
 
 1. Launch Windows Powershell as an administrator
@@ -56,36 +61,71 @@ If these options are not set, you just need to manually enter your git user_name
     4. Run ```Get-ExecutionPolicy``` again and check that the execution policy is now properly set to 'RemoteSigned'
 9. You are now set. Continue with the import and setup described below.
 
+<br><br>
+
+### SEMI-REQUIRED: Setting up Self-signed certificates -> Required for testing/hosting HTTPS based endpoints/server  
+
+1. Clear any already existing self-signed certificates for localhost (i.e. maybe an SSL from SEP3).
+   
+    a. Press CTRL + R and then type ```certmgr.msv``` to open the certificate manager i windows.
+   
+    b. Navigate to ```Trusted Root Carficiation Authorities / Rodnøglecentre, der er tillid til``` -> ```Certificates / Certifikater ```
+   
+    c. Delete <b>ALL</b> certificates issued to localhost (there may be multiple!). You can easily search for them, by just typing "L" with the keyboard.
+   
+4. Download the self-signed certificates form here ([dev_certs.zip](https://github.com/user-attachments/files/19235235/dev_certs.zip)). They are also included in the C# solution source - but must be run on your local windows machine (not inside the docker container/dev-environment), so you'll anyhow need to download these to your windows machine.
+5. Unpack contents
+6. Right-click `setup-cert.bat` and select "Run as administrator" (or if you're using Linux/Unix, run 'setup-cert.sh' as administrator)
+7. Follow the prompts to import the certificate.
+<br>
+If you've already installed the dev environment you can now:
+
+  1. Start the container via Rider Remote Development.
+     
+  3. Test endpoints at `https://localhost:8081`.
+
+Otherwise, follow the "first time install" instructions below.  
 
 
-### First time install / Setting up the development environment directly from GitHub
-IMPORTANT: Ensure that Docker Desktop is running in the background - and that Docker Desktop along with other sub-requirements such as WSL are properly installed!
+<br><br>
+### REQUIRED: First time install / Setting up the development environment directly from GitHub  
+
+IMPORTANT: 
+- Ensure that Docker Desktop is running in the background - and that Docker Desktop along with other sub-requirements such as WSL are properly installed!
+- Ensure that you have installed the localhost development SSL certificates (Self-signed) for development - otherwise testing https during development will be "impossible".
+
+<br>
 
 1. Launch Rider on your PC and close any already open projects.
 
+<br><br>
 
 2. Select 'Dev Containers' and then click on 'New Dev Container'
 
-![Step2](https://github.com/user-attachments/assets/7b18ef2e-e1df-4e8a-81dd-903f8dc138e1)
+![Step2_red](https://github.com/user-attachments/assets/c3072c34-d306-4aed-aacc-0baecc65896f)
 
+<br><br>
 
 
 3. Select the options displayed on the picture below, inserting the proper repository link into the Git Repository field. Select the branch you wish to initially check out.
 
-![Step3](https://github.com/user-attachments/assets/537aab6b-fada-4f88-8c73-2725df41b531)
+![Step3_red](https://github.com/user-attachments/assets/158611dd-a162-41ca-bab2-c5cf964d992c)
 
+<br><br>
 
 
 4. Wait for Rider to download the repository, dev enviroments and build the local container.
 
-![Step4](https://github.com/user-attachments/assets/d49deee8-43cf-4ea5-9876-8e985b96b69d)
+![Step4_red](https://github.com/user-attachments/assets/8d2ce0f6-766d-484f-94d2-f9779ae5d1e0)
 
+<br><br>
 
 
 5. The Rider Dev Environment will automatically launch. You now have the latest Rider version running in your dev environment with the team specified libraries/packages and configurations already prepared.
 
-![Step5](https://github.com/user-attachments/assets/aa5e7c87-a582-4de8-85b5-b18faabe2417)
+![Step5_red](https://github.com/user-attachments/assets/6968b941-e005-4e89-bbd1-3af59abdf373)
 
+<br><br>
    
    
    
