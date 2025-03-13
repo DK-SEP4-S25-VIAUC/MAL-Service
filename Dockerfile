@@ -58,15 +58,15 @@ RUN python3 -m venv /venv \
 RUN mkdir -p /https
 
 # SSL Certificates should be defined in the lines below here:
-COPY .certs/aspnetapp.pfx /https/aspnetapp.pfx
-COPY .certs/aspnetapp.crt /src/aspnetapp.crt
+COPY .certs/localhost_custom.pfx /https/localhost_custom.pfx
+COPY .certs/localhost_custom.crt /src/localhost_custom.crt
 RUN chmod 644 /https/aspnetapp.pfx
 
 COPY . .
 
 ENV ASPNETCORE_ENVIRONMENT=Development
-ENV ASPNETCORE_Kestrel__Certificates__Default__Path=/https/aspnetapp.pfx
-ENV ASPNETCORE_Kestrel__Certificates__Default__Password=devpassword
+ENV ASPNETCORE_Kestrel__Certificates__Default__Path=/https/localhost_custom.pfx
+ENV ASPNETCORE_Kestrel__Certificates__Default__Password=DevPassword
 
 WORKDIR /src/MAL-Api-Service
 
