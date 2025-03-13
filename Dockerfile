@@ -60,7 +60,7 @@ RUN mkdir -p /https
 # SSL Certificates should be defined in the lines below here:
 COPY .certs/localhost_custom.pfx /https/localhost_custom.pfx
 COPY .certs/localhost_custom.crt /src/localhost_custom.crt
-RUN chmod 644 /https/aspnetapp.pfx
+RUN chmod 644 /https/localhost_custom.pfx
 
 COPY . .
 
