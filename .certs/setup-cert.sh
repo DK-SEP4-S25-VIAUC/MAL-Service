@@ -4,7 +4,7 @@ echo "Importing self-signed certificate for local development..."
 
 # Get the directory where this script is located
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-CERT_FILE="$SCRIPT_DIR/aspnetapp.crt"
+CERT_FILE="$SCRIPT_DIR/localhost_custom.crt"
 
 if [ -f "$CERT_FILE" ]; then
     echo "Found $CERT_FILE."

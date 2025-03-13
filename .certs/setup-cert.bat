@@ -4,7 +4,7 @@ echo Importing self-signed certificate for local development...
 REM Get the directory where this script is located
 set "SCRIPT_DIR=%~dp0"
 REM Set the full path to the certificate file with proper quoting
-set "CERT_FILE=%SCRIPT_DIR%aspnetapp.crt"
+set "CERT_FILE=%SCRIPT_DIR%localhost_custom.crt"
 
 echo Checking for "%CERT_FILE%"...
 REM Check if the certificate file exists
