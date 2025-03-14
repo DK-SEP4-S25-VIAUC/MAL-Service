@@ -10,7 +10,7 @@
   },
   "workspaceFolder": "/src",
   "forwardPorts": [8080, 8081],
-  "postCreateCommand": "git config --global user.name $GIT_USER_NAME && git config --global user.email $GIT_USER_EMAIL && echo 'export PATH=\"$PATH:/root/.dotnet/tools\"' >> ~/.bashrc",
+  "postCreateCommand": "echo 'export PATH=\"$PATH:/root/.dotnet/tools\"' >> ~/.bashrc",
   "remoteEnv": {
     "GIT_USER_NAME": "${localEnv:GIT_USER_NAME}",
     "GIT_USER_EMAIL": "${localEnv:GIT_USER_EMAIL}"
@@ -25,7 +25,7 @@
     {
       "type": "volume",
       "source": "mal_dev_volume",
-      "target": "/src/data"
+      "target": "/src"
     }
   ]
 }
