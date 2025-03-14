@@ -16,5 +16,12 @@
     "jetbrains": {
       "backend": "Rider"
     }
-  }
+  },
+  "mounts": [
+    {
+      "type": "volume",
+      "source": "mal_dev_volume",
+      "target": "/src/data"
+    }
+  ]
 }
