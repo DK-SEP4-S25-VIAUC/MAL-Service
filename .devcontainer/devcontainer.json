@@ -10,7 +10,11 @@
   },
   "workspaceFolder": "/src",
   "forwardPorts": [8080, 8081],
-  "postCreateCommand": "echo 'Dependencies already restored in Dockerfile'",
+  "postCreateCommand": "echo 'export PATH=\"$PATH:/root/.dotnet/tools\"' >> ~/.bashrc",
+  "remoteEnv": {
+    "GIT_USER_NAME": "${localEnv:GIT_USER_NAME}",
+    "GIT_USER_EMAIL": "${localEnv:GIT_USER_EMAIL}"
+  },
   "remoteUser": "root",
   "customizations": {
     "jetbrains": {
