@@ -1,4 +1,6 @@
-﻿FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+﻿# This image is an official Microsoft .NET SDK (Software Development Kit) image, based on Debian (similar to Ubuntu).
+# It includes the full .NET 8.0 SDK.
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 
 WORKDIR /src
 
@@ -26,13 +28,14 @@ RUN apt-get update && apt-get install -y \
          git config --global user.email "$GIT_USER_EMAIL"; \
        else \
          echo "Warning: Git user.name and user.email not set. Provide GIT_USER_NAME and GIT_USER_EMAIL during build."; \
-       fi
+       fi 
 
-# TODO: Make sure to add future projects in this solution, to the list below so they are properly built upon new Dockerfile build.
-COPY MAL-Microservice.sln .
-COPY MAL-Api-Service/MAL-Api-Service.csproj MAL-Api-Service/
-COPY MAL-Api-Service/appsettings.json MAL-Api-Service/
-COPY MAL-Api-Service.Tests/MAL-Api-Service.Tests.csproj MAL-Api-Service.Tests/
+# Ensure Git config is refreshed post-create
+RUN git config --global user.name "$GIT_USER_NAME" \
+    && git config --global user.email "$GIT_USER_EMAIL"
+
+# Copy all solution folder contents to the image
+COPY . .
 
 RUN dotnet restore MAL-Microservice.sln
 
@@ -48,16 +51,12 @@ COPY .certs/localhost_custom.pfx /https/localhost_custom.pfx
 COPY .certs/localhost_custom.crt /src/localhost_custom.crt
 RUN chmod 644 /https/localhost_custom.pfx
 
-COPY . .
-
 ENV ASPNETCORE_ENVIRONMENT=Development
 ENV ASPNETCORE_Kestrel__Certificates__Default__Path=/https/localhost_custom.pfx
 ENV ASPNETCORE_Kestrel__Certificates__Default__Password=DevPassword
 
-WORKDIR /src/MAL-Api-Service
-
 #Define a VOLUME so workdata is persisted across containers and images:
-VOLUME /rider_sep4_mal_volume
+VOLUME /mal_dev_volume
 
 #HTTP port
 EXPOSE 8080 
@@ -65,4 +64,4 @@ EXPOSE 8080
 #HTTPS port
 EXPOSE 8081 
 
-CMD ["dotnet", "run", "--project", "MAL-Api-Service.csproj", "--urls", "http://0.0.0.0:8080;https://0.0.0.0:8081"]
+CMD ["/bin/bash"]
