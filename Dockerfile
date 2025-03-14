@@ -28,6 +28,7 @@ RUN apt-get update && apt-get install -y \
          echo "Warning: Git user.name and user.email not set. Provide GIT_USER_NAME and GIT_USER_EMAIL during build."; \
        fi
 
+# TODO: Make sure to add future projects in this solution, to the list below so they are properly built upon new Dockerfile build.
 COPY MAL-Microservice.sln .
 COPY MAL-Api-Service/MAL-Api-Service.csproj MAL-Api-Service/
 COPY MAL-Api-Service/appsettings.json MAL-Api-Service/
@@ -35,22 +36,7 @@ COPY MAL-Api-Service.Tests/MAL-Api-Service.Tests.csproj MAL-Api-Service.Tests/
 
 RUN dotnet restore MAL-Microservice.sln
 
-# Packages / Libaries used by the MAL-Api-Service Project
-RUN dotnet add MAL-Api-Service/MAL-Api-Service.csproj package Swashbuckle.AspNetCore --version 7.3.0 \
-    && dotnet add MAL-Api-Service/MAL-Api-Service.csproj package Microsoft.AspNetCore.Hosting --version 2.3.0 \
-    && dotnet add MAL-Api-Service/MAL-Api-Service.csproj package Microsoft.EntityFrameworkCore --version 9.0.3 \
-    && dotnet add MAL-Api-Service/MAL-Api-Service.csproj package Newtonsoft.Json --version 13.0.3 \
-    && dotnet add MAL-Api-Service/MAL-Api-Service.csproj package RestSharp --version 112.1.0
-
-# Packages / Libraries used by the MAL-Api-Service.Tests project - with a focus on testing the above service.
-RUN dotnet add MAL-Api-Service.Tests/MAL-Api-Service.Tests.csproj package xunit --version 2.9.3 \
-    && dotnet add MAL-Api-Service.Tests/MAL-Api-Service.Tests.csproj package Moq --version 4.20.72 \
-    && dotnet add MAL-Api-Service.Tests/MAL-Api-Service.Tests.csproj package FluentAssertions --version 8.1.1 \
-    && dotnet add MAL-Api-Service/MAL-Api-Service.csproj package coverlet.collector --version 6.0.0 \
-    && dotnet add MAL-Api-Service/MAL-Api-Service.csproj package Microsoft.AspNetCore.Mvc.Testing --version 8.0.14 \
-    && dotnet add MAL-Api-Service/MAL-Api-Service.csproj package Microsoft.Net.Test.Sdk --version 17.8.0
-
-# Packages relevant for machine learning and Azure:
+# Install packages relevant for machine learning and Azure:
 RUN python3 -m venv /venv \
     && . /venv/bin/activate \
     && pip install pythonnet==3.0.5 azureml-core azureml-mlflow
