@@ -1,0 +1,20 @@
+name: Bugfix Pull Request Auto-Approve
+
+on:
+  pull_request:
+    branches:
+      - development
+
+jobs:
+  auto-approve-bugfix:
+    if: startsWith(github.head_ref, 'bugfix/')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Auto-approve bugfix pull request
+        uses: hmarr/auto-approve-action@v3
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
