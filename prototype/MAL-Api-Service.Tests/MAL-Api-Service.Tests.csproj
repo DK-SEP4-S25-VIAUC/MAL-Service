@@ -24,7 +24,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\MAL-Api-Service\MAL-Api-Service.csproj" />
+      <ProjectReference Include="..\prototype\MAL-Api-Service\MAL-Api-Service.csproj" />
     </ItemGroup>
 
 </Project>
