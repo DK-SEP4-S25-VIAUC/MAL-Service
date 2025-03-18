@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  test-and-build:
+  test-and-deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -41,4 +41,15 @@ jobs:
           context: .
           file: prototype/MAL-Api-Service/Dockerfile
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/mal-service-api:${{ github.sha }}
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/mal-service-api:${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/mal-service-api:latest
+
+      - name: Validate Docker image
+        run: |
+          docker run --rm -d -p 8080:8080 ${{ secrets.DOCKERHUB_USERNAME }}/mal-service-api:latest
+          sleep 5  # Give the container time to start
+          curl -f http://localhost:8080/Prototype/testEndpoint || exit 1
+          docker stop $(docker ps -q --filter "ancestor=${{ secrets.DOCKERHUB_USERNAME }}/mal-service-api:latest")
+        env:
+          DOCKER_BUILDKIT: 1
