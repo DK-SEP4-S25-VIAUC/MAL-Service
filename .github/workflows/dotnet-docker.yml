@@ -1,0 +1,53 @@
+name: Build and Deploy MAL-Api-Service to Docker Hub
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the code
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Set up Docker Buildx for multi-architecture builds (future-proofing)
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Log in to Docker Hub
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # Build and test the solution
+      - name: Build and Test
+        run: |
+          cd MAL-Microservice/prototype/MAL-Api-Service
+          docker build --target build -t mal-api:test .
+
+      # Build and push the Docker image
+      - name: Build and Push Docker Image
+        run: |
+          cd MAL-Microservice/prototype/MAL-Api-Service
+          docker build --target runtime -t ${{ secrets.DOCKERHUB_USERNAME }}/mal-api:${{ github.sha }} \
+                       -t ${{ secrets.DOCKERHUB_USERNAME }}/mal-api:latest .
+          docker push --all-tags
+
+      # Optional: Validate image (future-proofing for Azure)
+      - name: Run Docker Container (Validation)
+        run: |
+          docker run --rm -p 5000:80 ${{ secrets.DOCKERHUB_USERNAME }}/mal-api:latest &
+          sleep 5  # Give it time to start
+          curl -f http://localhost:5000/health  # Adjust endpoint as needed
+
+    env:
+      DOCKER_BUILDKIT: 1
