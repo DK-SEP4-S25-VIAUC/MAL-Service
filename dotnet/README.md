@@ -122,7 +122,9 @@ IMPORTANT:
 
 3. Select the options displayed on the picture below, inserting the proper repository link into the Git Repository field. Select the branch you wish to initially check out.
 
-![Step3_red](https://github.com/user-attachments/assets/158611dd-a162-41ca-bab2-c5cf964d992c)
+IMPORTANT: Ensure to manually select the devcontainer.json from the dotnet environment in the repo! Otherwise it won't work.
+
+![step3_red](https://github.com/user-attachments/assets/2e076afb-c142-41f7-9737-90573dd81c27)
 
 <br><br>
 

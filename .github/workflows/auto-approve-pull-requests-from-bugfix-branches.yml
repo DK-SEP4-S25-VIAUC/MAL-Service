@@ -1,7 +1,7 @@
 name: Bugfix Pull Request Auto-Approve
 
 on:
-  pull_request:
+  pull_request_target:
     branches:
       - development
 
@@ -11,9 +11,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
       - name: Auto-approve bugfix pull request
         uses: hmarr/auto-approve-action@v3
         with:
