@@ -55,3 +55,6 @@ nunit-*.xml
 
 #Jetbrains:
 .idea/
+
+# Ignore changes made in the python projects:
+.ipynb
