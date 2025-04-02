@@ -1,4 +1,4 @@
-name: CI/CD Pipeline
+name: CI/CD Pipeline (Mal Prediction Service)
 
 on:
   push:
@@ -13,7 +13,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Check directory structure
-        run: ls -la && ls -la prototype/MAL-Api-Service/
+        run: ls -la && ls -la dotnet/prototype/MAL-Api-Service/
 
       - name: Set up .NET
         uses: actions/setup-dotnet@v3
@@ -39,7 +39,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: prototype/MAL-Api-Service/Dockerfile
+          file: dotnet/prototype/MAL-Api-Service/Dockerfile
           push: true
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/mal-service-api:${{ github.sha }}
