@@ -1,5 +1,5 @@
 {
-  "name": "MAL-Microservice Dev Environment",
+  "name": "dotnet Dev Environment",
   "build": {
     "dockerfile": "../Dockerfile",
     "context": "..",
