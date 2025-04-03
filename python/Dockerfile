@@ -1,4 +1,4 @@
-﻿# python-dev/Dockerfile
+﻿# python/Dockerfile
 FROM python:3.11-slim
 
 WORKDIR /workspace

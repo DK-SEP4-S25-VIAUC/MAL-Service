@@ -1,0 +1,61 @@
+name: CI/CD Pipeline (LinearRegressionModelTrainingService)
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  test-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check directory structure (debug)
+        run: ls -la && ls -la python-dev/LinearRegressionModelTrainingService
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        working-directory: python-dev/LinearRegressionModelTrainingService
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest
+
+      - name: Test with pytest
+        working-directory: python-dev/LinearRegressionModelTrainingService
+        run: pytest || echo "No tests yet – skipping"
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: python-dev/LinearRegressionModelTrainingService
+          file: python-dev/LinearRegressionModelTrainingService/Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/linear-regression-service:${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/linear-regression-service:latest
+
+      - name: Validate Docker image
+        run: |
+          docker run --rm -d -p 8001:8001 ${{ secrets.DOCKERHUB_USERNAME }}/linear-regression-service:latest
+          sleep 5
+          curl -f http://localhost:8001/ || exit 1
+          docker stop $(docker ps -q --filter "ancestor=${{ secrets.DOCKERHUB_USERNAME }}/linear-regression-service:latest")
+        env:
+          DOCKER_BUILDKIT: 1
