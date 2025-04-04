@@ -14,7 +14,7 @@ ENV GIT_USER_EMAIL=${GIT_USER_EMAIL}
 
 # Install dependencies and configure Git using the build args
 RUN apt-get update && apt-get install -y \
-    curl unzip git python3 python3-pip python3-venv build-essential ca-certificates \
+    curl unzip git python3 python3-pip python3-venv build-essential ca-certificates libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/* \
     && if [ -n "$GIT_USER_NAME" ] && [ -n "$GIT_USER_EMAIL" ]; then \
          git config --global user.name "$GIT_USER_NAME" && \
