@@ -41,8 +41,9 @@ public class BlobStorageMonitorServiceImpl : IBlobStorageMonitorService
             
             await foreach (var blobItem in containerClient.GetBlobsAsync(cancellationToken: token)) {
                 blobNames.Add(blobItem.Name);
-                _logger.LogInformation("Found blob: {BlobName}", blobItem.Name);
             }
+
+            _logger.LogInformation("Found {count} blobs\n: {blobNames}", blobNames.Count, blobNames);
 
             return blobNames;
         } catch (Exception ex) {
