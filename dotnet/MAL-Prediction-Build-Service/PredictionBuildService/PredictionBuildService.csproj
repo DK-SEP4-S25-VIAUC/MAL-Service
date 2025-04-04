@@ -17,4 +17,9 @@
         <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.1"/>
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\PredictionBuildService.core\PredictionBuildService.core.csproj" />
+      <ProjectReference Include="..\PredictionBuildService.Infrastructure\PredictionBuildService.Infrastructure.csproj" />
+    </ItemGroup>
 </Project>

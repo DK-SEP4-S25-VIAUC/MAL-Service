@@ -1,6 +1,8 @@
+using PredictionBuildService.core.Interfaces;
+
 namespace PredictionBuildService.Infrastructure;
 
-public class ModelCache
+public class ModelCache : IModelCache
 {
     
 }

@@ -1,6 +1,8 @@
+using PredictionBuildService.core.Interfaces;
+
 namespace PredictionBuildService.Infrastructure;
 
-public class ModelEvaluationServiceImpl
+public class ModelEvaluationServiceImpl : IModelEvaluationService
 {
     
 }
