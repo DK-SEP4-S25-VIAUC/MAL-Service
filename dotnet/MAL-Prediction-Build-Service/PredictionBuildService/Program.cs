@@ -2,8 +2,10 @@ using Azure.Identity;
 using Azure.ResourceManager;
 using Azure.Storage.Queues;
 using Azure.Storage.Blobs;
+using PredictionBuildService.Configuration;
 using PredictionBuildService.core.Interfaces;
 using PredictionBuildService.Infrastructure;
+using Microsoft.Extensions.Options;
 
 namespace PredictionBuildService;
 
@@ -22,7 +24,7 @@ public class Program
     /// /// <remarks>
     /// Shared internal services are declared as Singletons for dependency injection project-wide.
     /// </remarks>
-    public static void Main(string[] args)
+    public static async Task Main(string[] args)
     {
         // 1. Continuously monitor Azure Blob Storage for Changes.
         // This is done with Azure Event Grid.
@@ -45,18 +47,24 @@ public class Program
             logging.AddConsole();
             logging.SetMinimumLevel(LogLevel.Information);
         });
+
+        // Load configuration settings from appsettings.json to respective configuration classes, to enable project wide access to settings through dependency injection:
+        builder.Services.Configure<AzureBlobStorageSettings>(builder.Configuration.GetSection("AzureBlobStorage"));
         
         // Register Azure clients as singletons:
-        builder.Services.AddSingleton(_ =>
-            new QueueClient(
-                // Note: Find this link inside Blob Storage Account -> Settings -> Endpoints -> Queue Service:
-                new Uri("https://onnx1storage1test.queue.core.windows.net/model-changes-queue"),
-                new DefaultAzureCredential()));
+        builder.Services.AddSingleton(provider => {
+            var settings = provider.GetRequiredService<IOptions<AzureBlobStorageSettings>>().Value;
+            return new QueueClient(
+                new Uri(settings.QueueUri),
+                new DefaultAzureCredential());
+        });
         
-        builder.Services.AddSingleton(_ =>
-            new BlobServiceClient(
-                new Uri("https://onnx1storage1test.blob.core.windows.net"),
-                new DefaultAzureCredential()));
+        builder.Services.AddSingleton(provider => {
+            var settings = provider.GetRequiredService<IOptions<AzureBlobStorageSettings>>().Value;
+            return new BlobServiceClient(
+                new Uri(settings.StorageAccountUri),
+                new DefaultAzureCredential());
+        });
         
         builder.Services.AddSingleton(_ => new ArmClient(new DefaultAzureCredential()));
         
@@ -72,6 +80,6 @@ public class Program
         builder.Services.AddHostedService<Worker>();
 
         var host = builder.Build();
-        host.RunAsync();
+        await host.RunAsync();
     }
 }
