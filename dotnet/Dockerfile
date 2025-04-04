@@ -27,6 +27,9 @@ RUN apt-get update && apt-get install -y \
 RUN /usr/share/dotnet/dotnet tool install --ignore-failed-sources --add-source https://api.nuget.org/v3/index.json --global dotnet-ef \
     && echo 'export PATH="$PATH:/root/.dotnet/tools"' | tee -a /root/.bashrc /root/.profile
 
+# Install libsecret (To be able to log in to Azure from Rider)
+RUN apt-get update && apt-get install -y libsecret-1-0 libsecret-1-dev
+
 # Copy all solution folder contents to the image
 COPY . .
 RUN dotnet restore MAL-Microservice.sln
