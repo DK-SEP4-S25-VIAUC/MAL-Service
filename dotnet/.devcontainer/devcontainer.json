@@ -15,6 +15,14 @@
     "GIT_USER_NAME": "${localEnv:GIT_USER_NAME}",
     "GIT_USER_EMAIL": "${localEnv:GIT_USER_EMAIL}"
   },
+  "containerEnv": {
+    "AZURE_AUTH_USE_KEYCHAIN": "false"
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/azure-cli:1": {
+      "version": "latest"
+    }
+  },
   "remoteUser": "root",
   "customizations": {
     "jetbrains": {
