@@ -9,4 +9,6 @@ public class AzureBlobStorageSettings
     public string ContainerName { get; set; } = string.Empty;
     public string StorageAccountUri { get; set; } = string.Empty;
     public string QueueUri { get; set; } = string.Empty;
+    public string ModelFileType { get; set; } = string.Empty;
+    public string ModelMetaDataFormat { get; set; } = string.Empty;
 }
