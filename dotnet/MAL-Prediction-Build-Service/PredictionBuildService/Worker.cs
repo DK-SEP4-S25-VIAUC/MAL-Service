@@ -1,6 +1,6 @@
 using Azure.Storage.Blobs;
 using Microsoft.Extensions.Options;
-using PredictionBuildService.Configuration;
+using PredictionBuildService.Configurations;
 using PredictionBuildService.core.Interfaces;
 
 namespace PredictionBuildService;

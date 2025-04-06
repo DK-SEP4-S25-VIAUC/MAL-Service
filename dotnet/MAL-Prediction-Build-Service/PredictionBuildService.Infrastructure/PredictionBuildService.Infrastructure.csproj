@@ -7,6 +7,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\PredictionBuildService.Configurations\PredictionBuildService.Configurations.csproj" />
       <ProjectReference Include="..\PredictionBuildService.core\PredictionBuildService.core.csproj" />
     </ItemGroup>
 

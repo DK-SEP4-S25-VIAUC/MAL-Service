@@ -7,6 +7,13 @@ using PredictionBuildService.core.Interfaces;
 
 namespace PredictionBuildService.Infrastructure;
 
+/// <summary>
+/// ...
+/// </summary>
+/// <remarks>
+/// Implmentation logic is based on available Microsoft tutorials, i.e.:<br />
+/// https://learn.microsoft.com/en-us/azure/storage/blobs/ <br />
+/// </remarks>
 public class BlobStorageInteractionHelperImpl : IBlobStorageInteractionHelper
 {
     private readonly ILogger<BlobStorageInteractionHelperImpl> _logger;

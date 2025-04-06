@@ -2,9 +2,9 @@ using Azure.Identity;
 using Azure.ResourceManager;
 using Azure.Storage.Queues;
 using Azure.Storage.Blobs;
-using PredictionBuildService.Configuration;
 using PredictionBuildService.core.Interfaces;
 using PredictionBuildService.Infrastructure;
+using PredictionBuildService.Configurations;
 using Microsoft.Extensions.Options;
 
 namespace PredictionBuildService;
