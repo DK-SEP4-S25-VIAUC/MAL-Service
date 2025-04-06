@@ -20,6 +20,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PredictionBuildService.Infr
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PredictionBuildService.core.Tests", "MAL-Prediction-Build-Service\PredictionBuildService.core.Tests\PredictionBuildService.core.Tests.csproj", "{EDDD069B-48C3-4E60-9472-FFD93ED21559}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PredictionBuildService.Configurations", "MAL-Prediction-Build-Service\PredictionBuildService.Configurations\PredictionBuildService.Configurations.csproj", "{F70F4B0D-449E-42AA-8C07-619467BB801B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -58,6 +60,10 @@ Global
 		{EDDD069B-48C3-4E60-9472-FFD93ED21559}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EDDD069B-48C3-4E60-9472-FFD93ED21559}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EDDD069B-48C3-4E60-9472-FFD93ED21559}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F70F4B0D-449E-42AA-8C07-619467BB801B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F70F4B0D-449E-42AA-8C07-619467BB801B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F70F4B0D-449E-42AA-8C07-619467BB801B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F70F4B0D-449E-42AA-8C07-619467BB801B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{11239057-52C0-4C63-9AAF-37BCE2EC383A} = {3A80A7D6-EC3E-495B-822A-64B48131373E}
@@ -68,5 +74,6 @@ Global
 		{38FD0DFB-2594-4F4D-919A-A62ADFF3A01E} = {B6245860-2321-485C-A242-FC8676275D10}
 		{546D781F-3068-4DD8-AEBE-EBF8CD5AF333} = {B6245860-2321-485C-A242-FC8676275D10}
 		{EDDD069B-48C3-4E60-9472-FFD93ED21559} = {B6245860-2321-485C-A242-FC8676275D10}
+		{F70F4B0D-449E-42AA-8C07-619467BB801B} = {B6245860-2321-485C-A242-FC8676275D10}
 	EndGlobalSection
 EndGlobal

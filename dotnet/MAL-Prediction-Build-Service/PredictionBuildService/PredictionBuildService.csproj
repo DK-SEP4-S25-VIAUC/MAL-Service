@@ -19,6 +19,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\PredictionBuildService.Configurations\PredictionBuildService.Configurations.csproj" />
       <ProjectReference Include="..\PredictionBuildService.core\PredictionBuildService.core.csproj" />
       <ProjectReference Include="..\PredictionBuildService.Infrastructure\PredictionBuildService.Infrastructure.csproj" />
     </ItemGroup>
