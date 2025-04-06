@@ -65,11 +65,12 @@ public class Program
         builder.Services.AddSingleton(_ => new ArmClient(new DefaultAzureCredential()));
         
         // Register internal services as Singletons, for dependency injection in the entire project:
+        builder.Services.AddSingleton<IModelCache, ModelCache>();
+        builder.Services.AddSingleton<IBlobStorageInteractionHelper, BlobStorageInteractionHelperImpl>();
         builder.Services.AddSingleton<IBlobStorageMonitorService, BlobStorageMonitorServiceImpl>();
         builder.Services.AddSingleton<IModelEvaluationService, ModelEvaluationServiceImpl>();
         builder.Services.AddSingleton<IBuildService, BuildServiceImpl>();
         builder.Services.AddSingleton<IDeploymentService, DeploymentServiceImpl>();
-        builder.Services.AddSingleton<IModelCache, ModelCache>();
         builder.Services.AddSingleton<AzureFunctionDeploymentFactory>();
         
         // Register the Worker service (Runs in the background):

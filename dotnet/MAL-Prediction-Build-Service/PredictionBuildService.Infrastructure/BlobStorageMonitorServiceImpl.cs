@@ -1,5 +1,6 @@
 using PredictionBuildService.core.Interfaces;
 using Azure.Storage.Blobs;
+using Azure.Storage.Queues;
 using Microsoft.Extensions.Logging;
 
 namespace PredictionBuildService.Infrastructure;
@@ -15,19 +16,39 @@ public class BlobStorageMonitorServiceImpl : IBlobStorageMonitorService
 {
     private readonly ILogger<BlobStorageMonitorServiceImpl> _logger;
     private readonly BlobServiceClient _blobServiceClient;
+    private readonly QueueClient _queueClient;
+    private readonly IModelEvaluationService _modelEvaluationService;
 
-    public BlobStorageMonitorServiceImpl(ILogger<BlobStorageMonitorServiceImpl> logger, BlobServiceClient blobServiceClient) {
+    public BlobStorageMonitorServiceImpl(
+        ILogger<BlobStorageMonitorServiceImpl> logger, 
+        BlobServiceClient blobServiceClient,
+        QueueClient queueClient,
+        IModelEvaluationService modelEvaluationService) {
         _logger = logger;
         _blobServiceClient = blobServiceClient;
+        _queueClient = queueClient;
+        _modelEvaluationService = modelEvaluationService;
     }
     
     
-    public Task MonitorAsync(CancellationToken token) {
-        // TODO: Implement
-        throw new NotImplementedException();
+    public async Task MonitorAsync(CancellationToken token) {
+        /*while (!token.IsCancellationRequested) {
+            var msg = await _queueClient.ReceiveMessageAsync();
+            if (msg != null) {
+                var eventGridEvent = JsonSerializer.Deserialize<EventGridEvent[]>(msg.MessageText).FirstOrDefault();
+                if (eventGridEvent?.EventType == "Microsoft.Storage.BlobCreated") {
+                    string blobUri = eventGridEvent.Data["url"].ToString();
+                    await _modelEvaluationService(blobUri);
+                }
+                
+                // Delete the message after processing
+                await _queueClient.DeleteMessageAsync(message.MessageId, message.PopReceipt);
+            }
+            await Task.Delay(1000, token); // Avoid tight loop
+        }*/
     }
 
-    public async Task<List<string>> ListBlobsAsync(string containerName, CancellationToken token) {
+    /*public async Task<List<string>> ListAllBlobsAsync(string containerName, CancellationToken token) {
         _logger.LogInformation("Listing blobs in container: {ContainerName}", containerName);
 
         try {
@@ -51,5 +72,5 @@ public class BlobStorageMonitorServiceImpl : IBlobStorageMonitorService
             _logger.LogError(ex, "Error listing blobs in container: {ContainerName}", containerName);
             throw;
         }
-    }
+    }*/
 }
