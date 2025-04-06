@@ -3,7 +3,7 @@ using Newtonsoft.Json;
 namespace PredictionBuildService.core;
 
 [JsonObject]
-public class Model
+public class ModelDTO
 {
     [JsonProperty("model_type")]
     public string? Type { get; set; }            // I.e.: LinearRegression

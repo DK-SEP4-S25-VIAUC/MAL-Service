@@ -26,15 +26,12 @@ public class Program
     /// </remarks>
     public static async Task Main(string[] args)
     {
-        // 1. Continuously monitor Azure Blob Storage for Changes.
-        // This is done with Azure Event Grid.
-        
-        // 2. Process the Change Event:
-        // When a new or updated ONNX model is detected, extract metadata (e.g., model type, version) from the blob’s name or metadata.
-        
-        // 3. Build and Deploy Azure Functions:
-        // Generate or update an Azure Function project dynamically (e.g., a C# Function App) to use the new ONNX model for predictions.
-        // Deploy the Azure Function to Azure using the Azure Resource Manager (ARM) SDK
+        // TODO: Update the appsettings.json and appsettings.devevelopment.json files to include the proper Azure data, i.e. replace these values:
+        //"ContainerName": "models",
+        //"StorageAccountUri": "https://onnx1storage1test.blob.core.windows.net",
+        //"QueueUri": "https://onnx1storage1test.queue.core.windows.net/blob-events",
+        //"ModelFileType": ".onnx",
+        //"ModelMetaDataFormat": ".metadata.json".
         
         var builder = Host.CreateApplicationBuilder(args);
         

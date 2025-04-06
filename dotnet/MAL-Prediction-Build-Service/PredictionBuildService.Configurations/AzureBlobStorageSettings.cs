@@ -11,5 +11,4 @@ public class AzureBlobStorageSettings
     public string QueueUri { get; set; } = string.Empty;
     public string ModelFileType { get; set; } = string.Empty;
     public string ModelMetaDataFormat { get; set; } = string.Empty;
-    public string QueueConnectionString { get; set; } = string.Empty;
 }

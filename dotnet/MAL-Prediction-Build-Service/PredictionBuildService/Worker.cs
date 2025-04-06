@@ -40,7 +40,7 @@ public class Worker : BackgroundService
     protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
         _logger.LogInformation("Prediction Build Service started at: {time}", DateTimeOffset.Now);
         
-        // Check if the Model Cache is empty. If so, first read all models available from Azure Blob Storage into the in-memory cache.
+        // Check if the ModelDTO Cache is empty. If so, first read all models available from Azure Blob Storage into the in-memory cache.
         // This is necessary upon service initialization, to ensure existing models are properly loaded:
         if (_modelCache.CacheSize() == 0) {
             await _blobBlobStorageInteractionHelper.LoadAllModelsIntoCacheAsync(_blobServiceClient, stoppingToken, 
@@ -58,5 +58,6 @@ public class Worker : BackgroundService
         
         // Start the Azure Blob Storage monitoring service, to look for all future changes in the model registry:
         await _monitorService.MonitorAsync(stoppingToken);
+        _logger.LogInformation("Prediction Build Service stopped at: {time}", DateTimeOffset.Now);
     }
 }
