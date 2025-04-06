@@ -45,21 +45,15 @@ public class BlobStorageInteractionHelperImpl : IBlobStorageInteractionHelper
                         // Download the metadata file from Azure Blob Storage:
                         string jsonMetaData = await DownloadBlobToStringAsync(blobClient, cancellationToken);
                         
-                        // Convert from json to Model:
-                        var model = JsonConvert.DeserializeObject<Model>(jsonMetaData);
-                        
-                        // Fill out non-serialized fields:
-                        // TODO: UPDATE THESE LINES AFTER METADATA HAS BEEN VERIFIED!
-                        model.DownloadUrl = ConvertMetaDataUriToModelUri(blobClient.Uri, modelMetaDataFormat, modelFormat);
-                        model.TrainingDate = DateTime.Now;
-                        
+                        // Convert from json to ModelDTO:
+                        var model = ConvertFromJsonMetadataToModelDTO(jsonMetaData, modelMetaDataFormat, modelFormat, blobClient);
                         _logger.LogInformation("Downloaded metadata for model: {blobName}, metadata is: \n{metadata}", blobName, model.ToString());
                         
-                        // Add this new Model to the ModelCache:
+                        // Add this new ModelDTO to the ModelCache:
                         await _modelCache.AddModelAsync(model);
                     }
                 } catch (JsonException jx) {
-                    _logger.LogError(jx, "Could not deserialize into Model: {blobName}", blobName);
+                    _logger.LogError(jx, "Could not deserialize into ModelDTO: {blobName}", blobName);
                 } catch (Exception ex) {
                     _logger.LogError(ex, "Error occured while downloading: {blobName}", blobName);
                 }
@@ -93,9 +87,24 @@ public class BlobStorageInteractionHelperImpl : IBlobStorageInteractionHelper
             throw;
         }
     }
+
+
+    public ModelDTO ConvertFromJsonMetadataToModelDTO(string jsonMetaData, string modelMetaDataFormat, string modelFormat, BlobClient blobClient) {
+        var model = JsonConvert.DeserializeObject<ModelDTO>(jsonMetaData);
+
+        if (model == null) {
+            throw new JsonException();
+        }
+        
+        // Fill out non-serialized fields:
+        // TODO: UPDATE THESE LINES AFTER METADATA HAS BEEN VERIFIED!
+        model.DownloadUrl = ConvertMetaDataUriToModelUri(blobClient.Uri, modelMetaDataFormat, modelFormat);
+        model.TrainingDate = DateTime.Now;
+        return model;
+    }
     
     
-    private static async Task<string> DownloadBlobToStringAsync(BlobClient blobClient, CancellationToken token) {
+    public async Task<string> DownloadBlobToStringAsync(BlobClient blobClient, CancellationToken token) {
         BlobDownloadResult downloadResult = await blobClient.DownloadContentAsync(token);
         return downloadResult.Content.ToString();
     }
