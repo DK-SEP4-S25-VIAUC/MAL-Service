@@ -1,10 +1,12 @@
+using Microsoft.Extensions.Logging;
 using PredictionBuildService.core.Interfaces;
 
 namespace PredictionBuildService.Infrastructure.Deployment;
 
-public class DeploymentServiceImpl : IDeploymentService, IEventSubscriber
+public class DeploymentServiceImpl : IDeploymentService
 {
-    // TODO: Implement
+
+    
     public void Subscribe() {
         throw new NotImplementedException();
     }

@@ -10,9 +10,9 @@ public class ModelEvaluationServiceImpl : IModelEvaluationService
     private readonly ILogger<ModelEvaluationServiceImpl> _logger;
     private readonly IModelCache _modelCache;
     private readonly IBlobStorageMonitorService _blobStorageMonitorService;
-    private Func<object, NewModelsAddedEventArgs, Task>? _newModelsAddedEventHandler;
+    private Func<object, AddedNewModelsEventArgs, Task>? _newModelsAddedEventHandler;
     
-    public event Func<object, AllLinearRegressionModelsEvaluatedEventArgs, Task>? LinearRegModelsEvaluated;
+    public event Func<object, EvaluatedAllLinearRegressionModelsEventArgs, Task>? LinearRegModelsEvaluated;
 
     public ModelEvaluationServiceImpl(
         ILogger<ModelEvaluationServiceImpl> logger, 
@@ -26,14 +26,18 @@ public class ModelEvaluationServiceImpl : IModelEvaluationService
         Subscribe();
     }
     
-    protected virtual async Task OnLinearRegModelsEvaluated(ModelDTO bestModel) {
+    // Define Event Handler invokers:
+    private async Task OnLinearRegModelsEvaluated(ModelDTO bestModel) {
+        // Fire the event if there are more than null subscribers.
         if (LinearRegModelsEvaluated != null) {
-            await LinearRegModelsEvaluated.Invoke(this, new AllLinearRegressionModelsEvaluatedEventArgs(bestModel));
+            await LinearRegModelsEvaluated.Invoke(this, new EvaluatedAllLinearRegressionModelsEventArgs(bestModel));
         } else {
             _logger.LogWarning("No subscribers to the LinearRegModelsEvaluated event.");
         }
     }
     
+    
+    // Implement the IEventSubscriber interface:
     public void Subscribe() {
         _newModelsAddedEventHandler = async (sender, e) => await HandleEventAsync(sender, e);
         _blobStorageMonitorService.NewModelsAdded += _newModelsAddedEventHandler;
@@ -50,8 +54,8 @@ public class ModelEvaluationServiceImpl : IModelEvaluationService
 
     public async Task HandleEventAsync(object? sender, EventArgs e) {
         switch (e) {
-            case NewModelsAddedEventArgs newModelsAddedEventArgs:
-                await HandleEventAsync(sender, newModelsAddedEventArgs);
+            case AddedNewModelsEventArgs eventArgs:
+                await HandleEventAsync(sender, eventArgs);
                 break;
             default:
                 _logger.LogWarning("Received event with unexpected EventArgs type: {EventArgsType}", e.GetType().Name);
@@ -59,7 +63,10 @@ public class ModelEvaluationServiceImpl : IModelEvaluationService
         }
     }
 
-    public async Task HandleEventAsync(object? sender, NewModelsAddedEventArgs e) {
+    
+    // Re-direct each EventArgs type to a specific overloaded implementation of HandleEventAsync method.
+    // This allows for future scalability in the number of events this class can handle!
+    private async Task HandleEventAsync(object? sender, AddedNewModelsEventArgs e) {
         // Initially we just pick the 1st model from the modelCache and build/deploy this - as proof-of-concept.
         // This should be expanded to perform proper model evaluation
         // TODO: PROPERLY IMPLEMENT THIS METHOD!

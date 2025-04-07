@@ -30,7 +30,7 @@ public class BlobStorageMonitorServiceImpl : IBlobStorageMonitorService
     private readonly IBlobStorageInteractionHelper _blobStorageInteractionHelper;
     private readonly BlobServiceClient _blobServiceClient;
     
-    public event Func<object, NewModelsAddedEventArgs, Task> NewModelsAdded;
+    public event Func<object, AddedNewModelsEventArgs, Task> NewModelsAdded;
     
     public BlobStorageMonitorServiceImpl(
         ILogger<BlobStorageMonitorServiceImpl> logger, 
@@ -49,6 +49,18 @@ public class BlobStorageMonitorServiceImpl : IBlobStorageMonitorService
     }
     
     
+    // Define Event Handler invokers:
+    private async Task OnNewModelsAdded() {
+        // Fire the event if there are more than null subscribers.
+        if (NewModelsAdded != null) {
+            await NewModelsAdded.Invoke(this, new AddedNewModelsEventArgs());
+        } else {
+            _logger.LogWarning("No subscribers to the NewModelsAdded event.");
+        }
+    }
+    
+    
+    // Define IBlobStorageMonitorService interface specified methods:
     public async Task MonitorAsync(CancellationToken token) {
         _logger.LogInformation("Blob Storage Monitoring Service started at: {time}", DateTimeOffset.Now);
         
@@ -88,17 +100,8 @@ public class BlobStorageMonitorServiceImpl : IBlobStorageMonitorService
         _logger.LogInformation("Blob Storage Monitoring Service stopped at: {time}", DateTimeOffset.Now);
     }
 
-
-    protected virtual async Task OnNewModelsAdded() {
-        // Fire the event if there are more than null subscribers.
-        if (NewModelsAdded != null) {
-            await NewModelsAdded.Invoke(this, new NewModelsAddedEventArgs());
-        } else {
-            _logger.LogWarning("No subscribers to the NewModelsAdded event.");
-        }
-    }
-
     
+    // Define private methods supporting the above code execution:
     private async Task HandleQueueResponse(Response<QueueMessage[]> response, CancellationToken token) {
         // Pick the first response from the received messages. This is necessary because the method 'ReceiveMessagesAsync'
         // returns an array of messages (delimited by maxMessages).
