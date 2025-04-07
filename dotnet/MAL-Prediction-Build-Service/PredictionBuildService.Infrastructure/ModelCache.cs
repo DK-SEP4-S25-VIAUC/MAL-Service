@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using PredictionBuildService.core;
+using PredictionBuildService.core.EventArgs;
 using PredictionBuildService.core.Interfaces;
 
 namespace PredictionBuildService.Infrastructure;
@@ -7,6 +8,9 @@ namespace PredictionBuildService.Infrastructure;
 public class ModelCache : IModelCache
 {
     private ConcurrentDictionary<string, ModelDTO> _modelCache = new();
+    
+    // Define the event using EventHandler<T>
+    public event EventHandler<ModelAddedEventArgs> ModelAdded;
 
     public async Task<bool> AddModelAsync(ModelDTO newModelDto) {
         return await Task.Run(() => {
@@ -22,8 +26,15 @@ public class ModelCache : IModelCache
             // Generate key for mapping into the cache:
             var key = GenerateKey(newModelDto.Type, newModelDto.Version);
         
+            bool result = _modelCache.TryAdd(key, newModelDto);
+            
+            // Notify subscribers:
+            if (result) {
+                OnModelAdded(newModelDto);
+            }
+            
             // return result:
-            return _modelCache.TryAdd(key, newModelDto);
+            return result;
         });
     }
 
@@ -53,6 +64,10 @@ public class ModelCache : IModelCache
 
     public int CacheSize() {
         return _modelCache.Count;
+    }
+
+    protected virtual void OnModelAdded(ModelDTO model) {
+        ModelAdded.Invoke(this, new ModelAddedEventArgs(model));
     }
 
     private string GenerateKey(string type, string version) {
