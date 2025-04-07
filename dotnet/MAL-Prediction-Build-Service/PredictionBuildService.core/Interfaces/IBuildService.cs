@@ -1,6 +1,6 @@
 namespace PredictionBuildService.core.Interfaces;
 
-public interface IBuildService
+public interface IBuildService : IEventSubscriber
 {
     
 }

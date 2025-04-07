@@ -1,6 +1,6 @@
 namespace PredictionBuildService.core.EventArgs;
 
-public class NewModelsAddedEventArgs : System.EventArgs
+public class AddedNewModelsEventArgs : System.EventArgs
 {
     // Class is deliberately empty.
 }
