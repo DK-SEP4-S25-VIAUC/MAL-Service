@@ -39,9 +39,6 @@ RUN /usr/share/dotnet/dotnet tool install --ignore-failed-sources --add-source h
 COPY . .
 RUN dotnet restore MAL-Microservice.sln
 
-# Install ONNX Runtime for .NET:
-RUN dotnet add package Microsoft.ML.OnnxRuntime --version 1.17.1
-
 # Install packages relevant for machine learning and Azure:
 RUN python3 -m venv /venv \
     && . /venv/bin/activate \
