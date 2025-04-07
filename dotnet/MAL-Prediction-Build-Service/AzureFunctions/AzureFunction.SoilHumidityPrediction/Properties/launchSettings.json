@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "Sep4.PredictionApp": {
+      "commandName": "Project",
+      "commandLineArgs": "--port 7260",
+      "launchBrowser": false
+    }
+  }
+}

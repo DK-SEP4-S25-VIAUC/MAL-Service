@@ -7,7 +7,6 @@ using PredictionBuildService.Infrastructure;
 using PredictionBuildService.Configurations;
 using Microsoft.Extensions.Options;
 using PredictionBuildService.Infrastructure.Build;
-using PredictionBuildService.Infrastructure.Deployment;
 using PredictionBuildService.Infrastructure.Evaluation;
 using PredictionBuildService.Infrastructure.Monitoring;
 
@@ -39,14 +38,18 @@ public class Program
         
         var builder = Host.CreateApplicationBuilder(args);
         
+        
         // Configure logging:
         builder.Services.AddLogging(logging => {
             logging.AddConsole();
             logging.SetMinimumLevel(LogLevel.Information);
         });
 
+        
         // Load configuration settings from appsettings.json to respective configuration classes, to enable project wide access to settings through dependency injection:
         builder.Services.Configure<AzureBlobStorageSettings>(builder.Configuration.GetSection("AzureBlobStorage"));
+        builder.Services.Configure<AzureFunctionsSettings>(builder.Configuration.GetSection("AzureFunctions"));
+        
         
         // Register Azure clients as singletons:
         builder.Services.AddSingleton(provider => {
@@ -65,14 +68,14 @@ public class Program
         
         builder.Services.AddSingleton(_ => new ArmClient(new DefaultAzureCredential()));
         
+        
         // Register internal services as Singletons, for dependency injection in the entire project:
         builder.Services.AddSingleton<IModelCache, ModelCache>();
         builder.Services.AddSingleton<IBlobStorageInteractionHelper, BlobStorageInteractionHelperImpl>();
         builder.Services.AddSingleton<IBlobStorageMonitorService, BlobStorageMonitorServiceImpl>();
         builder.Services.AddSingleton<IModelEvaluationService, ModelEvaluationServiceImpl>();
         builder.Services.AddSingleton<IBuildService, BuildServiceImpl>();
-        builder.Services.AddSingleton<IDeploymentService, DeploymentServiceImpl>();
-        builder.Services.AddSingleton<AzureFunctionDeploymentFactory>();
+        
         
         // Register the Worker service (Runs in the background):
         builder.Services.AddHostedService<Worker>();
