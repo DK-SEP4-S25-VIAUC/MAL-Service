@@ -7,6 +7,8 @@ using Azure.Storage.Queues.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using PredictionBuildService.Configurations;
+using PredictionBuildService.core;
+using PredictionBuildService.core.EventArgs;
 using PredictionBuildService.core.Interfaces;
 
 namespace PredictionBuildService.Infrastructure.Monitoring;
@@ -27,6 +29,8 @@ public class BlobStorageMonitorServiceImpl : IBlobStorageMonitorService
     private readonly IModelCache _modelCache;
     private readonly IBlobStorageInteractionHelper _blobStorageInteractionHelper;
     private readonly BlobServiceClient _blobServiceClient;
+    
+    public event Func<object, NewModelsAddedEventArgs, Task> NewModelsAdded;
     
     public BlobStorageMonitorServiceImpl(
         ILogger<BlobStorageMonitorServiceImpl> logger, 
@@ -55,6 +59,21 @@ public class BlobStorageMonitorServiceImpl : IBlobStorageMonitorService
                 var response = await _queueClient.ReceiveMessagesAsync(maxMessages: 1, cancellationToken: token);
                 if (response?.Value != null && response.Value.Length > 0) {
                     await HandleQueueResponse(response, token);
+                    
+                    // Check if there are more messages waiting to be processed:
+                    bool moreMessagesWaiting = false;
+                    try {
+                        var peekResponse = await _queueClient.PeekMessagesAsync(maxMessages: 1, cancellationToken: token);
+                        moreMessagesWaiting = peekResponse?.Value != null && peekResponse.Value.Length > 0;
+                    } catch (Exception ex) {
+                        _logger.LogError(ex, "Failed to peek at queue messages");
+                    }
+            
+                    // Notify event subscribers, if queue is empty (meaning we've processed the last of the potential model changes):
+                    if (!moreMessagesWaiting) {
+                        _logger.LogInformation("Processed entire queue. Now notifying subscribers...");
+                        await OnNewModelsAdded();
+                    }
                 }
             } catch (JsonException ex) {
                 _logger.LogError(ex, "Failed to deserialize Event Grid message");
@@ -67,6 +86,16 @@ public class BlobStorageMonitorServiceImpl : IBlobStorageMonitorService
         }
         
         _logger.LogInformation("Blob Storage Monitoring Service stopped at: {time}", DateTimeOffset.Now);
+    }
+
+
+    protected virtual async Task OnNewModelsAdded() {
+        // Fire the event if there are more than null subscribers.
+        if (NewModelsAdded != null) {
+            await NewModelsAdded.Invoke(this, new NewModelsAddedEventArgs());
+        } else {
+            _logger.LogWarning("No subscribers to the NewModelsAdded event.");
+        }
     }
 
     

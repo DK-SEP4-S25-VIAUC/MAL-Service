@@ -1,8 +1,8 @@
 namespace PredictionBuildService.core.Interfaces;
 
-public interface EventSubscriber
+public interface IEventSubscriber
 {
     void Subscribe();
     void Unsubscribe();
-    void HandleEvent();
+    Task HandleEventAsync(object sender, System.EventArgs e);
 }

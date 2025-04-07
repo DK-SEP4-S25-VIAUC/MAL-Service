@@ -2,7 +2,7 @@ using PredictionBuildService.core.Interfaces;
 
 namespace PredictionBuildService.Infrastructure.Build;
 
-public class BuildServiceImpl : IBuildService, EventSubscriber
+public class BuildServiceImpl : IBuildService, IEventSubscriber
 {
     // TODO: Implement
     public void Subscribe() {
@@ -13,7 +13,7 @@ public class BuildServiceImpl : IBuildService, EventSubscriber
         throw new NotImplementedException();
     }
 
-    public void HandleEvent() {
+    public async Task HandleEventAsync(object? sender, EventArgs e) {
         throw new NotImplementedException();
     }
 }

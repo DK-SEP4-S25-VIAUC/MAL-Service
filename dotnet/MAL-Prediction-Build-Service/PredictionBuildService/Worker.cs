@@ -16,6 +16,7 @@ public class Worker : BackgroundService
     private readonly IModelCache _modelCache;
     private readonly BlobServiceClient _blobServiceClient;
     private readonly IBlobStorageInteractionHelper _blobBlobStorageInteractionHelper;
+    private readonly IModelEvaluationService _modelEvaluationService;
 
     public Worker(
         IBlobStorageMonitorService monitorService,
@@ -23,13 +24,15 @@ public class Worker : BackgroundService
         IOptions<AzureBlobStorageSettings> settings,
         IModelCache modelCache,
         BlobServiceClient blobServiceClient,
-        IBlobStorageInteractionHelper blobBlobStorageInteractionHelper) {
+        IBlobStorageInteractionHelper blobBlobStorageInteractionHelper,
+        IModelEvaluationService modelEvaluationService) {
         _monitorService = monitorService;
         _logger = logger;
         _settings = settings.Value;
         _modelCache = modelCache;
         _blobServiceClient = blobServiceClient;
         _blobBlobStorageInteractionHelper = blobBlobStorageInteractionHelper;
+        _modelEvaluationService = modelEvaluationService;
     }
 
     /// <summary>
@@ -58,6 +61,9 @@ public class Worker : BackgroundService
         
         // Start the Azure Blob Storage monitoring service, to look for all future changes in the model registry:
         await _monitorService.MonitorAsync(stoppingToken);
+        
+        // Begin application shutdown (ensure all subscribers are un-subscribed):
+        _modelEvaluationService.Unsubscribe();
         _logger.LogInformation("Prediction Build Service stopped at: {time}", DateTimeOffset.Now);
     }
 }
