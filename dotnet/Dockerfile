@@ -35,12 +35,12 @@ RUN apt-get update && apt-get install -y \
 RUN /usr/share/dotnet/dotnet tool install --ignore-failed-sources --add-source https://api.nuget.org/v3/index.json --global dotnet-ef \
     && echo 'export PATH="$PATH:/root/.dotnet/tools"' | tee -a /root/.bashrc /root/.profile
 
-# Install ONNX Runtime for .NET:
-RUN dotnet add package Microsoft.ML.OnnxRuntime --version 1.17.1
-
 # Copy all solution folder contents to the image:
 COPY . .
 RUN dotnet restore MAL-Microservice.sln
+
+# Install ONNX Runtime for .NET:
+RUN dotnet add package Microsoft.ML.OnnxRuntime --version 1.17.1
 
 # Install packages relevant for machine learning and Azure:
 RUN python3 -m venv /venv \
