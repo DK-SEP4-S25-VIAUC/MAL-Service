@@ -2,7 +2,7 @@ using PredictionBuildService.core.Interfaces;
 
 namespace PredictionBuildService.Infrastructure.Deployment;
 
-public class DeploymentServiceImpl : IDeploymentService, EventSubscriber
+public class DeploymentServiceImpl : IDeploymentService, IEventSubscriber
 {
     // TODO: Implement
     public void Subscribe() {
@@ -13,7 +13,7 @@ public class DeploymentServiceImpl : IDeploymentService, EventSubscriber
         throw new NotImplementedException();
     }
 
-    public void HandleEvent() {
+    public async Task HandleEventAsync(object? sender, EventArgs e) {
         throw new NotImplementedException();
     }
 }
