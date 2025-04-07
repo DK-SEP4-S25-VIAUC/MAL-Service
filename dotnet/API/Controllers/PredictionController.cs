@@ -20,8 +20,11 @@ public class PredictionController : ControllerBase
     }
 
     [HttpGet("forecast")]
-    public ActionResult<ForecastDTO> GetForecast()
+    public async Task<ForecastDTO> GetForecast()
     {
-        
+        int lowerThreshold = await sensorDataService.getSoilHumiLowerThresholdAsync();
+        var forecast = await predictionService.GetPredictionAsync(lowerThreshold);
+
+        return forecast;
     }
 }

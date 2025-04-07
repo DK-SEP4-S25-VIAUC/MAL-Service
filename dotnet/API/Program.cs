@@ -1,3 +1,5 @@
+using API.Services.PredictionService;
+using API.Services.SensorDataService;
 
 namespace API;
 
@@ -15,6 +17,14 @@ public class Program
         builder.Services.AddSwaggerGen();
         
         builder.Services.AddScoped<IPredictionService, PredictionService>();
+        builder.Services.AddHttpClient<ISensorDataService, SensorDataService>(client =>
+        {
+            client.BaseAddress = new Uri("https://sep4api.azure-api.net/api/IoT/");
+            client.DefaultRequestHeaders.Add("Accept", "application/json");
+            // Add API keys or headers here if needed
+        });
+
+        
 
         var app = builder.Build();
 
