@@ -1,15 +1,15 @@
 using System.Text.Json;
 using Azure;
 using Azure.Messaging.EventGrid;
-using PredictionBuildService.core.Interfaces;
+using Azure.Storage.Blobs;
 using Azure.Storage.Queues;
 using Azure.Storage.Queues.Models;
-using Azure.Storage.Blobs;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using PredictionBuildService.Configurations;
+using PredictionBuildService.core.Interfaces;
 
-namespace PredictionBuildService.Infrastructure;
+namespace PredictionBuildService.Infrastructure.Monitoring;
 
 /// <summary>
 /// ...

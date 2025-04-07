@@ -1,3 +1,5 @@
+using PredictionBuildService.core.EventArgs;
+
 namespace PredictionBuildService.core.Interfaces;
 
 public interface IModelCache
@@ -8,4 +10,5 @@ public interface IModelCache
     IAsyncEnumerable<ModelDTO> ListModelsAsync();
     Task<ModelDTO> FindModelAsync(string type, string version);
     int CacheSize();
+    event EventHandler<ModelAddedEventArgs> ModelAdded;
 }
