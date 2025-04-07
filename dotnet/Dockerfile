@@ -14,8 +14,15 @@ ENV GIT_USER_EMAIL=${GIT_USER_EMAIL}
 
 # Install dependencies and configure Git using the build args
 RUN apt-get update && apt-get install -y \
-    unzip git python3 python3-pip python3-venv build-essential ca-certificates libsecret-1-0 libsecret-1-dev libglib2.0-0 curl  \
+    unzip git python3 python3-pip python3-venv build-essential ca-certificates libsecret-1-0 libsecret-1-dev libglib2.0-0 curl gpg wget  \
     && curl -sL https://aka.ms/InstallAzureCLIDeb | bash \
+    # Add Microsoft package repository for Azure Functions Core Tools \
+    && wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg \
+    && wget -q https://packages.microsoft.com/config/debian/12/prod.list -O /etc/apt/sources.list.d/microsoft-prod.list \
+    && chown root:root /usr/share/keyrings/microsoft-prod.gpg \
+    && chown root:root /etc/apt/sources.list.d/microsoft-prod.list \
+    && apt-get update && apt-get install -y azure-functions-core-tools-4 libicu-dev \
+    # Configure Git user detail import \
     && rm -rf /var/lib/apt/lists/* \
     && if [ -n "$GIT_USER_NAME" ] && [ -n "$GIT_USER_EMAIL" ]; then \
          git config --global user.name "$GIT_USER_NAME" && \
@@ -28,17 +35,17 @@ RUN apt-get update && apt-get install -y \
 RUN /usr/share/dotnet/dotnet tool install --ignore-failed-sources --add-source https://api.nuget.org/v3/index.json --global dotnet-ef \
     && echo 'export PATH="$PATH:/root/.dotnet/tools"' | tee -a /root/.bashrc /root/.profile
 
-# Install libsecret (To be able to log in to Azure from Rider)
-RUN apt-get update && apt-get install -y libsecret-1-0 libsecret-1-dev
+# Install ONNX Runtime for .NET:
+RUN dotnet add package Microsoft.ML.OnnxRuntime --version 1.17.1
 
-# Copy all solution folder contents to the image
+# Copy all solution folder contents to the image:
 COPY . .
 RUN dotnet restore MAL-Microservice.sln
 
 # Install packages relevant for machine learning and Azure:
 RUN python3 -m venv /venv \
     && . /venv/bin/activate \
-    && pip install pythonnet==3.0.5 azureml-core azureml-mlflow
+    && pip install pythonnet==3.0.5 azureml-core azureml-mlflow onnxruntime==1.17.1 numpy scipy
 
 # Create a directory for SSL certificates:
 RUN mkdir -p /https

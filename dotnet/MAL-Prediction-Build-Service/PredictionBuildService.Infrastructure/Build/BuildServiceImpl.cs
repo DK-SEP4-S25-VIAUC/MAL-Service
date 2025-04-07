@@ -4,6 +4,10 @@ using PredictionBuildService.core.Interfaces;
 
 namespace PredictionBuildService.Infrastructure.Build;
 
+
+/// <summary>
+/// https://learn.microsoft.com/en-us/azure/azure-functions/
+/// </summary>
 public class BuildServiceImpl : IBuildService
 { 
     private readonly ILogger<BuildServiceImpl> _logger;
