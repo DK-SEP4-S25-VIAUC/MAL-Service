@@ -22,6 +22,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PredictionBuildService.core
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PredictionBuildService.Configurations", "MAL-Prediction-Build-Service\PredictionBuildService.Configurations\PredictionBuildService.Configurations.csproj", "{F70F4B0D-449E-42AA-8C07-619467BB801B}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "AzureFunctions", "AzureFunctions", "{CFECEDDD-712F-4380-9079-75C3478D7281}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AzureFunction.SoilHumidityPrediction", "MAL-Prediction-Build-Service\AzureFunctions\AzureFunction.SoilHumidityPrediction\AzureFunction.SoilHumidityPrediction.csproj", "{D858AB03-0BB8-4ED7-AA46-E163380CAA13}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -64,6 +68,10 @@ Global
 		{F70F4B0D-449E-42AA-8C07-619467BB801B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F70F4B0D-449E-42AA-8C07-619467BB801B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F70F4B0D-449E-42AA-8C07-619467BB801B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D858AB03-0BB8-4ED7-AA46-E163380CAA13}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D858AB03-0BB8-4ED7-AA46-E163380CAA13}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D858AB03-0BB8-4ED7-AA46-E163380CAA13}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D858AB03-0BB8-4ED7-AA46-E163380CAA13}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{11239057-52C0-4C63-9AAF-37BCE2EC383A} = {3A80A7D6-EC3E-495B-822A-64B48131373E}
@@ -75,5 +83,7 @@ Global
 		{546D781F-3068-4DD8-AEBE-EBF8CD5AF333} = {B6245860-2321-485C-A242-FC8676275D10}
 		{EDDD069B-48C3-4E60-9472-FFD93ED21559} = {B6245860-2321-485C-A242-FC8676275D10}
 		{F70F4B0D-449E-42AA-8C07-619467BB801B} = {B6245860-2321-485C-A242-FC8676275D10}
+		{CFECEDDD-712F-4380-9079-75C3478D7281} = {B6245860-2321-485C-A242-FC8676275D10}
+		{D858AB03-0BB8-4ED7-AA46-E163380CAA13} = {CFECEDDD-712F-4380-9079-75C3478D7281}
 	EndGlobalSection
 EndGlobal
