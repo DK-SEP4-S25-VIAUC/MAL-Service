@@ -83,8 +83,8 @@ public class BlobStorageMonitorServiceImpl : IBlobStorageMonitorService
             
                     // Notify event subscribers, if queue is empty (meaning we've processed the last of the potential model changes):
                     if (!moreMessagesWaiting) {
-                        _logger.LogInformation("Processed entire queue. Now notifying subscribers...");
-                        await OnNewModelsAdded();
+                        _logger.LogInformation("Processed entire queue.");
+                        await NotifySubscribersAsync();
                     }
                 }
             } catch (JsonException ex) {
@@ -100,7 +100,12 @@ public class BlobStorageMonitorServiceImpl : IBlobStorageMonitorService
         _logger.LogInformation("Blob Storage Monitoring Service stopped at: {time}", DateTimeOffset.Now);
     }
 
-    
+    public async Task NotifySubscribersAsync() {
+        _logger.LogInformation("Notifying subscribers of changes...");
+        await OnNewModelsAdded();
+    }
+
+
     // Define private methods supporting the above code execution:
     private async Task HandleQueueResponse(Response<QueueMessage[]> response, CancellationToken token) {
         // Pick the first response from the received messages. This is necessary because the method 'ReceiveMessagesAsync'

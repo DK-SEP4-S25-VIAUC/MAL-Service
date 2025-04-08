@@ -17,6 +17,7 @@ public class Worker : BackgroundService
     private readonly BlobServiceClient _blobServiceClient;
     private readonly IBlobStorageInteractionHelper _blobBlobStorageInteractionHelper;
     private readonly IModelEvaluationService _modelEvaluationService;
+    private readonly IBuildService _buildService;
 
     public Worker(
         IBlobStorageMonitorService monitorService,
@@ -25,7 +26,8 @@ public class Worker : BackgroundService
         IModelCache modelCache,
         BlobServiceClient blobServiceClient,
         IBlobStorageInteractionHelper blobBlobStorageInteractionHelper,
-        IModelEvaluationService modelEvaluationService) {
+        IModelEvaluationService modelEvaluationService,
+        IBuildService buildService) {
         _monitorService = monitorService;
         _logger = logger;
         _settings = settings.Value;
@@ -33,6 +35,7 @@ public class Worker : BackgroundService
         _blobServiceClient = blobServiceClient;
         _blobBlobStorageInteractionHelper = blobBlobStorageInteractionHelper;
         _modelEvaluationService = modelEvaluationService;
+        _buildService = buildService;
     }
 
     /// <summary>
@@ -41,7 +44,7 @@ public class Worker : BackgroundService
     /// </summary>
     /// <param name="stoppingToken"></param>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
-        _logger.LogInformation("Prediction Build Service started at: {time}", DateTimeOffset.Now);
+        _logger.LogInformation("PredictionBuildService started at: {time}", DateTimeOffset.Now);
         
         // Check if the ModelDTO Cache is empty. If so, first read all models available from Azure Blob Storage into the in-memory cache.
         // This is necessary upon service initialization, to ensure existing models are properly loaded:
@@ -59,11 +62,15 @@ public class Worker : BackgroundService
         }
         _logger.LogInformation("{modelsAsString}", modelsAsString);
         
+        // Evaluate loaded models and deploy the best (ensures that a 'best model' is initially ready for use):
+        await _monitorService.NotifySubscribersAsync();
+        
         // Start the Azure Blob Storage monitoring service, to look for all future changes in the model registry:
         await _monitorService.MonitorAsync(stoppingToken);
         
         // Begin application shutdown (ensure all subscribers are un-subscribed):
         _modelEvaluationService.Unsubscribe();
-        _logger.LogInformation("Prediction Build Service stopped at: {time}", DateTimeOffset.Now);
+        _buildService.Unsubscribe();
+        _logger.LogInformation("PredictionBuildService stopped at: {time}", DateTimeOffset.Now);
     }
 }
