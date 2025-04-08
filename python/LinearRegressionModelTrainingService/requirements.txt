@@ -5,3 +5,4 @@ pandas
 numpy
 onnx
 jupyterlab
+azure-storage-blob

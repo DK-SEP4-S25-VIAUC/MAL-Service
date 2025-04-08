@@ -59,3 +59,12 @@ jobs:
           docker stop $(docker ps -q --filter "ancestor=${{ secrets.DOCKERHUB_USERNAME }}/linear-regression-service:latest")
         env:
           DOCKER_BUILDKIT: 1
+
+      - name: Upload trained model to Azure Blob Storage
+        working-directory: python-dev/LinearRegressionModelTrainingService
+        env:
+          AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
+          AZURE_CONTAINER_NAME: models
+        run: |
+          pip install azure-storage-blob
+          python upload_model.py
