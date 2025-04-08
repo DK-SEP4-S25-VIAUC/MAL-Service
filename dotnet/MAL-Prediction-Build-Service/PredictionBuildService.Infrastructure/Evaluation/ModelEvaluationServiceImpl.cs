@@ -22,6 +22,8 @@ public class ModelEvaluationServiceImpl : IModelEvaluationService
         _modelCache = modelCache;
         _blobStorageMonitorService = blobStorageMonitorService;
         
+        _logger.LogInformation("ModelEvaluationServiceImpl started at: {time}", DateTimeOffset.Now);
+        
         // Subscribe to relevant events from the monitoring service:
         Subscribe();
     }
@@ -85,7 +87,7 @@ public class ModelEvaluationServiceImpl : IModelEvaluationService
             return;
         }
         
-        _logger.LogInformation("Evaluation found best model to be: Type={ModelType}, Version={ModelVersion}", firstModel.Type, firstModel.Type);
+        _logger.LogInformation("Evaluation found best model to be: Type={ModelType}, Version={ModelVersion}", firstModel.Type, firstModel.Version);
         
         // Notify Subscribers:
         _logger.LogInformation("Now notifying subscribers...");

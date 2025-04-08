@@ -4,6 +4,7 @@ using PredictionBuildService.core.Interfaces;
 using Azure.ResourceManager;
 using Azure.ResourceManager.AppService;
 using Azure.ResourceManager.Resources;
+using Microsoft.Extensions.Options;
 using PredictionBuildService.Configurations;
 
 namespace PredictionBuildService.Infrastructure.Build;
@@ -20,18 +21,19 @@ public class BuildServiceImpl : IBuildService
     private readonly IModelEvaluationService _modelEvaluationService;
     private readonly AzureFunctionsSettings _settings;
     private readonly ArmClient _armClient;
-    
     private Func<object, EvaluatedAllLinearRegressionModelsEventArgs, Task>? _evaluatedLinearRegModelEventHandler;
      
     public BuildServiceImpl(
         ILogger<BuildServiceImpl> logger, 
         IModelEvaluationService modelEvaluationService,
-        AzureFunctionsSettings settings,
+        IOptions<AzureFunctionsSettings> settings,
         ArmClient armClient) {
         _logger = logger;
         _modelEvaluationService = modelEvaluationService;
-        _settings = settings;
+        _settings = settings.Value;
         _armClient = armClient;
+        
+        _logger.LogInformation("BuildServiceImpl started at: {time}", DateTimeOffset.Now);
         
         // Subscribe to relevant events from the evaluation service:
         Subscribe();
@@ -70,7 +72,9 @@ public class BuildServiceImpl : IBuildService
     // Re-direct each EventArgs type to a specific overloaded implementation of HandleEventAsync method.
     // This allows for future scalability in the number of events this class can handle!
     private async Task HandleEventAsync(object? sender, EvaluatedAllLinearRegressionModelsEventArgs e) {
-        try { 
+        try {
+            _logger.LogInformation("BuildService received EvaluatedAllLinearRegressionModelsEventArgs event. Building and deploying updated Linear Model to Azure Functions App");
+            
             // Get the Function App resource:
             var resourceGroup = _armClient.GetResourceGroupResource(ResourceGroupResource.CreateResourceIdentifier(_settings.SubscriptionId, _settings.ResourceGroupName));
             
@@ -88,10 +92,10 @@ public class BuildServiceImpl : IBuildService
             // Apply the updated settings:
             await functionApp.Value.UpdateApplicationSettingsAsync(appSettings);
             
-            Console.WriteLine($"Updated OnnxModelUri to {e.BestModel.DownloadUrl}");
+            _logger.LogInformation("Deployed updated azure function reference.\nUpdated OnnxModelUri to {BestModelUrl}", e.BestModel.DownloadUrl);
             
         } catch (Exception ex) {
-            Console.WriteLine($"Error updating Function App settings: {ex.Message}");
+            _logger.LogError(ex, "Failed to build and deploy updated model to Azure Functions.");
             throw;
         }
     }
