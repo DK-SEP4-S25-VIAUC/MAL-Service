@@ -7,6 +7,7 @@ from sklearn.metrics import mean_squared_error, r2_score
 from skl2onnx import convert_sklearn
 from skl2onnx.common.data_types import FloatTensorType
 import os
+from upload_model import upload_model_to_blob
 
 def train_model(data_url: str) -> dict:
     # 1. Fetch training data
@@ -44,8 +45,11 @@ def train_model(data_url: str) -> dict:
     with open(model_path, "wb") as f:
         f.write(onnx_model.SerializeToString())
 
+    # 7. Upload model to Azure
+    upload_model_to_blob(model_path, "linear-regression-model-latest.onnx")
+
     return {
-        "message": "Model trained and saved successfully.",
+        "message": "Model trained, saved and uploaded successfully.",
         "rmse": round(rmse, 2),
         "r2": round(r2, 2),
         "best_alpha": grid_search.best_params_["alpha"]
