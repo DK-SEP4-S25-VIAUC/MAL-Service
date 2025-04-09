@@ -1,5 +1,6 @@
 using Azure.Identity;
 using Azure.ResourceManager;
+using Azure.ResourceManager.Resources.Models;
 using Azure.Storage.Queues;
 using Azure.Storage.Blobs;
 using PredictionBuildService.core.Interfaces;
@@ -54,9 +55,7 @@ public class Program
         // Register Azure clients as singletons:
         builder.Services.AddSingleton(provider => {
             var settings = provider.GetRequiredService<IOptions<AzureBlobStorageSettings>>().Value;
-            return new QueueClient(
-                new Uri(settings.QueueUri),
-                new DefaultAzureCredential());
+            return new QueueClient(new Uri(settings.QueueUri), new DefaultAzureCredential());
         });
         
         builder.Services.AddSingleton(provider => {
