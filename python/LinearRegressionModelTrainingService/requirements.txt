@@ -3,6 +3,7 @@ uvicorn[standard]
 scikit-learn
 pandas
 numpy
-onnx
+skl2onnx
 jupyterlab
 azure-storage-blob
+azure-identity
