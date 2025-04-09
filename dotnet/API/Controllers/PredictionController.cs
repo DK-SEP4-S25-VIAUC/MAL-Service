@@ -12,19 +12,41 @@ public class PredictionController : ControllerBase
 {
     private readonly IPredictionService predictionService;
     private readonly ISensorDataService sensorDataService;
+    private readonly ILogger<PredictionController> _logger;
 
-    public PredictionController(IPredictionService predictionService, ISensorDataService sensorDataService)
+    public PredictionController(IPredictionService predictionService, ISensorDataService sensorDataService, ILogger<PredictionController> logger)
     {
         this.predictionService = predictionService;
         this.sensorDataService = sensorDataService;
+        _logger = logger;
     }
 
     [HttpGet("forecast")]
-    public async Task<ForecastDTO> GetForecast()
+    public async Task<IActionResult> GetForecast()
     {
-        int lowerThreshold = await sensorDataService.getSoilHumiLowerThresholdAsync();
-        var forecast = await predictionService.GetPredictionAsync(lowerThreshold);
+        try
+        {
+            var lowerThreshold = await sensorDataService.getSoilHumiLowerThresholdAsync();
 
-        return forecast;
+            if (!lowerThreshold.HasValue)
+            {
+                return StatusCode(503, "Unable to retrieve soil humidity threshold.");
+            }
+
+            var forecast = await predictionService.GetPredictionAsync(lowerThreshold.Value);
+
+            if (forecast == null)
+            {
+                return StatusCode(502, "Prediction service failed to return a forecast.");
+            }
+
+            return Ok(forecast);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An error occurred while retrieving the forecast.");
+            return StatusCode(500, "An internal server error occurred.");
+        }
     }
+
 }

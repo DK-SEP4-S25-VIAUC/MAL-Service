@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Web;
+using System.Text.Json;
+
 
 namespace API.Services.SensorDataService;
 
@@ -10,21 +12,79 @@ public class SensorDataService : ISensorDataService
 {
     private readonly HttpClient _httpClient;
     private readonly List<Dictionary<string, SampleDTO>> _fallbackList = new();
+    private readonly ILogger<SensorDataService> _logger;
 
-    public SensorDataService(HttpClient httpClient)
+    public SensorDataService(HttpClient httpClient, ILogger<SensorDataService> logger)
     {
         _httpClient = httpClient;
-        LoadFallbackData(); // Populate fallback list on startup
+        _logger = logger;
+        LoadFallbackData();
     }
 
-    public async Task<int> getSoilHumiLowerThresholdAsync()
+    public async Task<double?> getSoilHumiLowerThresholdAsync()
     {
-        var response = await _httpClient.GetFromJsonAsync<Dictionary<string, CreateManualThresholdDTO>>(
-            "soilhumidity/threshhold"
-        );
+        try
+        {
+            var response = await _httpClient.GetFromJsonAsync<Dictionary<string, CreateManualThresholdDTO>>(
+                "soilhumidity/threshhold"
+            );
 
-        return response["CreateManualThresholdDTO"].lowerbound;
+            if (response != null && response.TryGetValue("CreateManualThresholdDTO", out var dto))
+            {
+                return dto.lowerbound;
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex, "HTTP request to soil humidity API failed.");
+        }
+        catch (NotSupportedException ex) // Content type is not valid
+        {
+            _logger.LogError(ex, "The content type of the response is not supported.");
+        }
+        catch (JsonException ex) // JSON parsing error
+        {
+            _logger.LogError(ex, "Error parsing JSON response.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error occurred while fetching soil humidity threshold.");
+        }
+        
+        return null;
     }
+    
+    public async Task<double?> GetLatestSoilHumidityValueAsync()
+    {
+        try
+        {
+            var response = await _httpClient.GetFromJsonAsync<Dictionary<string, SoilHumidityDTO>>(
+                "soilhumidity/latest"
+            );
+
+            if (response != null && response.TryGetValue("SoilHumidityDTO", out var dto))
+            {
+                return dto.Soil_Humidity_Value;
+            }
+
+            _logger.LogWarning("SoilHumidityDTO not found in the response.");
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex, "HTTP request to fetch latest soil humidity failed.");
+        }
+        catch (JsonException ex)
+        {
+            _logger.LogError(ex, "Failed to parse JSON for latest soil humidity.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error occurred while retrieving latest soil humidity.");
+        }
+
+        return null;
+    }
+
 
     public async Task<IActionResult> getSamples(DateTime? from, DateTime? to)
     {
