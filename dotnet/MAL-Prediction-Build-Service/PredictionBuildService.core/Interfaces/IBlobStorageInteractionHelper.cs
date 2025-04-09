@@ -1,5 +1,6 @@
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
+using PredictionBuildService.core.ModelEntities;
 
 namespace PredictionBuildService.core.Interfaces;
 

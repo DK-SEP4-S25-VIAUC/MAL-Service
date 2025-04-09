@@ -1,3 +1,5 @@
+using PredictionBuildService.core.ModelEntities;
+
 namespace PredictionBuildService.core.EventArgs;
 
 public class EvaluatedAllLinearRegressionModelsEventArgs : System.EventArgs

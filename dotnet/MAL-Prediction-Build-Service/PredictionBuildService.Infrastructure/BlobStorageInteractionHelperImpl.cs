@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using PredictionBuildService.core;
 using PredictionBuildService.core.Interfaces;
+using PredictionBuildService.core.ModelEntities;
 
 namespace PredictionBuildService.Infrastructure;
 
