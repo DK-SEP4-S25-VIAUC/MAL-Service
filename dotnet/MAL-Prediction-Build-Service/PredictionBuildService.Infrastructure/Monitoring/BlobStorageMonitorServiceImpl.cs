@@ -30,7 +30,7 @@ public class BlobStorageMonitorServiceImpl : IBlobStorageMonitorService
     private readonly IBlobStorageInteractionHelper _blobStorageInteractionHelper;
     private readonly BlobServiceClient _blobServiceClient;
     
-    public event Func<object, AddedNewModelsEventArgs, Task> NewModelsAdded;
+    public event Func<object, AddedNewModelsEventArgs, Task>? NewModelsAdded;
     
     public BlobStorageMonitorServiceImpl(
         ILogger<BlobStorageMonitorServiceImpl> logger, 
@@ -67,11 +67,10 @@ public class BlobStorageMonitorServiceImpl : IBlobStorageMonitorService
         // Start the monitoring loop:
         while (!token.IsCancellationRequested) {
             try {
-                // Wait to receive a message from the Azure Storage Queue
+                // Wait to receive a message from the Azure Storage Queue:
                 var response = await _queueClient.ReceiveMessagesAsync(maxMessages: 1, cancellationToken: token);
                 if (response?.Value != null && response.Value.Length > 0) {
                     await HandleQueueResponse(response, token);
-                    
                     // Check if there are more messages waiting to be processed:
                     bool moreMessagesWaiting = false;
                     try {
@@ -80,7 +79,6 @@ public class BlobStorageMonitorServiceImpl : IBlobStorageMonitorService
                     } catch (Exception ex) {
                         _logger.LogError(ex, "Failed to peek at queue messages");
                     }
-            
                     // Notify event subscribers, if queue is empty (meaning we've processed the last of the potential model changes):
                     if (!moreMessagesWaiting) {
                         _logger.LogInformation("Processed entire queue.");
