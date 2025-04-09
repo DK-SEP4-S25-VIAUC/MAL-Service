@@ -1,4 +1,4 @@
-name: CI/CD Pipeline (Mal Prediction Service)
+name: CI/CD Pipeline
 
 on:
   push:
@@ -13,7 +13,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Check directory structure
-        run: ls -la && ls -la dotnet/prototype/MAL-Api-Service/
+        run: ls -la && ls -la prototype/MAL-Api-Service/ && ls -la API/
 
       - name: Set up .NET
         uses: actions/setup-dotnet@v3
@@ -35,21 +35,40 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build and push Docker image
+      - name: Build and push MAL-Api-Service Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: dotnet/prototype/MAL-Api-Service/Dockerfile
+          file: prototype/MAL-Api-Service/Dockerfile
           push: true
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/mal-service-api:${{ github.sha }}
             ${{ secrets.DOCKERHUB_USERNAME }}/mal-service-api:latest
 
-      - name: Validate Docker image
+      - name: Build and push API Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: API/Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/api:${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/api:latest
+
+      - name: Validate MAL-Api-Service Docker image
         run: |
           docker run --rm -d -p 8080:8080 ${{ secrets.DOCKERHUB_USERNAME }}/mal-service-api:latest
-          sleep 5  # Give the container time to start
+          sleep 5
           curl -f http://localhost:8080/Prototype/testEndpoint || exit 1
           docker stop $(docker ps -q --filter "ancestor=${{ secrets.DOCKERHUB_USERNAME }}/mal-service-api:latest")
+        env:
+          DOCKER_BUILDKIT: 1
+
+      - name: Validate API Docker image
+        run: |
+          docker run --rm -d -p 8081:8080 ${{ secrets.DOCKERHUB_USERNAME }}/api:latest
+          sleep 5
+          curl -f http://localhost:8081/sensor/data || exit 1
+          docker stop $(docker ps -q --filter "ancestor=${{ secrets.DOCKERHUB_USERNAME }}/api:latest")
         env:
           DOCKER_BUILDKIT: 1
