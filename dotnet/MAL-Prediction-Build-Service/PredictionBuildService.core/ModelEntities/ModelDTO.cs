@@ -1,6 +1,6 @@
 using Newtonsoft.Json;
 
-namespace PredictionBuildService.core;
+namespace PredictionBuildService.core.ModelEntities;
 
 [JsonObject]
 public class ModelDTO

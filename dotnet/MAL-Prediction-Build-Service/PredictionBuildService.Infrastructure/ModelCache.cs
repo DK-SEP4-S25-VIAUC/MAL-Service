@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using PredictionBuildService.core;
 using PredictionBuildService.core.EventArgs;
 using PredictionBuildService.core.Interfaces;
+using PredictionBuildService.core.ModelEntities;
 
 namespace PredictionBuildService.Infrastructure;
 

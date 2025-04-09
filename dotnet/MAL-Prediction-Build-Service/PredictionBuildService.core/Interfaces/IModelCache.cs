@@ -1,4 +1,5 @@
 using PredictionBuildService.core.EventArgs;
+using PredictionBuildService.core.ModelEntities;
 
 namespace PredictionBuildService.core.Interfaces;
 
