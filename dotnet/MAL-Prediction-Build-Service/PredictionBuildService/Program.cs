@@ -76,7 +76,6 @@ public class Program
         builder.Services.AddSingleton<IModelEvaluationService, ModelEvaluationServiceImpl>();
         builder.Services.AddSingleton<IBuildService, BuildServiceImpl>();
         
-        
         // Register the Worker service (Runs in the background):
         builder.Services.AddHostedService<Worker>();
 
