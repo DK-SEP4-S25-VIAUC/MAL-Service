@@ -25,27 +25,29 @@ public class BlobStorageMonitorServiceImpl : IBlobStorageMonitorService
 {
     private readonly ILogger<BlobStorageMonitorServiceImpl> _logger;
     private readonly QueueClient _queueClient;
-    private readonly AzureBlobStorageSettings _settings;
+    private readonly AzureBlobStorageSettings _blobStorageSettings;
     private readonly IModelCache _modelCache;
     private readonly IBlobStorageInteractionHelper _blobStorageInteractionHelper;
     private readonly BlobServiceClient _blobServiceClient;
+    private readonly WorkerSettings _workerSettings;
     
     public event Func<object, AddedNewModelsEventArgs, Task>? NewModelsAdded;
     
     public BlobStorageMonitorServiceImpl(
         ILogger<BlobStorageMonitorServiceImpl> logger, 
-        IOptions<AzureBlobStorageSettings> settings,
+        IOptions<AzureBlobStorageSettings> blobStorageSettings,
         QueueClient queueClient,
         IModelCache modelCache,
         IBlobStorageInteractionHelper blobStorageInteractionHelper,
-        BlobServiceClient blobServiceClient
-        ) {
+        BlobServiceClient blobServiceClient,
+        IOptions<WorkerSettings> workerSettings) {
         _logger = logger;
         _queueClient = queueClient;
-        _settings = settings.Value;
+        _blobStorageSettings = blobStorageSettings.Value;
         _modelCache = modelCache;
         _blobStorageInteractionHelper = blobStorageInteractionHelper;
         _blobServiceClient = blobServiceClient;
+        _workerSettings = workerSettings.Value;
     }
     
     
@@ -65,8 +67,10 @@ public class BlobStorageMonitorServiceImpl : IBlobStorageMonitorService
         _logger.LogInformation("Blob Storage Monitoring Service started at: {time}", DateTimeOffset.Now);
         
         // Start the monitoring loop:
+        // This is designed to check for changes only once an hour to ensure Azure costs to CPU usage remain as low as possible.
         while (!token.IsCancellationRequested) {
             try {
+                _logger.LogInformation("Checking for changes in Blob Storage at: {time}", DateTimeOffset.Now);
                 // Wait to receive a message from the Azure Storage Queue:
                 var response = await _queueClient.ReceiveMessagesAsync(maxMessages: 1, cancellationToken: token);
                 if (response?.Value != null && response.Value.Length > 0) {
@@ -83,18 +87,28 @@ public class BlobStorageMonitorServiceImpl : IBlobStorageMonitorService
                     if (!moreMessagesWaiting) {
                         _logger.LogInformation("Processed entire queue.");
                         await NotifySubscribersAsync();
+                        
+                        // Sleep for 1 hour (or whatever is set in the settings) to minimize CPU usage:
+                        await Task.Delay(TimeSpan.FromHours(int.Parse(_workerSettings.SleepBetweenChecksInterval)), token);
+                    } else {
+                        // Sleep for a few seconds before processing next event:
+                        await Task.Delay(3000, token);
                     }
                 }
+
+                _logger.LogInformation("Finished processing changes at: {time}.\nSleeping for {delay} minutes...", DateTimeOffset.Now, _workerSettings.SleepBetweenChecksInterval);
+                
             } catch (JsonException ex) {
                 _logger.LogError(ex, "Failed to deserialize Event Grid message");
             } catch (Exception ex) {
-                _logger.LogError(ex, "Error processing message from queue");
+                if (ex is not TaskCanceledException) {
+                    _logger.LogError(ex, "Error processing Blob Storage changes.\nSleeping for 10 minutes before retrying...");
+                    await Task.Delay(TimeSpan.FromMinutes(10), token);
+                } else {
+                    _logger.LogError(ex, "Error processing message from queue");
+                }
             }
-            
-            // Wait a little while, to save system resources:
-            await Task.Delay(5000, token);
         }
-        
         _logger.LogInformation("Blob Storage Monitoring Service stopped at: {time}", DateTimeOffset.Now);
     }
 
@@ -144,12 +158,12 @@ public class BlobStorageMonitorServiceImpl : IBlobStorageMonitorService
                 _logger.LogInformation("Processing blob creation event for URI: {blobUri} with name: {blobName}", blobUri, blobName);
                 
                 // ModelMetaDataFormat is set in appsettings.json. Maybe it's like '.metadata.json' - maybe some other format:
-                if (blobUri.Contains(_settings.ModelMetaDataFormat)) {
+                if (blobUri.Contains(_blobStorageSettings.ModelMetaDataFormat)) {
                     
                     // Download the model metadata:
-                    BlobClient blobClient = _blobServiceClient.GetBlobContainerClient(_settings.ContainerName).GetBlobClient(blobName);
+                    BlobClient blobClient = _blobServiceClient.GetBlobContainerClient(_blobStorageSettings.ContainerName).GetBlobClient(blobName);
                     var modelMetaData = await _blobStorageInteractionHelper.DownloadBlobToStringAsync(blobClient, token);
-                    var model = _blobStorageInteractionHelper.ConvertFromJsonMetadataToModelDTO(modelMetaData, _settings.ModelMetaDataFormat, _settings.ModelFileType, blobClient);
+                    var model = _blobStorageInteractionHelper.ConvertFromJsonMetadataToModelDTO(modelMetaData, _blobStorageSettings.ModelMetaDataFormat, _blobStorageSettings.ModelFileType, blobClient);
                     
                     // Add the newly found model to the ModelCache:
                     await _modelCache.AddModelAsync(model);
