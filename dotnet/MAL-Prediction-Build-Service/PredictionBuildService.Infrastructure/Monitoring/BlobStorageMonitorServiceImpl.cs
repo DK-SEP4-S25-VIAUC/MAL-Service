@@ -74,6 +74,7 @@ public class BlobStorageMonitorServiceImpl : IBlobStorageMonitorService
                 // Wait to receive a message from the Azure Storage Queue:
                 var response = await _queueClient.ReceiveMessagesAsync(maxMessages: 1, cancellationToken: token);
                 if (response?.Value != null && response.Value.Length > 0) {
+                    // Theres something in the event queue. Let's handle it.
                     await HandleQueueResponse(response, token);
                     // Check if there are more messages waiting to be processed:
                     bool moreMessagesWaiting = false;
@@ -87,16 +88,16 @@ public class BlobStorageMonitorServiceImpl : IBlobStorageMonitorService
                     if (!moreMessagesWaiting) {
                         _logger.LogInformation("Processed entire queue.");
                         await NotifySubscribersAsync();
-                        
-                        // Sleep for 1 hour (or whatever is set in the settings) to minimize CPU usage:
-                        await Task.Delay(TimeSpan.FromHours(int.Parse(_workerSettings.SleepBetweenChecksInterval)), token);
-                    } else {
-                        // Sleep for a few seconds before processing next event:
-                        await Task.Delay(3000, token);
                     }
+                    // Sleep for a few seconds before processing next event:
+                    await Task.Delay(3000, token);
+                    
+                } else {
+                    // Queue is empty...
+                    // Sleep for 1 hour (or whatever is set in the settings) to minimize CPU usage:
+                    _logger.LogInformation("Finished processing changes at: {time}.\nSleeping for {delay} minutes...", DateTimeOffset.Now, _workerSettings.SleepBetweenChecksInterval);
+                    await Task.Delay(TimeSpan.FromHours(int.Parse(_workerSettings.SleepBetweenChecksInterval)), token);
                 }
-
-                _logger.LogInformation("Finished processing changes at: {time}.\nSleeping for {delay} minutes...", DateTimeOffset.Now, _workerSettings.SleepBetweenChecksInterval);
                 
             } catch (JsonException ex) {
                 _logger.LogError(ex, "Failed to deserialize Event Grid message");
