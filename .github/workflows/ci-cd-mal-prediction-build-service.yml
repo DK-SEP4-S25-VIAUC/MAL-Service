@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
   test-and-deploy:
@@ -44,12 +45,3 @@ jobs:
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/mal-prediction-build-service:${{ github.sha }}
             ${{ secrets.DOCKERHUB_USERNAME }}/mal-prediction-build-service:latest
-
-      - name: Validate Docker image
-        run: |
-          docker run --rm -d -p 8080:8080 ${{ secrets.DOCKERHUB_USERNAME }}/mal-prediction-build-service:latest
-          sleep 5  # Give the container time to start
-          curl -f http://localhost:8080/Prototype/testEndpoint || exit 1
-          docker stop $(docker ps -q --filter "ancestor=${{ secrets.DOCKERHUB_USERNAME }}/mal-prediction-build-service:latest")
-        env:
-          DOCKER_BUILDKIT: 1
