@@ -76,4 +76,4 @@ jobs:
           az containerapp update \
             --name mal-api \
             --resource-group SEP4_MAL_team \
-            --image ${{ secrets.DOCKERHUB_USERNAME }}/mal-api:latest
+            --image ${{ secrets.DOCKERHUB_USERNAME }}/api:latest
