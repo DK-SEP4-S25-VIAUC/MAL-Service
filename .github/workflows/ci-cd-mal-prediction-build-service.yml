@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'dotnet/MAL-Prediction-Build-Service/**'
   workflow_dispatch:
 
 jobs:
