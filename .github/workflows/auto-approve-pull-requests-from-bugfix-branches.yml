@@ -1,9 +1,13 @@
-name: Bugfix Pull Request Auto-Approve
+name: Auto-Approve Pull Requests from bugfix branches.
 
 on:
   pull_request_target:
     branches:
       - development
+
+permissions:
+  pull-requests: write
+  contents: write
 
 jobs:
   auto-approve-bugfix:
@@ -15,3 +19,8 @@ jobs:
         uses: hmarr/auto-approve-action@v3
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Auto-merge bugfix pull request
+        uses: pascalgn/automerge-action@v0.16.3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
