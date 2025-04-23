@@ -16,7 +16,7 @@ COPY MAL-API/ MAL-API/
 RUN dotnet build MAL-API/API/API.csproj -c Release
 
 # Run tests
-RUN dotnet test MAL-API/API.Tests/API.Tests.csproj -c Release --verbosity normal
+RUN dotnet test MAL-API/API.tests/API.tests.csproj -c Release --verbosity normal
 
 # Stage 2: Publish
 FROM build AS publish
