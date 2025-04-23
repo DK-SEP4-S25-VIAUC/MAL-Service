@@ -71,14 +71,9 @@ jobs:
           tenant-id: ${{ secrets.MALAPI_AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.MALAPI_AZURE_SUBSCRIPTION_ID }}
 
-      - name: Deploy to Azure Container Apps
-        uses: azure/container-apps-deploy-action@v2
-        with:
-          appSourcePath: ${{ github.workspace }}/dotnet/MAL-API/API
-          dockerfilePath: dotnet/MAL-API/API/Dockerfile
-          registryUrl: docker.io
-          registryUsername: ${{ secrets.DOCKERHUB_USERNAME }}
-          registryPassword: ${{ secrets.DOCKERHUB_TOKEN }}
-          containerAppName: mal-api
-          resourceGroup: SEP4_MAL_team
-          imageToBuild: ${{ secrets.DOCKERHUB_USERNAME }}/api:${{ github.sha }}
+      - name: Deploy to Container App
+        run: |
+          az containerapp update \
+            --name mal-api \
+            --resource-group SEP4_MAL_team \
+            --image ${{ secrets.DOCKERHUB_USERNAME }}/mal-api:latest
