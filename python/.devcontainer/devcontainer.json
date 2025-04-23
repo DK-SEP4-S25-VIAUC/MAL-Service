@@ -1,0 +1,24 @@
+{
+    "name": "Python Dev Environment",
+    "build": {
+      "dockerfile": "../Dockerfile",
+      "context": "..",
+      "args": {
+        "GIT_USER_NAME": "${localEnv:GIT_USER_NAME}",
+        "GIT_USER_EMAIL": "${localEnv:GIT_USER_EMAIL}"
+      }
+    },
+    "workspaceFolder": "/workspace",
+    "forwardPorts": [8001, 8002],
+    "remoteEnv": {
+      "GIT_USER_NAME": "${localEnv:GIT_USER_NAME}",
+      "GIT_USER_EMAIL": "${localEnv:GIT_USER_EMAIL}"
+    },
+    "remoteUser": "root",
+    "customizations": {
+      "jetbrains": {
+        "backend": "PyCharm"
+      }
+    }
+  }
+  

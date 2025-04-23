@@ -1,0 +1,50 @@
+# === Python generelt ===
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+*.so
+*.egg-info/
+*.log
+
+# === Jupyter ===
+.ipynb_checkpoints/
+.notebook_cache/
+*.ipynb~  # backup-filer
+
+# === Virtual environments ===
+env/
+venv/
+.venv/
+ENV/
+.VENV/
+
+# === FastAPI & Uvicorn relateret ===
+*.db
+*.sqlite
+*.sqlite3
+
+# === Model filer ===
+*.onnx
+*.joblib
+*.pkl
+
+# === Docker og container ===
+*.pid
+docker-compose.override.yml
+
+# === OS og systemfiler ===
+.DS_Store
+Thumbs.db
+
+# === PyCharm og JetBrains ===
+.idea/
+*.iml
+
+# === VS Code ===
+.vscode/
+
+# === Git og config ===
+*.swp
+*.swo
