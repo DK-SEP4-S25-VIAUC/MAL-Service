@@ -37,8 +37,8 @@ jobs:
           appSourcePath: ${{ github.workspace }}dotnet/MAL-Prediction-Build-Service
           _dockerfilePathKey_: _dockerfilePath_
           registryUrl: docker.io
-          registryUsername: ${{ secrets.MALPREDICTIONBUILDSERVICE_REGISTRY_USERNAME }}
-          registryPassword: ${{ secrets.MALPREDICTIONBUILDSERVICE_REGISTRY_PASSWORD }}
+          registryUsername: ${{ secrets.DOCKERHUB_USERNAME }}
+          registryPassword: ${{ secrets.DOCKERHUB_TOKEN }}
           containerAppName: mal-prediction-build-service
           resourceGroup: SEP4_MAL_team
           imageToBuild: Dogmeat2000/mal-prediction-build-service:${{ github.sha }}
