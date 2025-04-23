@@ -37,8 +37,8 @@ jobs:
           appSourcePath: ${{ github.workspace }}dotnet/MAL-API/API
           _dockerfilePathKey_: _dockerfilePath_
           registryUrl: docker.io
-          registryUsername: ${{ secrets.MALAPI_REGISTRY_USERNAME }}
-          registryPassword: ${{ secrets.MALAPI_REGISTRY_PASSWORD }}
+          registryUsername: ${{ secrets.DOCKERHUB_USERNAME }}
+          registryPassword: ${{ secrets.DOCKERHUB_TOKEN }}
           containerAppName: mal-api
           resourceGroup: SEP4_MAL_team
           imageToBuild: Dogmeat2000/mal-api:${{ github.sha }}
