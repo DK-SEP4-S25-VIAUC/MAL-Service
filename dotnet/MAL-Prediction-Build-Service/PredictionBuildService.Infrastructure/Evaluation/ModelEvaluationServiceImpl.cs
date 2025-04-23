@@ -3,6 +3,7 @@ using PredictionBuildService.core;
 using PredictionBuildService.core.EventArgs;
 using PredictionBuildService.core.Interfaces;
 using PredictionBuildService.core.ModelEntities;
+using PredictionBuildService.Infrastructure.Evaluation.EvaluationWorkflows;
 
 namespace PredictionBuildService.Infrastructure.Evaluation;
 
@@ -12,6 +13,7 @@ public class ModelEvaluationServiceImpl : IModelEvaluationService
     private readonly IModelCache _modelCache;
     private readonly IBlobStorageMonitorService _blobStorageMonitorService;
     private Func<object, AddedNewModelsEventArgs, Task>? _newModelsAddedEventHandler;
+    private readonly EvaluationInvoker _evaluationInvoker = new();
     
     public event Func<object, EvaluatedAllLinearRegressionModelsEventArgs, Task>? LinearRegModelsEvaluated;
 
