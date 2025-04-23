@@ -1,0 +1,48 @@
+name: Trigger auto deployment for mal-api
+
+# When this action will be executed
+on:
+  # Automatically trigger it when detected changes in repo
+  push:
+    branches: 
+      [ main ]
+    paths:
+    - '**'
+    - '.github/workflows/mal-api-AutoDeployTrigger-6b318701-319f-485d-9d87-c6f3e0e262ed.yml'
+
+  # Allow manual trigger 
+  workflow_dispatch:      
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions: 
+      id-token: write #This is required for requesting the OIDC JWT Token
+      contents: read #Required when GH token is used to authenticate with private repo
+
+    steps:
+      - name: Checkout to the branch
+        uses: actions/checkout@v2
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.MALAPI_AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.MALAPI_AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.MALAPI_AZURE_SUBSCRIPTION_ID }}
+
+      - name: Build and push container image to registry
+        uses: azure/container-apps-deploy-action@v2
+        with:
+          appSourcePath: ${{ github.workspace }}dotnet/MAL-API/API
+          _dockerfilePathKey_: _dockerfilePath_
+          registryUrl: docker.io
+          registryUsername: ${{ secrets.MALAPI_REGISTRY_USERNAME }}
+          registryPassword: ${{ secrets.MALAPI_REGISTRY_PASSWORD }}
+          containerAppName: mal-api
+          resourceGroup: SEP4_MAL_team
+          imageToBuild: Dogmeat2000/mal-api:${{ github.sha }}
+          _buildArgumentsKey_: |
+            _buildArgumentsValues_
+
+
