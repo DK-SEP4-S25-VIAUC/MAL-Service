@@ -5,14 +5,16 @@ on:
     branches:
       - main
       - development
-  pull_request:
-    branches:
-      - main
-      - development
+    paths:
+      - 'dotnet/**'
+  workflow_dispatch:
 
 jobs:
   test:
     runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      contents: read
     steps:
       # Checkout the repository
       - name: Checkout code
@@ -36,7 +38,7 @@ jobs:
             --logger "trx;LogFileName=test-results.trx" \
             --results-directory ./test-results \
             --collect:"XPlat Code Coverage" \
-            --settings dotnet/coverlet.runsettings
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura
 
       # Publish test results to GitHub UI (pass/fail overview)
       - name: Publish test results
@@ -55,7 +57,8 @@ jobs:
       - name: Generate coverage report
         run: |
           reportgenerator \
-            -reports:"./coverage.cobertura.xml" \
+            -reports:"./test-results/**/coverage.cobertura.xml" \
             -targetdir:"coverage-report" \
             -reporttypes:"MarkdownSummary"
           cat coverage-report/Summary.md >> $GITHUB_STEP_SUMMARY
+
