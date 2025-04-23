@@ -1,6 +1,6 @@
 namespace PredictionBuildService.core.Interfaces;
 
-public interface IEvaluateModel
+public interface IEvaluationWorkflow
 {
     Task ExecuteEvaluationAsync();
 }
