@@ -51,9 +51,9 @@ jobs:
 
       - name: Validate API Docker image
         run: |
-          docker run --rm -d -p 8081:8080 ${{ secrets.DOCKERHUB_USERNAME }}/api:latest
+          docker run --rm -d -p 8080:8080 ${{ secrets.DOCKERHUB_USERNAME }}/api:latest
           sleep 5
-          curl -f http://localhost:8081/sensor/data || exit 1
+          curl -f http://localhost:8080/sensor/data || exit 1
           docker stop $(docker ps -q --filter "ancestor=${{ secrets.DOCKERHUB_USERNAME }}/api:latest")
         env:
           DOCKER_BUILDKIT: 1
