@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <UserSecretsId>dotnet-PredictionBuildService-3b8bd9ca-823d-4418-bdd2-9d38573b47fb</UserSecretsId>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Azure.Identity" Version="1.14.0-beta.2" />
+        <PackageReference Include="Azure.ResourceManager" Version="1.13.0" />
+        <PackageReference Include="Azure.ResourceManager.AppService" Version="1.3.0" />
+        <PackageReference Include="Azure.ResourceManager.Resources" Version="1.9.1" />
+        <PackageReference Include="Azure.Storage.Blobs" Version="12.24.0" />
+        <PackageReference Include="Azure.Storage.Queues" Version="12.22.0" />
+        <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.1"/>
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\PredictionBuildService.Configurations\PredictionBuildService.Configurations.csproj" />
+      <ProjectReference Include="..\PredictionBuildService.core\PredictionBuildService.core.csproj" />
+      <ProjectReference Include="..\PredictionBuildService.Infrastructure\PredictionBuildService.Infrastructure.csproj" />
+    </ItemGroup>
+</Project>
