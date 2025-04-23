@@ -41,7 +41,7 @@ jobs:
           registryPassword: ${{ secrets.DOCKERHUB_TOKEN }}
           containerAppName: mal-api
           resourceGroup: SEP4_MAL_team
-          imageToBuild: Dogmeat2000/mal-api:${{ github.sha }}
+          imageToBuild: Dogmeat2000/api:${{ github.sha }}
           _buildArgumentsKey_: |
             _buildArgumentsValues_
 
