@@ -28,7 +28,7 @@ jobs:
         run: dotnet build dotnet/MAL-API/API/API.csproj --configuration Release
 
       - name: Run tests
-        run: dotnet test dotnet/MAL-Microservice.sln --configuration Release --no-build --verbosity normal
+        run: dotnet test dotnet/MAL-Microservice.sln --configuration Release --verbosity normal
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
