@@ -9,6 +9,10 @@ jobs:
   build-test-deploy:
     runs-on: ubuntu-latest
 
+    permissions: 
+      id-token: write
+      contents: read
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -57,3 +61,23 @@ jobs:
           docker stop $(docker ps -q --filter "ancestor=${{ secrets.DOCKERHUB_USERNAME }}/api:latest")
         env:
           DOCKER_BUILDKIT: 1
+
+      # 🔽 Azure deployment step added here
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.MALAPI_AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.MALAPI_AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.MALAPI_AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy to Azure Container Apps
+        uses: azure/container-apps-deploy-action@v2
+        with:
+          appSourcePath: ${{ github.workspace }}/dotnet/MAL-API/API
+          dockerfilePath: dotnet/MAL-API/API/Dockerfile
+          registryUrl: docker.io
+          registryUsername: ${{ secrets.DOCKERHUB_USERNAME }}
+          registryPassword: ${{ secrets.DOCKERHUB_TOKEN }}
+          containerAppName: mal-api
+          resourceGroup: SEP4_MAL_team
+          imageToBuild: ${{ secrets.DOCKERHUB_USERNAME }}/api:${{ github.sha }}
