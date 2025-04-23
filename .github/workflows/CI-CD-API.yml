@@ -42,7 +42,7 @@ jobs:
       - name: Build and push API Docker image
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: dotnet
           file: dotnet/MAL-API/API/Dockerfile
           push: true
           tags: |
