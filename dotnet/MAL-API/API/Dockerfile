@@ -11,7 +11,6 @@ RUN dotnet restore MAL-Microservice.sln
 
 # Copy the source code for the API project
 COPY MAL-API/ MAL-API/
-COPY .certs/ /app/.certs/
 
 # Build the solution
 RUN dotnet build MAL-API/API/API.csproj -c Release
@@ -27,7 +26,6 @@ RUN dotnet publish MAL-API/API/API.csproj -c Release -o /app/publish --no-build
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
 WORKDIR /app
 COPY --from=publish /app/publish .
-COPY --from=build /app/.certs/ ./.certs/
 
 # Port for Azure Container Apps
 EXPOSE 8080
