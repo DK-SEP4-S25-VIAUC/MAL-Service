@@ -5,6 +5,9 @@ on:
     branches:
       - main
       - development
+    paths:
+      - 'dotnet/**'
+  workflow_dispatch:
 
 jobs:
   test:
