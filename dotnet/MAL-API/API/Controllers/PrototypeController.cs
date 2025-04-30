@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace API.Controllers;
 
 [ApiController]
-[Route("[controller]")]
+[Route("prototype")]
 public class PrototypeController : ControllerBase {
 
     private readonly ILogger<PrototypeController> _logger;
@@ -12,7 +12,7 @@ public class PrototypeController : ControllerBase {
         _logger = logger;
     }
 
-    [HttpGet("testEndpoint", Name = "GetTestEndpoint")]
+    [HttpGet("testendpoint", Name = "GetTestEndpoint")]
     public string Get() {
         return "You successfully connected to the MAL Prototype test endpoint";
     }
