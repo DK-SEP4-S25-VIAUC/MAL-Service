@@ -26,7 +26,7 @@ public class SensorDataService : ISensorDataService
         try
         {
             var response = await _httpClient.GetFromJsonAsync<Dictionary<string, CreateManualThresholdDTO>>(
-                "soilhumidity/threshhold"
+                "soilhumidity/threshold"
             );
 
             if (response != null && response.TryGetValue("CreateManualThresholdDTO", out var dto))
