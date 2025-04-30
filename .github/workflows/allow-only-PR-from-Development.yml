@@ -1,0 +1,18 @@
+name: Validate that PR originates from Development Branch
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  check-source-branch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail if PR is not from 'development' branch
+        run: |
+          echo "Source branch: ${{ github.head_ref }}"
+          if [ "${{ github.head_ref }}" != "development" ]; then
+            echo "❌ Pull requests to main are only allowed from the 'development' branch."
+            exit 1
+          fi
