@@ -2,7 +2,6 @@ using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using PredictionBuildService.core;
 using PredictionBuildService.core.Interfaces;
 using PredictionBuildService.core.ModelEntities;
 
@@ -27,6 +26,7 @@ public class BlobStorageInteractionHelperImpl : IBlobStorageInteractionHelper
         _modelCache = modelCache;
     }
 
+    
     public async Task LoadAllModelsIntoCacheAsync(BlobServiceClient blobServiceClient, CancellationToken token, string containerName, string modelMetaDataFormat, string modelFormat) {
         _logger.LogInformation("Loading existing models from Azure Blob Storage into local cache");
 
@@ -63,6 +63,7 @@ public class BlobStorageInteractionHelperImpl : IBlobStorageInteractionHelper
         _logger.LogInformation("Completed loading existing models into local cache");
     }
 
+    
     public async Task<List<string>> ListAllBlobsAsync(BlobServiceClient blobServiceClient, string containerName, CancellationToken token) {
         _logger.LogInformation("Listing blobs in container: {ContainerName}", containerName);
 

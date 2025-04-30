@@ -62,7 +62,7 @@ public class Program
         
         
         // Register internal services as Singletons, for dependency injection in the entire project:
-        builder.Services.AddSingleton<IModelCache, ModelCache>();
+        builder.Services.AddSingleton<IModelCache, ModelCacheImpl>();
         builder.Services.AddSingleton<IBlobStorageInteractionHelper, BlobStorageInteractionHelperImpl>();
         builder.Services.AddSingleton<IBlobStorageMonitorService, BlobStorageMonitorServiceImpl>();
         builder.Services.AddSingleton<IModelEvaluationService, ModelEvaluationServiceImpl>();
