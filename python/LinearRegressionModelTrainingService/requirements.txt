@@ -1,9 +1,15 @@
 fastapi
 uvicorn[standard]
+pydantic
+datetime
 scikit-learn
 pandas
 numpy
+python-dotenv
 skl2onnx
+onnx
 jupyterlab
 azure-storage-blob
 azure-identity
+pytest
+pathlib
