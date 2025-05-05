@@ -64,7 +64,7 @@ jobs:
           DOCKER_BUILDKIT: 1
 
       - name: Upload trained model to Azure Blob Storage
-        working-directory: python-dev/LinearRegressionModelTrainingService
+        working-directory: python/LinearRegressionModelTrainingService
         env:
           AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
           AZURE_CONTAINER_NAME: models
