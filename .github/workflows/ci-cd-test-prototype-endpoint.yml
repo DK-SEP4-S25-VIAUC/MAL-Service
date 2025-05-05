@@ -1,4 +1,4 @@
-name: CI/CD Pipeline (Mal Prediction Service)
+name: CI/CD Pipeline (Test Prototype Endpoint)
 
 on:
   push:

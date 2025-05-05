@@ -1,0 +1,64 @@
+name: Run Tests with Coverage (MAL-Microservice)
+
+on:
+  push:
+    branches:
+      - main
+      - development
+    paths:
+      - 'dotnet/**'
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      contents: read
+    steps:
+      # Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Set up .NET environment
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '8.0.x'
+
+      # Restore dependencies
+      - name: Restore dependencies
+        run: dotnet restore dotnet/MAL-Microservice.sln
+
+      # Run tests, collect code coverage, and generate TRX results
+      - name: Run tests with coverage
+        run: |
+          dotnet test dotnet/MAL-Microservice.sln \
+            --configuration Release \
+            --logger "trx;LogFileName=test-results.trx" \
+            --results-directory ./test-results \
+            --collect:"XPlat Code Coverage" \
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura
+
+      # Publish test results to GitHub UI (pass/fail overview)
+      - name: Publish test results
+        if: always()
+        uses: dorny/test-reporter@v1
+        with:
+          name: Test Results
+          path: test-results/*.trx
+          reporter: dotnet-trx
+
+      # Install reportgenerator to process coverage data
+      - name: Install reportgenerator
+        run: dotnet tool install -g dotnet-reportgenerator-globaltool
+
+      # Generate and display coverage report in GitHub UI
+      - name: Generate coverage report
+        run: |
+          reportgenerator \
+            -reports:"./test-results/**/coverage.cobertura.xml" \
+            -targetdir:"coverage-report" \
+            -reporttypes:"MarkdownSummary"
+          cat coverage-report/Summary.md >> $GITHUB_STEP_SUMMARY
+

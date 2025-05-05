@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\PredictionBuildService.Configurations\PredictionBuildService.Configurations.csproj" />
+      <ProjectReference Include="..\PredictionBuildService.core\PredictionBuildService.core.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Azure.Identity" Version="1.13.2" />
+      <PackageReference Include="Azure.Messaging.EventGrid" Version="4.30.0" />
+      <PackageReference Include="Azure.ResourceManager.AppService" Version="1.3.0" />
+      <PackageReference Include="Azure.Storage.Blobs.Batch" Version="12.21.0" />
+      <PackageReference Include="Azure.Storage.Queues" Version="12.22.0" />
+      <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.0-preview.2.25163.2" />
+    </ItemGroup>
+
+</Project>
