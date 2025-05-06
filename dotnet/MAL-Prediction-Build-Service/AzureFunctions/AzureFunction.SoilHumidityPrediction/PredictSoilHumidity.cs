@@ -41,7 +41,8 @@ namespace Sep4.PredictionApp;
 /// Expected response:
 /// <code>
 /// {
-///   "minutes_to_dry": 12
+///     "description": "Prediction describes how many minutes are estimated before soil humidity falls below a 20% threshold"
+///     "minutes_to_dry": 12
 /// }
 /// </code>
 /// </example>
@@ -270,6 +271,7 @@ public class PredictSoilHumidity
             // Build json response:
             var resultJson = JsonSerializer.Serialize(new
             {
+                description = "Prediction describes how many minutes are estimated before soil humidity falls below a 20% threshold",
                 minutes_to_dry = predictionValue
             });
             
