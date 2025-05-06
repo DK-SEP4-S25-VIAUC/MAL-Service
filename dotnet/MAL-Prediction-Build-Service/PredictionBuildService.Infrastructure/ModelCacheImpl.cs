@@ -35,7 +35,7 @@ public class ModelCacheImpl : IModelCache
             }
         
             // Generate key for mapping into the cache:
-            var key = GenerateKey(newModelDto.Type, newModelDto.Version);
+            var key = GenerateKey(newModelDto.Type, newModelDto.TrainingTimestamp);
             
             // Check if this key position is already occupied:
             if (_modelCache.TryGetValue(key, out ModelDTO? model)) {
@@ -82,8 +82,8 @@ public class ModelCacheImpl : IModelCache
                 throw new ArgumentNullException(nameof(newModelDto));
             }
 
-            var oldKey = GenerateKey(oldModelDto.Type, oldModelDto.Version);
-            var newKey = GenerateKey(newModelDto.Type, newModelDto.Version);
+            var oldKey = GenerateKey(oldModelDto.Type, oldModelDto.TrainingTimestamp);
+            var newKey = GenerateKey(newModelDto.Type, newModelDto.TrainingTimestamp);
 
             // Remove old model (if exists):
             if (_modelCache.TryRemove(oldKey, out _)) {

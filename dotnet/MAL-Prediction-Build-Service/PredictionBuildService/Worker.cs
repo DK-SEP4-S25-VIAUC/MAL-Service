@@ -61,7 +61,7 @@ public class Worker : BackgroundService
         var models = _modelCache.ListModelsAsync();
         var modelsAsString = "Loaded these models:\n";
         await foreach (var model in models) {
-            modelsAsString += "type: " + model.Type + ", version: " + model.Version + "\n";
+            modelsAsString += "type: " + model.Type + ", version: " + model.TrainingTimestamp + "\n";
         }
         _logger.LogInformation("{modelsAsString}", modelsAsString);
         

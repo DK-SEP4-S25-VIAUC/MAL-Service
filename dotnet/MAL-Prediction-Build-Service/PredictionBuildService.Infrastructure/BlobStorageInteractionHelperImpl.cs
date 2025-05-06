@@ -142,7 +142,6 @@ public class BlobStorageInteractionHelperImpl : IBlobStorageInteractionHelper
         // Fill out common, non-serialized fields:
         // TODO: UPDATE THESE LINES AFTER METADATA HAS BEEN VERIFIED!
         model.DownloadUrl = ConvertMetaDataUriToModelUri(blobClient.Uri, modelMetaDataFormat, modelFormat);
-        model.TrainingDate = DateTime.Now;
         return model;
     }
     

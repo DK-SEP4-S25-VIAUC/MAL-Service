@@ -115,7 +115,7 @@ public class ModelEvaluationServiceImpl : IModelEvaluationService
             return;
         }
         
-        _logger.LogInformation("Evaluation found best model to be: Type={ModelType}, Version={ModelVersion}", firstModel.Type, firstModel.Version);
+        _logger.LogInformation("Evaluation found best model to be: Type={ModelType}, Version={ModelVersion}", firstModel.Type, firstModel.TrainingTimestamp);
         
         // Notify Subscribers:
         _logger.LogInformation("Now notifying subscribers...");

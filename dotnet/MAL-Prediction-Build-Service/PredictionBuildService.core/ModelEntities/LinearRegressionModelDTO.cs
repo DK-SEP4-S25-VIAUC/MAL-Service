@@ -5,5 +5,16 @@ namespace PredictionBuildService.core.ModelEntities;
 [JsonObject]
 public abstract class LinearRegressionModelDTO : ModelDTO
 {
-    // TODO: Add Model information unique for the Linear Regression Model.
+    // Injected variables through JSON deserialization:
+    [JsonProperty("alpha")]
+    public string? Alpha { get; set; }
+    
+    [JsonProperty("cross_val_splits")]
+    public string? CrossValSplits { get; set; }
+    
+    [JsonProperty("rmse_cv")]
+    public string? RmseCv { get; set; }
+    
+    [JsonProperty("r2_insample")]
+    public string? R2 { get; set; }
 };
