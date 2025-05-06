@@ -45,7 +45,7 @@ public class ModelCacheImplTests : IDisposable
         string? type = "LinearRegression";
         string? version = "1.0.0";
 
-        var model = new ModelDTO {
+        var model = new LinearRegressionModelDTO {
             Type = type,
             // TODO: UPDATE
             //TrainingTimestamp = version
@@ -66,7 +66,7 @@ public class ModelCacheImplTests : IDisposable
         string? type = null;
         string? version = "1.0.0";
 
-        var model = new ModelDTO {
+        var model = new LinearRegressionModelDTO {
             Type = type,
             // TODO: UPDATE
             //Version = version
@@ -85,7 +85,7 @@ public class ModelCacheImplTests : IDisposable
         string? type = "LinearRegression";
         string? version = null;
 
-        var model = new ModelDTO {
+        var model = new LinearRegressionModelDTO {
             Type = type,
             // TODO: UPDATE
             //Version = version
@@ -115,7 +115,7 @@ public class ModelCacheImplTests : IDisposable
         string? type = "";
         string? version = "1.0.0";
 
-        var model = new ModelDTO {
+        var model = new LinearRegressionModelDTO {
             Type = type,
             // TODO: UPDATE
             //Version = version
@@ -134,7 +134,7 @@ public class ModelCacheImplTests : IDisposable
         string? type = "LinearRegression";
         string? version = "";
 
-        var model = new ModelDTO {
+        var model = new LinearRegressionModelDTO {
             Type = type,
             // TODO: UPDATE
             //Version = version
@@ -153,7 +153,7 @@ public class ModelCacheImplTests : IDisposable
         string? type = "LinearRegression";
         string? version = "1.0.0";
 
-        var model = new ModelDTO {
+        var model = new LinearRegressionModelDTO {
             Type = type,
             // TODO: UPDATE
             //Version = version
@@ -177,7 +177,7 @@ public class ModelCacheImplTests : IDisposable
         string? type = "LinearRegression";
         string? version = "1.0.0";
 
-        var model = new ModelDTO {
+        var model = new LinearRegressionModelDTO {
             Type = type,
             // TODO: UPDATE
             //Version = version
@@ -197,7 +197,7 @@ public class ModelCacheImplTests : IDisposable
     public async Task RemoveModelAsync_ReturnsFalse_WhenAttemptingToRemoveModelFromCacheThatWasNeverAdded() {
         
         // Arrange:
-        var model = new ModelDTO { 
+        var model = new LinearRegressionModelDTO { 
             Type = "LinearRegression",
             // TODO: UPDATE
             //Version = "1.0.0"
@@ -216,7 +216,7 @@ public class ModelCacheImplTests : IDisposable
     public async Task RemoveModelAsync_ThrowsArgumentException_WhenModelTypeArgumentIsNull() {
         
         // Arrange:
-        var model = new ModelDTO { 
+        var model = new LinearRegressionModelDTO { 
             Type = null,
             // TODO: UPDATE
             //Version = "1.0.0"
@@ -231,7 +231,7 @@ public class ModelCacheImplTests : IDisposable
     public async Task RemoveModelAsync_ThrowsArgumentException_WhenModelTypeArgumentIsEmpty() {
         
         // Arrange:
-        var model = new ModelDTO { 
+        var model = new LinearRegressionModelDTO { 
             Type = "",
             // TODO: UPDATE
             //Version = "1.0.0"
@@ -246,7 +246,7 @@ public class ModelCacheImplTests : IDisposable
     public async Task RemoveModelAsync_ThrowsArgumentException_WhenModelVersionArgumentIsNull() {
         
         // Arrange:
-        var model = new ModelDTO { 
+        var model = new LinearRegressionModelDTO { 
             Type = "LinearRegression",
             // TODO: UPDATE
             //Version = null
@@ -261,7 +261,7 @@ public class ModelCacheImplTests : IDisposable
     public async Task RemoveModelAsync_ThrowsArgumentException_WhenModelVersionArgumentIsEmpty() {
         
         // Arrange:
-        var model = new ModelDTO { 
+        var model = new LinearRegressionModelDTO { 
             Type = "LinearRegression",
             // TODO: UPDATE
             //Version = ""
@@ -277,13 +277,13 @@ public class ModelCacheImplTests : IDisposable
     [Fact]
     public async Task UpdateModelAsync_ReturnsTrue_WhenModelIsUpdatedSuccessfully() {
         // Arrange:
-        var oldModel = new ModelDTO { 
+        var oldModel = new LinearRegressionModelDTO { 
              Type = "LinearRegression",
              // TODO: UPDATE
              //Version = "1.0.0" 
         };
         
-        var newModel = new ModelDTO { 
+        var newModel = new LinearRegressionModelDTO { 
             Type = "LinearRegression", 
             // TODO: UPDATE
             //Version = "1.0.1" 
@@ -304,13 +304,13 @@ public class ModelCacheImplTests : IDisposable
     [Fact]
     public async Task UpdateModelAsync_ReturnsFalse_WhenOldModelToUpdateIsNotFoundInCache() {
         // Arrange:
-        var oldModel = new ModelDTO { 
+        var oldModel = new LinearRegressionModelDTO { 
             Type = "LinearRegression", 
             // TODO: UPDATE
             //Version = "1.0.0" 
         };
         
-        var newModel = new ModelDTO { 
+        var newModel = new LinearRegressionModelDTO { 
             Type = "LinearRegression", 
             // TODO: UPDATE
             //Version = "1.0.1" 
@@ -330,7 +330,7 @@ public class ModelCacheImplTests : IDisposable
         // Arrange:
         ModelDTO? oldModel = null;
         
-        var newModel = new ModelDTO { 
+        var newModel = new LinearRegressionModelDTO { 
             Type = "LinearRegression", 
             // TODO: UPDATE
             //Version = "1.0.1" 
@@ -344,7 +344,7 @@ public class ModelCacheImplTests : IDisposable
     [Fact]
     public async Task UpdateModelAsync_ThrowsArgumentNullException_WhenNewModelArgumentIsNull() {
         // Arrange:
-        ModelDTO? oldModel = new ModelDTO { 
+        ModelDTO? oldModel = new LinearRegressionModelDTO { 
             Type = "LinearRegression", 
             // TODO: UPDATE
             //Version = "1.0.0" 
@@ -376,7 +376,7 @@ public class ModelCacheImplTests : IDisposable
     [Fact]
     public async Task ListModelsAsync_ReturnsListWith1ModelDto_WhenModelCacheContains1ModelDto() {
         // Arrange:
-        var model1 = new ModelDTO { 
+        var model1 = new LinearRegressionModelDTO { 
             Type = "LinearRegression",
             // TODO: UPDATE
             //Version = "1.0.0"
@@ -404,7 +404,7 @@ public class ModelCacheImplTests : IDisposable
         string version = "1";
 
         for (int i = 0; i < 20; i++) {
-            var model = new ModelDTO {
+            var model = new LinearRegressionModelDTO {
                 Type = type,
                 // TODO: UPDATE
                 //Version = version
@@ -438,7 +438,7 @@ public class ModelCacheImplTests : IDisposable
         string? type = "LinearRegression";
         string? version = "1.0.0";
 
-        var model = new ModelDTO {
+        var model = new LinearRegressionModelDTO {
             Type = type,
             // TODO: UPDATE
             //Version = version
@@ -460,7 +460,7 @@ public class ModelCacheImplTests : IDisposable
     public async Task FindModelAsync_ThrowsKeyNotFoundException_WhenModelCannotBeFoundInCache() {
         
         // Arrange:
-        var model = new ModelDTO { 
+        var model = new LinearRegressionModelDTO { 
             Type = "LinearRegression",
             // TODO: UPDATE
             //Version = "1.0.0"
@@ -495,7 +495,7 @@ public class ModelCacheImplTests : IDisposable
         string version = "1";
 
         for (int i = 0; i < 10; i++) {
-            var model = new ModelDTO {
+            var model = new LinearRegressionModelDTO {
                 Type = type,
                 // TODO: UPDATE
                 //Version = version

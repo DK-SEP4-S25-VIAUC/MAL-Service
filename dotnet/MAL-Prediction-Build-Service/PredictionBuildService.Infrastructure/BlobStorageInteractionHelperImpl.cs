@@ -111,7 +111,6 @@ public class BlobStorageInteractionHelperImpl : IBlobStorageInteractionHelper
     // TODO Tests:
     // What happens if jsonMetaData is not proper json?
     public ModelDTO ConvertFromJsonMetadataToModelDTO(string jsonMetaData, string modelMetaDataFormat, string modelFormat, BlobClient blobClient) {
-        // TODO: UPDATE WHEN MODEL METADATA FORMAT IS FINALIZED.
         
         // Extract model_type from the given json metadata, if it exists:
         JObject obj = JObject.Parse(jsonMetaData);
@@ -124,24 +123,24 @@ public class BlobStorageInteractionHelperImpl : IBlobStorageInteractionHelper
         // Convert to proper model dto:
         ModelDTO? model;
         switch (modelType.ToLower()) {
-            case "linearregression":
+            // TODO: If other model type are added in the future, ensure to add them below in this switch for proper deserialization during model load.
+            
+            case "ridge (linear)":
                 model = JsonConvert.DeserializeObject<LinearRegressionModelDTO>(jsonMetaData);
                 if (model == null) {
                     _logger.LogError("In method ConvertFromJsonMetadataToModelDTO(), could not convert LinearRegression model metadata into proper DTO.");
                     throw new JsonException("Could not convert LinearRegression model metadata into proper DTO");
                 }
-                    
-                // TODO: Review if there are any un-serialized model specific data to convert manually, apart from the shared data?
-                
                 break;
+            
             default:
-                _logger.LogError("In method ConvertFromJsonMetadataToModelDTO(), 'model_type' is not defined in the provided json metadata.");
+                _logger.LogError("In method ConvertFromJsonMetadataToModelDTO(), 'model_type' = {modelType} is not a recognized/implemented model type.", modelType);
                 throw new FormatException("'model_type' is unrecognized. Unable to continue.");
         }
         
         // Fill out common, non-serialized fields:
-        // TODO: UPDATE THESE LINES AFTER METADATA HAS BEEN VERIFIED!
         model.DownloadUrl = ConvertMetaDataUriToModelUri(blobClient.Uri, modelMetaDataFormat, modelFormat);
+        
         return model;
     }
     

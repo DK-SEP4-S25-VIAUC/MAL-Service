@@ -3,7 +3,7 @@ using Newtonsoft.Json;
 namespace PredictionBuildService.core.ModelEntities;
 
 [JsonObject]
-public class ModelDTO
+public abstract class ModelDTO
 {
     // Injected variables through JSON deserialization:
     [JsonProperty("model_type")]
