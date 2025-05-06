@@ -6,11 +6,18 @@ using PredictionBuildService.core.ModelEntities;
 
 namespace PredictionBuildService.Infrastructure;
 
+/// <summary>
+/// Implementation of the IModelCache interface that handles the in-memory processing and storage of registered prediction models.
+/// </summary>
 public class ModelCacheImpl : IModelCache
 {
     private ConcurrentDictionary<string, ModelDTO> _modelCache = new();
     private readonly ILogger<ModelCacheImpl> _logger;
 
+    /// <summary>
+    /// Primary constructor. It is recommended to use dependency injection to inject the specified arguments, instead of manual injection.
+    /// </summary>
+    /// <param name="logger">A logging service, that can handle logging of messages</param>
     public ModelCacheImpl(
         ILogger<ModelCacheImpl> logger) {
         _logger = logger;

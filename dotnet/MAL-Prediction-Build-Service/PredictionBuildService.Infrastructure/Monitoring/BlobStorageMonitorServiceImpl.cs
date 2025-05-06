@@ -7,22 +7,23 @@ using Azure.Storage.Queues.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using PredictionBuildService.Configurations;
-using PredictionBuildService.core;
 using PredictionBuildService.core.EventArgs;
 using PredictionBuildService.core.Interfaces;
 
 namespace PredictionBuildService.Infrastructure.Monitoring;
 
 /// <summary>
-/// ...
+/// This class is responsible for continuously monitoring/listening for changes in the EvenGrid associated with the BlobStorage that contains the prediction models.
+/// When changes are detected, the class ensures proper update of the in-memory ModelCache as well as the proper firing of EventListeners to the other services that observe/subscribe to this class.
 /// </summary>
 /// <remarks>
-/// Implmentation logic is based on available Microsoft tutorials, i.e.:<br />
+/// Implementation logic is based on available Microsoft tutorials, i.e.:<br />
 /// https://learn.microsoft.com/en-us/dotnet/api/overview/azure/messaging.eventgrid-readme?view=azure-dotnet <br />
 /// https://learn.microsoft.com/en-us/dotnet/api/overview/azure/storage.queues-readme?view=azure-dotnet <br />
 /// </remarks>
 public class BlobStorageMonitorServiceImpl : IBlobStorageMonitorService
 {
+    // Variables
     private readonly ILogger<BlobStorageMonitorServiceImpl> _logger;
     private readonly QueueClient _queueClient;
     private readonly AzureBlobStorageSettings _blobStorageSettings;
@@ -31,8 +32,19 @@ public class BlobStorageMonitorServiceImpl : IBlobStorageMonitorService
     private readonly BlobServiceClient _blobServiceClient;
     private readonly WorkerSettings _workerSettings;
     
+    // Events this class fires:
     public event Func<object, AddedNewModelsEventArgs, Task>? NewModelsAdded;
     
+    /// <summary>
+    /// Primary constructor. It is recommended to use dependency injection to inject the specified arguments, instead of manual injection.
+    /// </summary>
+    /// <param name="logger">A logging service, that can handle logging of messages</param>
+    /// <param name="blobStorageSettings">The settings class, defining access settings to the BlobStorage</param>
+    /// <param name="queueClient">The Azure QueueClient that handles interactions with the EventGrid queue on Azure</param>
+    /// <param name="modelCache">The local in-memory cache that holds all currently registered prediction models.</param>
+    /// <param name="blobStorageInteractionHelper">Helper class to handle conversions between BlobStorage format and Application formats. Exposes relevant helper methods. </param>
+    /// <param name="blobServiceClient">The Azure BlobServiceClient that handles interactions with the BlobStorage on Azure.</param>
+    /// <param name="workerSettings">The settings class, defining access settings applicable to the primary Worker class</param>
     public BlobStorageMonitorServiceImpl(
         ILogger<BlobStorageMonitorServiceImpl> logger, 
         IOptions<AzureBlobStorageSettings> blobStorageSettings,
@@ -52,6 +64,10 @@ public class BlobStorageMonitorServiceImpl : IBlobStorageMonitorService
     
     
     // Define Event Handler invokers:
+    /// <summary>
+    /// Fires an 'AddedNewModelsEventArgs' event when new models are registered in the BlobStorage.
+    /// Allows for listeners to react to this and do stuff, such as evaluate the model and if needed, redeploy.
+    /// </summary>
     private async Task OnNewModelsAdded() {
         // Fire the event if there are more than null subscribers.
         if (NewModelsAdded != null) {
@@ -112,7 +128,7 @@ public class BlobStorageMonitorServiceImpl : IBlobStorageMonitorService
         }
         _logger.LogInformation("Blob Storage Monitoring Service stopped at: {time}", DateTimeOffset.Now);
     }
-
+    
     public async Task NotifySubscribersAsync() {
         _logger.LogInformation("Notifying subscribers of changes...");
         await OnNewModelsAdded();

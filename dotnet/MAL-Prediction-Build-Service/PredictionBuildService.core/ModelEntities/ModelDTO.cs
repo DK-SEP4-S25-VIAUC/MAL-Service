@@ -5,6 +5,7 @@ namespace PredictionBuildService.core.ModelEntities;
 [JsonObject]
 public class ModelDTO
 {
+    // TODO: Update when Model metadata is finalized.
     [JsonProperty("model_type")]
     public string? Type { get; set; }            // I.e.: LinearRegression
     

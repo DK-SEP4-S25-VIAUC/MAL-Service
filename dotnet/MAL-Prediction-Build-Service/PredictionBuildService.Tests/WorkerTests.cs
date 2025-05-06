@@ -8,8 +8,14 @@ using PredictionBuildService.core.ModelEntities;
 
 namespace PredictionBuildService.Tests;
 
+/// <summary>
+/// Automated Unit Testing for the class with the same name (with the 'Tests' part).
+/// </summary>
 public class WorkerTests
 {
+    /// <summary>
+    /// Tests if the main worker thread launches successfully, calling the expected methods and is capable of a gentle shutdown.
+    /// </summary>
     [Fact]
     public async Task ExecuteAsync_LaunchesSuccessfully_CallsExpectedMethods() {
         // Arrange:
@@ -105,7 +111,9 @@ public class WorkerTests
         buildServiceMock.Verify(b => b.Unsubscribe(), Times.Once());
     }
     
-    // Helper method to create an empty IAsyncEnumerable:
+    /// <summary>
+    /// Helper method to create an empty IAsyncEnumerable:
+    /// </summary>
     private static async IAsyncEnumerable<T> GetEmptyAsyncEnumerable<T>()
     {
         yield break;

@@ -2,16 +2,17 @@ using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using PredictionBuildService.core.Interfaces;
 using PredictionBuildService.core.ModelEntities;
 
 namespace PredictionBuildService.Infrastructure;
 
 /// <summary>
-/// ...
+/// Implementation of the AzureBlobStorage Helper class that handles conversions between BlobStorage format and Application formats. Exposes relevant helper methods.
 /// </summary>
 /// <remarks>
-/// Implmentation logic is based on available Microsoft tutorials, i.e.:<br />
+/// Implementation logic is based on available Microsoft tutorials, i.e.:<br />
 /// https://learn.microsoft.com/en-us/azure/storage/blobs/ <br />
 /// </remarks>
 public class BlobStorageInteractionHelperImpl : IBlobStorageInteractionHelper
@@ -19,6 +20,11 @@ public class BlobStorageInteractionHelperImpl : IBlobStorageInteractionHelper
     private readonly ILogger<BlobStorageInteractionHelperImpl> _logger;
     private readonly IModelCache _modelCache;
 
+    /// <summary>
+    /// Primary constructor. It is recommended to use dependency injection to inject the specified arguments, instead of manual injection.
+    /// </summary>
+    /// <param name="logger">A logging service, that can handle logging of messages</param>
+    /// <param name="modelCache">The local in-memory cache that holds all currently registered prediction models.</param>
     public BlobStorageInteractionHelperImpl(
         ILogger<BlobStorageInteractionHelperImpl> logger,
         IModelCache modelCache) {
@@ -27,6 +33,14 @@ public class BlobStorageInteractionHelperImpl : IBlobStorageInteractionHelper
     }
 
     
+    // TODO Tests?
+    // What if conversion to json fails?
+    // What if download fails?
+    // What if download takes forever?
+    // What if there are zero models in the blob?
+    // What if containerName is rubbish?
+    // What if modelFormat is rubbish?
+    // What if modelMetaDataFormat is rubbish?
     public async Task LoadAllModelsIntoCacheAsync(BlobServiceClient blobServiceClient, CancellationToken token, string containerName, string modelMetaDataFormat, string modelFormat) {
         _logger.LogInformation("Loading existing models from Azure Blob Storage into local cache");
 
@@ -64,6 +78,9 @@ public class BlobStorageInteractionHelperImpl : IBlobStorageInteractionHelper
     }
 
     
+    // TODO Tests:
+    // What happens if the container is empty?
+    // What happens if the containerName is invalid?
     public async Task<List<string>> ListAllBlobsAsync(BlobServiceClient blobServiceClient, string containerName, CancellationToken token) {
         _logger.LogInformation("Listing blobs in container: {ContainerName}", containerName);
 
@@ -89,16 +106,40 @@ public class BlobStorageInteractionHelperImpl : IBlobStorageInteractionHelper
             throw;
         }
     }
-
-
+    
+    
+    // TODO Tests:
+    // What happens if jsonMetaData is not proper json?
     public ModelDTO ConvertFromJsonMetadataToModelDTO(string jsonMetaData, string modelMetaDataFormat, string modelFormat, BlobClient blobClient) {
-        var model = JsonConvert.DeserializeObject<ModelDTO>(jsonMetaData);
-
-        if (model == null) {
-            throw new JsonException();
+        // TODO: UPDATE WHEN MODEL METADATA FORMAT IS FINALIZED.
+        
+        // Extract model_type from the given json metadata, if it exists:
+        JObject obj = JObject.Parse(jsonMetaData);
+        string? modelType = (string?) obj["model_type"];
+        if (modelType == null) {
+            _logger.LogError("In method ConvertFromJsonMetadataToModelDTO(), 'model_type' is not defined in the provided json metadata.");
+            throw new MissingFieldException("model_type is not defined in the provided json metadata.");
         }
         
-        // Fill out non-serialized fields:
+        // Convert to proper model dto:
+        ModelDTO? model;
+        switch (modelType.ToLower()) {
+            case "linearregression":
+                model = JsonConvert.DeserializeObject<LinearRegressionModelDTO>(jsonMetaData);
+                if (model == null) {
+                    _logger.LogError("In method ConvertFromJsonMetadataToModelDTO(), could not convert LinearRegression model metadata into proper DTO.");
+                    throw new JsonException("Could not convert LinearRegression model metadata into proper DTO");
+                }
+                    
+                // TODO: Review if there are any un-serialized model specific data to convert manually, apart from the shared data?
+                
+                break;
+            default:
+                _logger.LogError("In method ConvertFromJsonMetadataToModelDTO(), 'model_type' is not defined in the provided json metadata.");
+                throw new FormatException("'model_type' is unrecognized. Unable to continue.");
+        }
+        
+        // Fill out common, non-serialized fields:
         // TODO: UPDATE THESE LINES AFTER METADATA HAS BEEN VERIFIED!
         model.DownloadUrl = ConvertMetaDataUriToModelUri(blobClient.Uri, modelMetaDataFormat, modelFormat);
         model.TrainingDate = DateTime.Now;
@@ -112,6 +153,15 @@ public class BlobStorageInteractionHelperImpl : IBlobStorageInteractionHelper
     }
 
     
+    /// <summary>
+    /// Class specific method, that handles converting the Uri from the model Metadata, to the Uri for the actual model.
+    /// Since the Metadata itself does not contain a Uri reference to each Model, this is necessary - and requires that
+    /// models and corresponding metadata adhere to naming conventions.
+    /// </summary>
+    /// <param name="metadataUri">Uri that points to the Metadata file for the specified model (i.e. http://example.com/model.metadata.json)</param>
+    /// <param name="metadataFormat">The format that the metadata is in (i.e. model.metadata.json)</param>
+    /// <param name="modelFormat">The format that the model is in (i.e. model.onnx)</param>
+    /// <returns>A complete Uri pointing to the model located in the same place as the metadata (i.e. http://example.com/model.onnx)</returns>
     private static string ConvertMetaDataUriToModelUri(Uri metadataUri, string metadataFormat, string modelFormat) {
         
         // Extract the download Uri for the metadata file:

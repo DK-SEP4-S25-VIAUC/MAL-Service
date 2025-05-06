@@ -6,8 +6,11 @@ using PredictionBuildService.core.Interfaces;
 namespace PredictionBuildService;
 
 /// <summary>
-/// https://learn.microsoft.com/en-us/azure/storage/blobs/storage-blob-download
+/// Main worker thread, responsible to instantiating and running all services, as well as responsible for shutting these services down gracefully.
 /// </summary>
+/// <remarks>
+/// https://learn.microsoft.com/en-us/azure/storage/blobs/storage-blob-download
+/// </remarks>
 public class Worker : BackgroundService
 {
     private readonly IBlobStorageMonitorService _monitorService;
