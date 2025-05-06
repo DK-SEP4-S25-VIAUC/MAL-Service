@@ -109,6 +109,11 @@ public class PredictSoilHumidity
     public async Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequestData req) {
         _logger.LogInformation("PredictSoilHumidity function triggered.");
         
+        if (req == null) {
+            _logger.LogError("PredictSoilHumidity function shutdown prematurely. HttpRequestData cannot be 'null'. ");
+            throw new ArgumentNullException(nameof(req));
+        }
+        
         try {
             // Load ONNX model:
             var session = await GetOrLoadModelAsync();
