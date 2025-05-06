@@ -98,6 +98,12 @@ public class PredictSoilHumidity
     /// <exception cref="JsonException">
     /// Thrown if the request body cannot be deserialized into a <see cref="PredictionInput"/> object.
     /// </exception>
+    // TODO: Test this:
+    // 1. BadRequest if HttpRequestData is null
+    // 2. BadRequest if HttpRequestData does not contain ALL required parameters.
+    // 3. Error if the .onnx model could not be found (or is not proper format)
+    // 4. Error if the float arrays for parameters do nat take exactly 1 value!
+    // 5. Error if the float arrays are not float arrays (i.e. strings, or something else)
     [Function("PredictSoilHumidity")]
     public async Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequestData req) {
         _logger.LogInformation("PredictSoilHumidity function triggered.");
@@ -122,37 +128,37 @@ public class PredictSoilHumidity
                 validationPassed = false;
             }
             
-            if (validationPassed && !inputData.Inputs.ContainsKey(FeatureNameSoilHumidity)) {
+            if (validationPassed && !inputData!.Inputs.ContainsKey(FeatureNameSoilHumidity)) {
                 errorMsg = $"Invalid input: Could not find 'inputs.{FeatureNameSoilHumidity}' in received request body.";
                 validationPassed = false;
             }
             
-            if (validationPassed && !inputData.Inputs.ContainsKey(FeatureNamSoilDelta)) {
+            if (validationPassed && !inputData!.Inputs.ContainsKey(FeatureNamSoilDelta)) {
                 errorMsg = $"Invalid input: Could not find 'inputs.{FeatureNamSoilDelta}' in received request body.";
                 validationPassed = false;
             }
             
-            if (validationPassed && !inputData.Inputs.ContainsKey(FeatureNameAirHumidity)) {
+            if (validationPassed && !inputData!.Inputs.ContainsKey(FeatureNameAirHumidity)) {
                 errorMsg = $"Invalid input: Could not find 'inputs.{FeatureNameAirHumidity}' in received request body.";
                 validationPassed = false;
             }
             
-            if (validationPassed && !inputData.Inputs.ContainsKey(FeatureNameTemperature)) {
+            if (validationPassed && !inputData!.Inputs.ContainsKey(FeatureNameTemperature)) {
                 errorMsg = $"Invalid input: Could not find 'inputs.{FeatureNameTemperature}' in received request body.";
                 validationPassed = false;
             }
             
-            if (validationPassed && !inputData.Inputs.ContainsKey(FeatureNameLight)) {
+            if (validationPassed && !inputData!.Inputs.ContainsKey(FeatureNameLight)) {
                 errorMsg = $"Invalid input: Could not find 'inputs.{FeatureNameLight}' in received request body.";
                 validationPassed = false;
             }
             
-            if (validationPassed && !inputData.Inputs.ContainsKey(FeatureNameHourSin)) {
+            if (validationPassed && !inputData!.Inputs.ContainsKey(FeatureNameHourSin)) {
                 errorMsg = $"Invalid input: Could not find 'inputs.{FeatureNameHourSin}' in received request body.";
                 validationPassed = false;
             }
             
-            if (validationPassed && !inputData.Inputs.ContainsKey(FeatureNameHourCos)) {
+            if (validationPassed && !inputData!.Inputs.ContainsKey(FeatureNameHourCos)) {
                 errorMsg = $"Invalid input: Could not find 'inputs.{FeatureNameHourCos}' in received request body.";
                 validationPassed = false;
             }
@@ -166,7 +172,7 @@ public class PredictSoilHumidity
             
             
             // Extract the feature data/values:
-            var valueSoilHumidity = inputData.Inputs[FeatureNameSoilHumidity];
+            var valueSoilHumidity = inputData!.Inputs[FeatureNameSoilHumidity];
             _logger.LogInformation("Serializing {input}: {feature}", FeatureNameSoilHumidity, JsonSerializer.Serialize(valueSoilHumidity));
             
             var valueSoilDelta = inputData.Inputs[FeatureNamSoilDelta];
