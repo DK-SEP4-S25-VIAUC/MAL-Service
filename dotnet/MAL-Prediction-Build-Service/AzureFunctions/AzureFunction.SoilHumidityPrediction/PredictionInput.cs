@@ -11,15 +11,10 @@ public class PredictionInput
 {
     /// <summary>
     /// Gets or sets the dictionary of input parameters for the prediction model.
-    /// The dictionary must contain a key named "target" with a float array value
-    /// representing the soil humidity value(s) to predict.
-    /// This value represent the target soil humidity threshold to find how long it will take to reach
-    /// (i.e. how long till we reach 45.7% soil humidity at current rate of evaporation)
+    /// The dictionary should contain the features required by the specific model with a float array value for each feature.
     /// </summary>
     /// <remarks>
-    /// The "target" value is expected to be a float array with exactly one element
-    /// (e.g., [45.7]) to match the ONNX model's input requirements (float32[1]).
-    /// The property name in the JSON request body must be "inputs" (lowercase),
+    /// The overall property name in the JSON request body must be "inputs" (lowercase),
     /// which is mapped to this property using the <see cref="JsonPropertyNameAttribute"/>.
     /// </remarks>
     /// <example>
@@ -27,7 +22,13 @@ public class PredictionInput
     /// <code>
     /// {
     ///   "inputs": {
-    ///     "target": [45.7]
+    ///     "soil_humidity": [45.7],
+    ///     "soil_delta": [45.7],
+    ///     "air_humidity": [45.7],
+    ///     "temperature": [45.7],
+    ///     "light": [45.7],
+    ///     "hour_sin": [45.7],
+    ///     "hour_cos": [45.7]
     ///   }
     /// }
     /// </code>

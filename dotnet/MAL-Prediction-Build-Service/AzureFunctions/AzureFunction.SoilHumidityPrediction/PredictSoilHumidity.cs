@@ -28,14 +28,20 @@ namespace Sep4.PredictionApp;
 /// 
 /// {
 ///   "inputs": {
-///     "target": [45.7]
+///     "soil_humidity": [45.7],
+///     "soil_delta": [45.7],
+///     "air_humidity": [45.7],
+///     "temperature": [45.7],
+///     "light": [45.7],
+///     "hour_sin": [45.7],
+///     "hour_cos": [45.7]
 ///   }
 /// }
 /// </code>
 /// Expected response:
 /// <code>
 /// {
-///   "minutes": 12
+///   "minutes_to_dry": 12
 /// }
 /// </code>
 /// </example>
@@ -55,6 +61,15 @@ public class PredictSoilHumidity
     /// The URI of the ONNX model in Azure Blob Storage, cached to detect changes in the model URI.
     /// </summary>
     private static string? _cachedUri;
+
+    // Required features for this model / prediction type:
+    private const string FeatureNameSoilHumidity = "soil_humidity";
+    private const string FeatureNamSoilDelta = "soil_delta";
+    private const string FeatureNameAirHumidity = "air_humidity";
+    private const string FeatureNameTemperature = "temperature";
+    private const string FeatureNameLight = "light";
+    private const string FeatureNameHourSin = "hour_sin";
+    private const string FeatureNameHourCos = "hour_cos";
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PredictSoilHumidity"/> class.
@@ -83,11 +98,6 @@ public class PredictSoilHumidity
     /// <exception cref="JsonException">
     /// Thrown if the request body cannot be deserialized into a <see cref="PredictionInput"/> object.
     /// </exception>
-    /// <remarks>
-    /// The request body must contain a JSON object with an "inputs" field, which includes a "target" key
-    /// with a float array value containing exactly one element (e.g., [45.7]). The function validates the input,
-    /// runs inference using the ONNX model, and returns the predicted minutes as an integer.
-    /// </remarks>
     [Function("PredictSoilHumidity")]
     public async Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequestData req) {
         _logger.LogInformation("PredictSoilHumidity function triggered.");
@@ -96,49 +106,173 @@ public class PredictSoilHumidity
             // Load ONNX model:
             var session = await GetOrLoadModelAsync();
 
+            
             // Parse input:
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
             _logger.LogInformation("Request body: {RequestBody}", requestBody);
             
             var inputData = JsonSerializer.Deserialize<PredictionInput>(requestBody);
             
-            if (inputData == null || !inputData.Inputs.ContainsKey("target")) {
-                _logger.LogError("Invalid input: 'inputs.target' is missing or null.");
+            
+            // Validate input:
+            bool validationPassed = true;
+            string errorMsg = "";
+            if (inputData == null) {
+                errorMsg = "Invalid input: Request body is null.";
+                validationPassed = false;
+            }
+            
+            if (validationPassed && !inputData.Inputs.ContainsKey(FeatureNameSoilHumidity)) {
+                errorMsg = $"Invalid input: Could not find 'inputs.{FeatureNameSoilHumidity}' in received request body.";
+                validationPassed = false;
+            }
+            
+            if (validationPassed && !inputData.Inputs.ContainsKey(FeatureNamSoilDelta)) {
+                errorMsg = $"Invalid input: Could not find 'inputs.{FeatureNamSoilDelta}' in received request body.";
+                validationPassed = false;
+            }
+            
+            if (validationPassed && !inputData.Inputs.ContainsKey(FeatureNameAirHumidity)) {
+                errorMsg = $"Invalid input: Could not find 'inputs.{FeatureNameAirHumidity}' in received request body.";
+                validationPassed = false;
+            }
+            
+            if (validationPassed && !inputData.Inputs.ContainsKey(FeatureNameTemperature)) {
+                errorMsg = $"Invalid input: Could not find 'inputs.{FeatureNameTemperature}' in received request body.";
+                validationPassed = false;
+            }
+            
+            if (validationPassed && !inputData.Inputs.ContainsKey(FeatureNameLight)) {
+                errorMsg = $"Invalid input: Could not find 'inputs.{FeatureNameLight}' in received request body.";
+                validationPassed = false;
+            }
+            
+            if (validationPassed && !inputData.Inputs.ContainsKey(FeatureNameHourSin)) {
+                errorMsg = $"Invalid input: Could not find 'inputs.{FeatureNameHourSin}' in received request body.";
+                validationPassed = false;
+            }
+            
+            if (validationPassed && !inputData.Inputs.ContainsKey(FeatureNameHourCos)) {
+                errorMsg = $"Invalid input: Could not find 'inputs.{FeatureNameHourCos}' in received request body.";
+                validationPassed = false;
+            }
+
+            if (!validationPassed) {
+                _logger.LogError("{err}", errorMsg);
                 var errorResponse = req.CreateResponse(HttpStatusCode.BadRequest);
-                await errorResponse.WriteStringAsync("Invalid input: 'inputs.target' is required.");
+                await errorResponse.WriteStringAsync(errorMsg);
                 return errorResponse;
             }
             
-            // Extract the target input:
-            var target = inputData.Inputs["target"];
-            _logger.LogInformation("Target input: {Target}", JsonSerializer.Serialize(target));
             
-            // Validate the input length (model expects exactly 1 value):
-            if (target.Length != 1) {
-                _logger.LogError("Invalid input: 'target' must contain exactly 1 value, got {Length}.", target.Length);
+            // Extract the feature data/values:
+            var valueSoilHumidity = inputData.Inputs[FeatureNameSoilHumidity];
+            _logger.LogInformation("Serializing {input}: {feature}", FeatureNameSoilHumidity, JsonSerializer.Serialize(valueSoilHumidity));
+            
+            var valueSoilDelta = inputData.Inputs[FeatureNamSoilDelta];
+            _logger.LogInformation("Serializing {input}: {feature}", FeatureNamSoilDelta, JsonSerializer.Serialize(valueSoilDelta));
+            
+            var valueAirHumidity = inputData.Inputs[FeatureNameAirHumidity];
+            _logger.LogInformation("Serializing {input}: {feature}", FeatureNameAirHumidity, JsonSerializer.Serialize(valueAirHumidity));
+            
+            var valueTemperature = inputData.Inputs[FeatureNameTemperature];
+            _logger.LogInformation("Serializing {input}: {feature}", FeatureNameTemperature, JsonSerializer.Serialize(valueTemperature));
+            
+            var valueLight = inputData.Inputs[FeatureNameLight];
+            _logger.LogInformation("Serializing {input}: {feature}", FeatureNameLight, JsonSerializer.Serialize(valueLight));
+            
+            var valueHourSin = inputData.Inputs[FeatureNameHourSin];
+            _logger.LogInformation("Serializing {input}: {feature}", FeatureNameHourSin, JsonSerializer.Serialize(valueHourSin));
+            
+            var valueHourCos = inputData.Inputs[FeatureNameHourCos];
+            _logger.LogInformation("Serializing {input}: {feature}", FeatureNameHourCos, JsonSerializer.Serialize(valueHourCos));
+            
+            
+            // Validate the input length for each feature (model expects exactly 1 value):
+            bool featureValidationPassed = true;
+            
+            if (valueSoilHumidity.Length != 1) {
+                errorMsg = $"Invalid input: '{FeatureNameSoilHumidity}' must contain exactly 1 value, got {valueSoilHumidity.Length} values.";
+                featureValidationPassed = false;
+            }
+            
+            if (valueSoilDelta.Length != 1) {
+                errorMsg = $"Invalid input: '{FeatureNamSoilDelta}' must contain exactly 1 value, got {valueSoilDelta.Length} values.";
+                featureValidationPassed = false;
+            }
+            
+            if (valueAirHumidity.Length != 1) {
+                errorMsg = $"Invalid input: '{FeatureNameAirHumidity}' must contain exactly 1 value, got {valueAirHumidity.Length} values.";
+                featureValidationPassed = false;
+            }
+            
+            if (valueTemperature.Length != 1) {
+                errorMsg = $"Invalid input: '{FeatureNameTemperature}' must contain exactly 1 value, got {valueTemperature.Length} values.";
+                featureValidationPassed = false;
+            }
+            
+            if (valueLight.Length != 1) {
+                errorMsg = $"Invalid input: '{FeatureNameLight}' must contain exactly 1 value, got {valueLight.Length} values.";
+                featureValidationPassed = false;
+            }
+            
+            if (valueHourSin.Length != 1) {
+                errorMsg = $"Invalid input: '{FeatureNameHourSin}' must contain exactly 1 value, got {valueHourSin.Length} values.";
+                featureValidationPassed = false;
+            }
+            
+            if (valueHourCos.Length != 1) {
+                errorMsg = $"Invalid input: '{FeatureNameHourCos}' must contain exactly 1 value, got {valueHourCos.Length} values.";
+                featureValidationPassed = false;
+            }
+
+            if (!featureValidationPassed) {
+                _logger.LogError("{err}", errorMsg);
                 var errorResponse = req.CreateResponse(HttpStatusCode.BadRequest);
-                await errorResponse.WriteStringAsync("Invalid input: 'target' must contain exactly 1 value.");
+                await errorResponse.WriteStringAsync(errorMsg);
                 return errorResponse;
             }
             
-            // Create a 1D tensor:
-            var inputTensor = new DenseTensor<float>(new[] { target[0] }, [1]);
+            // Build a feature vector to use in inference:
+            var featureVector = new[] {
+                valueSoilHumidity[0],
+                valueSoilDelta[0],
+                valueAirHumidity[0],
+                valueTemperature[0],
+                valueLight[0],
+                valueHourSin[0],
+                valueHourCos[0]
+            };
+            
+            // Create a 2D tensor for a single sample with 7 features [1, 7]:
+            var inputTensor = new DenseTensor<float>(featureVector, new[] { 1, 7 });
             _logger.LogInformation("Input tensor shape: [{Shape}]", string.Join(", ", inputTensor.Dimensions.ToArray()));
+            
             
             // Prepare the input for the ONNX model
             var inputs = new List<NamedOnnxValue> {
-                NamedOnnxValue.CreateFromTensor("target", inputTensor)
+                NamedOnnxValue.CreateFromTensor("input", inputTensor)
             };
 
+            
             // Run inference:
             using var results = session.Run(inputs);
-            var prediction = results.First().AsTensor<int>().ToArray(); // Output is int32[1]
-            _logger.LogInformation("Prediction result: {Prediction}", prediction[0]);
+            var predictionValue = results.First().AsTensor<float>().ToArray()[0]; // Output is float32[1]
+            _logger.LogInformation("Prediction result: {Prediction}", predictionValue);
 
+            
+            // Build json response:
+            var resultJson = JsonSerializer.Serialize(new
+            {
+                minutes_to_dry = predictionValue
+            });
+            
+            
             // Return prediction:
             var response = req.CreateResponse(HttpStatusCode.OK);
-            await response.WriteStringAsync($"Prediction: {string.Join(", ", prediction)}");
-            _logger.LogInformation("Returned this response: {response}", response);
+            response.Headers.Add("Content-Type", "application/json");
+            await response.WriteStringAsync(resultJson);
+            _logger.LogInformation("Returned this response: {response}", resultJson);
             return response;
             
         } catch (Exception ex) {
@@ -167,19 +301,21 @@ public class PredictSoilHumidity
     /// Thrown if there is an error writing the model file to the temporary path.
     /// </exception>
     /// <remarks>
-    /// The ONNX model is cached in memory to avoid reloading it for each function invocation.
+    /// The ONNX model is cached locally in the Function App to avoid reloading it for each function invocation.
     /// The model is reloaded if the <c>OnnxModelUri</c> environment variable changes.
     /// </remarks>
     private async Task<InferenceSession> GetOrLoadModelAsync() {
         string? onnxUri = Environment.GetEnvironmentVariable("OnnxModelUri");
         if (string.IsNullOrEmpty(onnxUri)) {
-            _logger.LogError("OnnxModelUri is not set in configuration.");
+            _logger.LogCritical("OnnxModelUri is not set in configuration. Set it in Azure Function configuration (environment variables).");
             throw new InvalidOperationException("OnnxModelUri is not set in configuration.");
         }
 
+        // Download the specified model to a temp directory:
         if (_cachedSession == null || _cachedUri != onnxUri) {
             _logger.LogInformation("Loading ONNX model...");
 
+            // Downloads to a temporary directory, with the name 'model.onnx'.
             string tempFilePath = Path.Combine(Path.GetTempPath(), "model.onnx");
             var blobClient = new BlobClient(new Uri(onnxUri), new DefaultAzureCredential());
             await blobClient.DownloadToAsync(tempFilePath);
@@ -191,5 +327,4 @@ public class PredictSoilHumidity
         }
         return _cachedSession;
     }
-
 }
