@@ -26,10 +26,10 @@ public abstract class ModelDTO
     public override string ToString() {
         return (
             "Type: " + Type + 
-            ", Training_timestamp_utc: " + TrainingTimestamp + 
-            ", DownloadUrl: " + DownloadUrl +
-            ", target: " + Target + 
-            ", feature_names: " + FeaturesNames
+            "\n, Training_timestamp_utc: " + TrainingTimestamp + 
+            "\n, DownloadUrl: " + DownloadUrl +
+            "\n, target: " + Target + 
+            "\n, feature_names: " + FeaturesNames
             );
     }
 };

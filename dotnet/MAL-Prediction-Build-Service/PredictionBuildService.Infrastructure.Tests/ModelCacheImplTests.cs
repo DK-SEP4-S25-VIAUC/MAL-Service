@@ -10,9 +10,8 @@ namespace PredictionBuildService.Infrastructure.Tests;
 /// </summary>
 public class ModelCacheImplTests : IDisposable
 {
-    // TODO: Update these tests!
     private readonly Mock<ILogger<ModelCacheImpl>> _mockLogger;
-    private ModelCacheImpl _modelCacheImpl;
+    private ModelCacheImpl? _modelCacheImpl;
     
     /// <summary>
     /// In XUnit, the constructor is run before each test, acting as a "SetUp()" method. 
@@ -42,15 +41,35 @@ public class ModelCacheImplTests : IDisposable
     public async Task AddModelAsync_ReturnsTrue_WhenValidModelDTOisProvided() {
         
         // Arrange:
-        string? type = "LinearRegression";
-        string? version = "1.0.0";
+        string? type = "Ridge (linear)";
+        string? trainingTimestampUtc = "2025-05-05T19:55:53.716723";
+        string[]? featureNames = {
+            "soil_humidity",
+            "soil_delta",
+            "air_humidity",
+            "temperature",
+            "light",
+            "hour_sin",
+            "hour_cos"
+        };
+        string? target = "minutes_to_dry (<20 % soil humidity)";
+        string? downloadUrl = "https://example.com/test.onnx";
+        double? alpha = 183.29807108324337;
+        int? crossValSplits = 5;
+        double? rmseCv = 394.93;
+        double? r2 = 0.59;
 
         var model = new LinearRegressionModelDTO {
             Type = type,
-            // TODO: UPDATE
-            //TrainingTimestamp = version
+            TrainingTimestamp = trainingTimestampUtc,
+            Target = target,
+            FeaturesNames = featureNames,
+            DownloadUrl = downloadUrl,
+            Alpha = alpha,
+            CrossValSplits = crossValSplits,
+            RmseCv = rmseCv,
+            R2 = r2
         };
-
 
         // Act:
         var boolean = await _modelCacheImpl.AddModelAsync(model);
@@ -62,14 +81,35 @@ public class ModelCacheImplTests : IDisposable
     [Fact]
     public async Task AddModelAsync_ThrowsArgumentNullException_WhenTypeIsNull() {
         
-        // Arrange
+        // Arrange:
         string? type = null;
-        string? version = "1.0.0";
+        string? trainingTimestampUtc = "2025-05-05T19:55:53.716723";
+        string[]? featureNames = {
+            "soil_humidity",
+            "soil_delta",
+            "air_humidity",
+            "temperature",
+            "light",
+            "hour_sin",
+            "hour_cos"
+        };
+        string? target = "minutes_to_dry (<20 % soil humidity)";
+        string? downloadUrl = "https://example.com/test.onnx";
+        double? alpha = 183.29807108324337;
+        int? crossValSplits = 5;
+        double? rmseCv = 394.93;
+        double? r2 = 0.59;
 
         var model = new LinearRegressionModelDTO {
             Type = type,
-            // TODO: UPDATE
-            //Version = version
+            TrainingTimestamp = trainingTimestampUtc,
+            Target = target,
+            FeaturesNames = featureNames,
+            DownloadUrl = downloadUrl,
+            Alpha = alpha,
+            CrossValSplits = crossValSplits,
+            RmseCv = rmseCv,
+            R2 = r2
         };
 
 
@@ -79,16 +119,37 @@ public class ModelCacheImplTests : IDisposable
     }
     
     [Fact]
-    public async Task AddModelAsync_ThrowsArgumentNullException_WhenVersionIsNull() {
+    public async Task AddModelAsync_ThrowsArgumentNullException_WhenTimestampIsNull() {
         
-        // Arrange
-        string? type = "LinearRegression";
-        string? version = null;
+        // Arrange:
+        string? type = "Ridge (linear)";
+        string? trainingTimestampUtc = null;
+        string[]? featureNames = {
+            "soil_humidity",
+            "soil_delta",
+            "air_humidity",
+            "temperature",
+            "light",
+            "hour_sin",
+            "hour_cos"
+        };
+        string? target = "minutes_to_dry (<20 % soil humidity)";
+        string? downloadUrl = "https://example.com/test.onnx";
+        double? alpha = 183.29807108324337;
+        int? crossValSplits = 5;
+        double? rmseCv = 394.93;
+        double? r2 = 0.59;
 
         var model = new LinearRegressionModelDTO {
             Type = type,
-            // TODO: UPDATE
-            //Version = version
+            TrainingTimestamp = trainingTimestampUtc,
+            Target = target,
+            FeaturesNames = featureNames,
+            DownloadUrl = downloadUrl,
+            Alpha = alpha,
+            CrossValSplits = crossValSplits,
+            RmseCv = rmseCv,
+            R2 = r2
         };
 
 
@@ -111,14 +172,35 @@ public class ModelCacheImplTests : IDisposable
     [Fact]
     public async Task AddModelAsync_ThrowsArgumentException_WhenTypeIsEmpty() {
         
-        // Arrange
+        // Arrange:
         string? type = "";
-        string? version = "1.0.0";
+        string? trainingTimestampUtc = "2025-05-05T19:55:53.716723";
+        string[]? featureNames = {
+            "soil_humidity",
+            "soil_delta",
+            "air_humidity",
+            "temperature",
+            "light",
+            "hour_sin",
+            "hour_cos"
+        };
+        string? target = "minutes_to_dry (<20 % soil humidity)";
+        string? downloadUrl = "https://example.com/test.onnx";
+        double? alpha = 183.29807108324337;
+        int? crossValSplits = 5;
+        double? rmseCv = 394.93;
+        double? r2 = 0.59;
 
         var model = new LinearRegressionModelDTO {
             Type = type,
-            // TODO: UPDATE
-            //Version = version
+            TrainingTimestamp = trainingTimestampUtc,
+            Target = target,
+            FeaturesNames = featureNames,
+            DownloadUrl = downloadUrl,
+            Alpha = alpha,
+            CrossValSplits = crossValSplits,
+            RmseCv = rmseCv,
+            R2 = r2
         };
 
 
@@ -128,16 +210,37 @@ public class ModelCacheImplTests : IDisposable
     }
     
     [Fact]
-    public async Task AddModelAsync_ThrowsArgumentException_WhenVersionIsEmpty() {
+    public async Task AddModelAsync_ThrowsArgumentException_WhenTimestampIsEmpty() {
         
-        // Arrange
-        string? type = "LinearRegression";
-        string? version = "";
+        // Arrange:
+        string? type = "Ridge (linear)";
+        string? trainingTimestampUtc = "";
+        string[]? featureNames = {
+            "soil_humidity",
+            "soil_delta",
+            "air_humidity",
+            "temperature",
+            "light",
+            "hour_sin",
+            "hour_cos"
+        };
+        string? target = "minutes_to_dry (<20 % soil humidity)";
+        string? downloadUrl = "https://example.com/test.onnx";
+        double? alpha = 183.29807108324337;
+        int? crossValSplits = 5;
+        double? rmseCv = 394.93;
+        double? r2 = 0.59;
 
         var model = new LinearRegressionModelDTO {
             Type = type,
-            // TODO: UPDATE
-            //Version = version
+            TrainingTimestamp = trainingTimestampUtc,
+            Target = target,
+            FeaturesNames = featureNames,
+            DownloadUrl = downloadUrl,
+            Alpha = alpha,
+            CrossValSplits = crossValSplits,
+            RmseCv = rmseCv,
+            R2 = r2
         };
 
 
@@ -150,13 +253,34 @@ public class ModelCacheImplTests : IDisposable
     public async Task AddModelAsync_ThrowsDuplicateNameException_WhenAddingAModelThatAlreadyExistsInTheCache() {
         
         // Arrange:
-        string? type = "LinearRegression";
-        string? version = "1.0.0";
+        string? type = "Ridge (linear)";
+        string? trainingTimestampUtc = "2025-05-05T19:55:53.716723";
+        string[]? featureNames = {
+            "soil_humidity",
+            "soil_delta",
+            "air_humidity",
+            "temperature",
+            "light",
+            "hour_sin",
+            "hour_cos"
+        };
+        string? target = "minutes_to_dry (<20 % soil humidity)";
+        string? downloadUrl = "https://example.com/test.onnx";
+        double? alpha = 183.29807108324337;
+        int? crossValSplits = 5;
+        double? rmseCv = 394.93;
+        double? r2 = 0.59;
 
         var model = new LinearRegressionModelDTO {
             Type = type,
-            // TODO: UPDATE
-            //Version = version
+            TrainingTimestamp = trainingTimestampUtc,
+            Target = target,
+            FeaturesNames = featureNames,
+            DownloadUrl = downloadUrl,
+            Alpha = alpha,
+            CrossValSplits = crossValSplits,
+            RmseCv = rmseCv,
+            R2 = r2
         };
         
         
@@ -174,13 +298,34 @@ public class ModelCacheImplTests : IDisposable
     public async Task RemoveModelAsync_ReturnsTrue_WhenModelWasRemovedSuccessfullyFromCache() {
         
         // Arrange:
-        string? type = "LinearRegression";
-        string? version = "1.0.0";
+        string? type = "Ridge (linear)";
+        string? trainingTimestampUtc = "2025-05-05T19:55:53.716723";
+        string[]? featureNames = {
+            "soil_humidity",
+            "soil_delta",
+            "air_humidity",
+            "temperature",
+            "light",
+            "hour_sin",
+            "hour_cos"
+        };
+        string? target = "minutes_to_dry (<20 % soil humidity)";
+        string? downloadUrl = "https://example.com/test.onnx";
+        double? alpha = 183.29807108324337;
+        int? crossValSplits = 5;
+        double? rmseCv = 394.93;
+        double? r2 = 0.59;
 
         var model = new LinearRegressionModelDTO {
             Type = type,
-            // TODO: UPDATE
-            //Version = version
+            TrainingTimestamp = trainingTimestampUtc,
+            Target = target,
+            FeaturesNames = featureNames,
+            DownloadUrl = downloadUrl,
+            Alpha = alpha,
+            CrossValSplits = crossValSplits,
+            RmseCv = rmseCv,
+            R2 = r2
         };
         
         
@@ -189,87 +334,207 @@ public class ModelCacheImplTests : IDisposable
         
 
         // Assert:
-        //bool success = await _modelCacheImpl.RemoveModelAsync(model.Type, model.Version);
-        //Assert.True(success);
+        bool success = await _modelCacheImpl.RemoveModelAsync(model.Type, model.TrainingTimestamp);
+        Assert.True(success);
     }
     
     [Fact]
     public async Task RemoveModelAsync_ReturnsFalse_WhenAttemptingToRemoveModelFromCacheThatWasNeverAdded() {
         
         // Arrange:
-        var model = new LinearRegressionModelDTO { 
-            Type = "LinearRegression",
-            // TODO: UPDATE
-            //Version = "1.0.0"
+        string? type = "Ridge (linear)";
+        string? trainingTimestampUtc = "2025-05-05T19:55:53.716723";
+        string[]? featureNames = {
+            "soil_humidity",
+            "soil_delta",
+            "air_humidity",
+            "temperature",
+            "light",
+            "hour_sin",
+            "hour_cos"
+        };
+        string? target = "minutes_to_dry (<20 % soil humidity)";
+        string? downloadUrl = "https://example.com/test.onnx";
+        double? alpha = 183.29807108324337;
+        int? crossValSplits = 5;
+        double? rmseCv = 394.93;
+        double? r2 = 0.59;
+
+        var model = new LinearRegressionModelDTO {
+            Type = type,
+            TrainingTimestamp = trainingTimestampUtc,
+            Target = target,
+            FeaturesNames = featureNames,
+            DownloadUrl = downloadUrl,
+            Alpha = alpha,
+            CrossValSplits = crossValSplits,
+            RmseCv = rmseCv,
+            R2 = r2
         };
         
         
         // Act:
-        //bool failure = await _modelCacheImpl.RemoveModelAsync(model.Type, model.Version);
+        bool failure = await _modelCacheImpl.RemoveModelAsync(model.Type, model.TrainingTimestamp);
         
 
         // Assert:
-        //Assert.False(failure);
+        Assert.False(failure);
     }
     
     [Fact]
     public async Task RemoveModelAsync_ThrowsArgumentException_WhenModelTypeArgumentIsNull() {
         
         // Arrange:
-        var model = new LinearRegressionModelDTO { 
-            Type = null,
-            // TODO: UPDATE
-            //Version = "1.0.0"
+        string? type = null;
+        string? trainingTimestampUtc = "2025-05-05T19:55:53.716723";
+        string[]? featureNames = {
+            "soil_humidity",
+            "soil_delta",
+            "air_humidity",
+            "temperature",
+            "light",
+            "hour_sin",
+            "hour_cos"
+        };
+        string? target = "minutes_to_dry (<20 % soil humidity)";
+        string? downloadUrl = "https://example.com/test.onnx";
+        double? alpha = 183.29807108324337;
+        int? crossValSplits = 5;
+        double? rmseCv = 394.93;
+        double? r2 = 0.59;
+
+        var model = new LinearRegressionModelDTO {
+            Type = type,
+            TrainingTimestamp = trainingTimestampUtc,
+            Target = target,
+            FeaturesNames = featureNames,
+            DownloadUrl = downloadUrl,
+            Alpha = alpha,
+            CrossValSplits = crossValSplits,
+            RmseCv = rmseCv,
+            R2 = r2
         };
         
         
         // Act + Assert:
-        //await Assert.ThrowsAsync<ArgumentException>(() => _modelCacheImpl.RemoveModelAsync(model.Type, model.Version));
+        await Assert.ThrowsAsync<ArgumentException>(() => _modelCacheImpl.RemoveModelAsync(model.Type, model.TrainingTimestamp));
     }
     
     [Fact]
     public async Task RemoveModelAsync_ThrowsArgumentException_WhenModelTypeArgumentIsEmpty() {
         
         // Arrange:
-        var model = new LinearRegressionModelDTO { 
-            Type = "",
-            // TODO: UPDATE
-            //Version = "1.0.0"
+        string? type = "";
+        string? trainingTimestampUtc = "2025-05-05T19:55:53.716723";
+        string[]? featureNames = {
+            "soil_humidity",
+            "soil_delta",
+            "air_humidity",
+            "temperature",
+            "light",
+            "hour_sin",
+            "hour_cos"
+        };
+        string? target = "minutes_to_dry (<20 % soil humidity)";
+        string? downloadUrl = "https://example.com/test.onnx";
+        double? alpha = 183.29807108324337;
+        int? crossValSplits = 5;
+        double? rmseCv = 394.93;
+        double? r2 = 0.59;
+
+        var model = new LinearRegressionModelDTO {
+            Type = type,
+            TrainingTimestamp = trainingTimestampUtc,
+            Target = target,
+            FeaturesNames = featureNames,
+            DownloadUrl = downloadUrl,
+            Alpha = alpha,
+            CrossValSplits = crossValSplits,
+            RmseCv = rmseCv,
+            R2 = r2
         };
         
         
         // Act + Assert:
-        //await Assert.ThrowsAsync<ArgumentException>(() => _modelCacheImpl.RemoveModelAsync(model.Type, model.Version));
+        await Assert.ThrowsAsync<ArgumentException>(() => _modelCacheImpl.RemoveModelAsync(model.Type, model.TrainingTimestamp));
     }
     
     [Fact]
-    public async Task RemoveModelAsync_ThrowsArgumentException_WhenModelVersionArgumentIsNull() {
+    public async Task RemoveModelAsync_ThrowsArgumentException_WhenModelTimestampArgumentIsNull() {
         
         // Arrange:
-        var model = new LinearRegressionModelDTO { 
-            Type = "LinearRegression",
-            // TODO: UPDATE
-            //Version = null
+        string? type = "Ridge (linear)";
+        string? trainingTimestampUtc = null;
+        string[]? featureNames = {
+            "soil_humidity",
+            "soil_delta",
+            "air_humidity",
+            "temperature",
+            "light",
+            "hour_sin",
+            "hour_cos"
+        };
+        string? target = "minutes_to_dry (<20 % soil humidity)";
+        string? downloadUrl = "https://example.com/test.onnx";
+        double? alpha = 183.29807108324337;
+        int? crossValSplits = 5;
+        double? rmseCv = 394.93;
+        double? r2 = 0.59;
+
+        var model = new LinearRegressionModelDTO {
+            Type = type,
+            TrainingTimestamp = trainingTimestampUtc,
+            Target = target,
+            FeaturesNames = featureNames,
+            DownloadUrl = downloadUrl,
+            Alpha = alpha,
+            CrossValSplits = crossValSplits,
+            RmseCv = rmseCv,
+            R2 = r2
         };
         
         
         // Act + Assert:
-        //await Assert.ThrowsAsync<ArgumentException>(() => _modelCacheImpl.RemoveModelAsync(model.Type, model.Version));
+        await Assert.ThrowsAsync<ArgumentException>(() => _modelCacheImpl.RemoveModelAsync(model.Type, model.TrainingTimestamp));
     }
     
     [Fact]
     public async Task RemoveModelAsync_ThrowsArgumentException_WhenModelVersionArgumentIsEmpty() {
         
         // Arrange:
-        var model = new LinearRegressionModelDTO { 
-            Type = "LinearRegression",
-            // TODO: UPDATE
-            //Version = ""
+        string? type = "Ridge (linear)";
+        string? trainingTimestampUtc = "";
+        string[]? featureNames = {
+            "soil_humidity",
+            "soil_delta",
+            "air_humidity",
+            "temperature",
+            "light",
+            "hour_sin",
+            "hour_cos"
+        };
+        string? target = "minutes_to_dry (<20 % soil humidity)";
+        string? downloadUrl = "https://example.com/test.onnx";
+        double? alpha = 183.29807108324337;
+        int? crossValSplits = 5;
+        double? rmseCv = 394.93;
+        double? r2 = 0.59;
+
+        var model = new LinearRegressionModelDTO {
+            Type = type,
+            TrainingTimestamp = trainingTimestampUtc,
+            Target = target,
+            FeaturesNames = featureNames,
+            DownloadUrl = downloadUrl,
+            Alpha = alpha,
+            CrossValSplits = crossValSplits,
+            RmseCv = rmseCv,
+            R2 = r2
         };
         
         
         // Act + Assert:
-        //await Assert.ThrowsAsync<ArgumentException>(() => _modelCacheImpl.RemoveModelAsync(model.Type, model.Version));
+        await Assert.ThrowsAsync<ArgumentException>(() => _modelCacheImpl.RemoveModelAsync(model.Type, model.TrainingTimestamp));
     }
     
     
@@ -277,16 +542,44 @@ public class ModelCacheImplTests : IDisposable
     [Fact]
     public async Task UpdateModelAsync_ReturnsTrue_WhenModelIsUpdatedSuccessfully() {
         // Arrange:
-        var oldModel = new LinearRegressionModelDTO { 
-             Type = "LinearRegression",
-             // TODO: UPDATE
-             //Version = "1.0.0" 
+        var oldModel = new LinearRegressionModelDTO {
+            Type = "Ridge (linear)",
+            TrainingTimestamp = "2025-05-05T19:55:53.716723",
+            Target = "minutes_to_dry (<20 % soil humidity)",
+            FeaturesNames = [
+                "soil_humidity",
+                "soil_delta",
+                "air_humidity",
+                "temperature",
+                "light",
+                "hour_sin",
+                "hour_cos"
+            ],
+            DownloadUrl = "https://example.com/test.onnx",
+            Alpha = 183.29807108324337,
+            CrossValSplits = 5,
+            RmseCv = 394.93,
+            R2 = 0.59
         };
         
-        var newModel = new LinearRegressionModelDTO { 
-            Type = "LinearRegression", 
-            // TODO: UPDATE
-            //Version = "1.0.1" 
+        var newModel = new LinearRegressionModelDTO {
+            Type = "Ridge (linear)",
+            TrainingTimestamp = "2025-06-05T19:55:53.716723",
+            Target = "minutes_to_dry (<20 % soil humidity)",
+            FeaturesNames = [
+                "soil_humidity",
+                "soil_delta",
+                "air_humidity",
+                "temperature",
+                "light",
+                "hour_sin",
+                "hour_cos"
+            ],
+            DownloadUrl = "https://example.com/test.onnx",
+            Alpha = 124.29807108324337,
+            CrossValSplits = 3,
+            RmseCv = 252.93,
+            R2 = 0.42
         };
 
         await _modelCacheImpl.AddModelAsync(oldModel);
@@ -294,26 +587,54 @@ public class ModelCacheImplTests : IDisposable
         
         // Act:
         bool success = await _modelCacheImpl.UpdateModelAsync(oldModel, newModel);
-        //var updatedModel = await _modelCacheImpl.FindModelAsync(newModel.Type, newModel.Version);
+        var updatedModel = await _modelCacheImpl.FindModelAsync(newModel.Type, newModel.TrainingTimestamp);
         
         // Assert:
         Assert.True(success);
-        //Assert.Equal(newModel.Version, updatedModel.Version);
+        Assert.Equal(newModel.TrainingTimestamp, updatedModel.TrainingTimestamp);
     }
     
     [Fact]
     public async Task UpdateModelAsync_ReturnsFalse_WhenOldModelToUpdateIsNotFoundInCache() {
         // Arrange:
-        var oldModel = new LinearRegressionModelDTO { 
-            Type = "LinearRegression", 
-            // TODO: UPDATE
-            //Version = "1.0.0" 
+        var oldModel = new LinearRegressionModelDTO {
+            Type = "Ridge (linear)",
+            TrainingTimestamp = "2025-05-05T19:55:53.716723",
+            Target = "minutes_to_dry (<20 % soil humidity)",
+            FeaturesNames = [
+                "soil_humidity",
+                "soil_delta",
+                "air_humidity",
+                "temperature",
+                "light",
+                "hour_sin",
+                "hour_cos"
+            ],
+            DownloadUrl = "https://example.com/test.onnx",
+            Alpha = 183.29807108324337,
+            CrossValSplits = 5,
+            RmseCv = 394.93,
+            R2 = 0.59
         };
         
-        var newModel = new LinearRegressionModelDTO { 
-            Type = "LinearRegression", 
-            // TODO: UPDATE
-            //Version = "1.0.1" 
+        var newModel = new LinearRegressionModelDTO {
+            Type = "Ridge (linear)",
+            TrainingTimestamp = "2025-06-05T19:55:53.716723",
+            Target = "minutes_to_dry (<20 % soil humidity)",
+            FeaturesNames = [
+                "soil_humidity",
+                "soil_delta",
+                "air_humidity",
+                "temperature",
+                "light",
+                "hour_sin",
+                "hour_cos"
+            ],
+            DownloadUrl = "https://example.com/test.onnx",
+            Alpha = 124.29807108324337,
+            CrossValSplits = 3,
+            RmseCv = 252.93,
+            R2 = 0.42
         };
         
         
@@ -330,10 +651,24 @@ public class ModelCacheImplTests : IDisposable
         // Arrange:
         ModelDTO? oldModel = null;
         
-        var newModel = new LinearRegressionModelDTO { 
-            Type = "LinearRegression", 
-            // TODO: UPDATE
-            //Version = "1.0.1" 
+        var newModel = new LinearRegressionModelDTO {
+            Type = "Ridge (linear)",
+            TrainingTimestamp = "2025-06-05T19:55:53.716723",
+            Target = "minutes_to_dry (<20 % soil humidity)",
+            FeaturesNames = [
+                "soil_humidity",
+                "soil_delta",
+                "air_humidity",
+                "temperature",
+                "light",
+                "hour_sin",
+                "hour_cos"
+            ],
+            DownloadUrl = "https://example.com/test.onnx",
+            Alpha = 124.29807108324337,
+            CrossValSplits = 3,
+            RmseCv = 252.93,
+            R2 = 0.42
         };
         
         
@@ -344,10 +679,24 @@ public class ModelCacheImplTests : IDisposable
     [Fact]
     public async Task UpdateModelAsync_ThrowsArgumentNullException_WhenNewModelArgumentIsNull() {
         // Arrange:
-        ModelDTO? oldModel = new LinearRegressionModelDTO { 
-            Type = "LinearRegression", 
-            // TODO: UPDATE
-            //Version = "1.0.0" 
+        var oldModel = new LinearRegressionModelDTO {
+            Type = "Ridge (linear)",
+            TrainingTimestamp = "2025-05-05T19:55:53.716723",
+            Target = "minutes_to_dry (<20 % soil humidity)",
+            FeaturesNames = [
+                "soil_humidity",
+                "soil_delta",
+                "air_humidity",
+                "temperature",
+                "light",
+                "hour_sin",
+                "hour_cos"
+            ],
+            DownloadUrl = "https://example.com/test.onnx",
+            Alpha = 183.29807108324337,
+            CrossValSplits = 5,
+            RmseCv = 394.93,
+            R2 = 0.59
         };
         
         ModelDTO? newModel = null;
@@ -376,17 +725,31 @@ public class ModelCacheImplTests : IDisposable
     [Fact]
     public async Task ListModelsAsync_ReturnsListWith1ModelDto_WhenModelCacheContains1ModelDto() {
         // Arrange:
-        var model1 = new LinearRegressionModelDTO { 
-            Type = "LinearRegression",
-            // TODO: UPDATE
-            //Version = "1.0.0"
+        var model1 = new LinearRegressionModelDTO {
+            Type = "Ridge (linear)",
+            TrainingTimestamp = "2025-06-05T19:55:53.716723",
+            Target = "minutes_to_dry (<20 % soil humidity)",
+            FeaturesNames = [
+                "soil_humidity",
+                "soil_delta",
+                "air_humidity",
+                "temperature",
+                "light",
+                "hour_sin",
+                "hour_cos"
+            ],
+            DownloadUrl = "https://example.com/test.onnx",
+            Alpha = 124.29807108324337,
+            CrossValSplits = 3,
+            RmseCv = 252.93,
+            R2 = 0.42
         };
         
         
         // Act:
         await _modelCacheImpl.AddModelAsync(model1);
 
-        int count = 0;
+        var count = 0;
         await foreach (var model in _modelCacheImpl.ListModelsAsync()) {
             count++;
         }
@@ -400,16 +763,37 @@ public class ModelCacheImplTests : IDisposable
     public async Task ListModelsAsync_ReturnsListWith20ModelDto_WhenModelCacheContains20ModelDto() {
         // Arrange:
         List<ModelDTO> models = new List<ModelDTO>();
-        string type = "LinearRegression";
-        string version = "1";
+        string? type = "Ridge (linear)";
+        string? trainingTimestampUtc = "1";
+        string[]? featureNames = {
+            "soil_humidity",
+            "soil_delta",
+            "air_humidity",
+            "temperature",
+            "light",
+            "hour_sin",
+            "hour_cos"
+        };
+        string? target = "minutes_to_dry (<20 % soil humidity)";
+        string? downloadUrl = "https://example.com/test.onnx";
+        double? alpha = 183.29807108324337;
+        int? crossValSplits = 5;
+        double? rmseCv = 394.93;
+        double? r2 = 0.59;
 
         for (int i = 0; i < 20; i++) {
             var model = new LinearRegressionModelDTO {
                 Type = type,
-                // TODO: UPDATE
-                //Version = version
+                TrainingTimestamp = trainingTimestampUtc,
+                Target = target,
+                FeaturesNames = featureNames,
+                DownloadUrl = downloadUrl,
+                Alpha = alpha,
+                CrossValSplits = crossValSplits,
+                RmseCv = rmseCv,
+                R2 = r2
             };
-            version += ".0";
+            trainingTimestampUtc += "24";
             models.Add(model);
         }
         
@@ -435,40 +819,85 @@ public class ModelCacheImplTests : IDisposable
     public async Task FindModelAsync_ReturnsFoundModel_WhenModelIsInCache() {
         
         // Arrange:
-        string? type = "LinearRegression";
-        string? version = "1.0.0";
+        string? type = "Ridge (linear)";
+        string? trainingTimestampUtc = "2025-05-05T19:55:53.716723";
+        string[]? featureNames = {
+            "soil_humidity",
+            "soil_delta",
+            "air_humidity",
+            "temperature",
+            "light",
+            "hour_sin",
+            "hour_cos"
+        };
+        string? target = "minutes_to_dry (<20 % soil humidity)";
+        string? downloadUrl = "https://example.com/test.onnx";
+        double? alpha = 183.29807108324337;
+        int? crossValSplits = 5;
+        double? rmseCv = 394.93;
+        double? r2 = 0.59;
 
         var model = new LinearRegressionModelDTO {
             Type = type,
-            // TODO: UPDATE
-            //Version = version
+            TrainingTimestamp = trainingTimestampUtc,
+            Target = target,
+            FeaturesNames = featureNames,
+            DownloadUrl = downloadUrl,
+            Alpha = alpha,
+            CrossValSplits = crossValSplits,
+            RmseCv = rmseCv,
+            R2 = r2
         };
         
         await _modelCacheImpl.AddModelAsync(model);
         
         
         // Act:
-        // TODO: UPDATE
-        //var foundModel = await _modelCacheImpl.FindModelAsync(model.Type, model.Version);
+        var foundModel = await _modelCacheImpl.FindModelAsync(model.Type, model.TrainingTimestamp);
         
 
         // Assert:
-        //Assert.Equal(model.ToString(), foundModel.ToString());
+        Assert.Equal(model.ToString(), foundModel.ToString());
     }
     
     [Fact]
     public async Task FindModelAsync_ThrowsKeyNotFoundException_WhenModelCannotBeFoundInCache() {
         
         // Arrange:
-        var model = new LinearRegressionModelDTO { 
-            Type = "LinearRegression",
-            // TODO: UPDATE
-            //Version = "1.0.0"
+        // Arrange:
+        string? type = "Ridge (linear)";
+        string? trainingTimestampUtc = "2025-05-05T19:55:53.716723";
+        string[]? featureNames = {
+            "soil_humidity",
+            "soil_delta",
+            "air_humidity",
+            "temperature",
+            "light",
+            "hour_sin",
+            "hour_cos"
+        };
+        string? target = "minutes_to_dry (<20 % soil humidity)";
+        string? downloadUrl = "https://example.com/test.onnx";
+        double? alpha = 183.29807108324337;
+        int? crossValSplits = 5;
+        double? rmseCv = 394.93;
+        double? r2 = 0.59;
+
+        var model = new LinearRegressionModelDTO {
+            Type = type,
+            TrainingTimestamp = trainingTimestampUtc,
+            Target = target,
+            FeaturesNames = featureNames,
+            DownloadUrl = downloadUrl,
+            Alpha = alpha,
+            CrossValSplits = crossValSplits,
+            RmseCv = rmseCv,
+            R2 = r2
         };
         
         
         // Act + Assert:
-        //await Assert.ThrowsAsync<KeyNotFoundException>(() => _modelCacheImpl.FindModelAsync(model.Type, model.Version));
+        await Assert.ThrowsAsync<KeyNotFoundException>(() => _modelCacheImpl.FindModelAsync(model.Type, model.TrainingTimestamp));
     }
     
     
@@ -491,16 +920,37 @@ public class ModelCacheImplTests : IDisposable
     public async Task CacheSize_Returns10_WhenModelCacheContains10Models() {
         // Arrange:
         List<ModelDTO> models = new List<ModelDTO>();
-        string type = "LinearRegression";
-        string version = "1";
+        string? type = "Ridge (linear)";
+        string? trainingTimestampUtc = "1";
+        string[]? featureNames = {
+            "soil_humidity",
+            "soil_delta",
+            "air_humidity",
+            "temperature",
+            "light",
+            "hour_sin",
+            "hour_cos"
+        };
+        string? target = "minutes_to_dry (<20 % soil humidity)";
+        string? downloadUrl = "https://example.com/test.onnx";
+        double? alpha = 183.29807108324337;
+        int? crossValSplits = 5;
+        double? rmseCv = 394.93;
+        double? r2 = 0.59;
 
         for (int i = 0; i < 10; i++) {
             var model = new LinearRegressionModelDTO {
                 Type = type,
-                // TODO: UPDATE
-                //Version = version
+                TrainingTimestamp = trainingTimestampUtc,
+                Target = target,
+                FeaturesNames = featureNames,
+                DownloadUrl = downloadUrl,
+                Alpha = alpha,
+                CrossValSplits = crossValSplits,
+                RmseCv = rmseCv,
+                R2 = r2
             };
-            version += ".0";
+            trainingTimestampUtc += "24";
             models.Add(model);
         }
         

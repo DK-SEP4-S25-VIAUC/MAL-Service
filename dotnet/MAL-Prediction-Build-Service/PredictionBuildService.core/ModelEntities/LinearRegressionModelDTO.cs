@@ -7,24 +7,28 @@ public class LinearRegressionModelDTO : ModelDTO
 {
     // Injected variables through JSON deserialization:
     [JsonProperty("alpha")]
-    public string? Alpha { get; set; }
+    public double? Alpha { get; set; }
     
     [JsonProperty("cross_val_splits")]
-    public string? CrossValSplits { get; set; }
+    public int? CrossValSplits { get; set; }
     
     [JsonProperty("rmse_cv")]
-    public string? RmseCv { get; set; }
+    public double? RmseCv { get; set; }
     
     [JsonProperty("r2_insample")]
-    public string? R2 { get; set; }
+    public double? R2 { get; set; }
     
     public override string ToString() {
         return (
             "Type: " + Type + 
             ", Training_timestamp_utc: " + TrainingTimestamp + 
-            ", DownloadUrl: " + DownloadUrl +
-            ", target: " + Target + 
-            ", feature_names: " + FeaturesNames
+            "\n, DownloadUrl: " + DownloadUrl +
+            "\n, target: " + Target + 
+            "\n, feature_names: " + FeaturesNames +
+            "\n, alpha: " + Alpha + 
+            "\n, CrossValSplits: " + CrossValSplits + 
+            "\n, RmseCV: " + RmseCv + 
+            "\n, R2: " + R2
         );
     }
 };
