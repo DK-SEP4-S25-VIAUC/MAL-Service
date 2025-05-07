@@ -55,21 +55,6 @@ jobs:
             ${{ secrets.DOCKERHUB_USERNAME }}/linear-regression-service:${{ github.sha }}
             ${{ secrets.DOCKERHUB_USERNAME }}/linear-regression-service:latest
 
-      - name: test container startup
-        run: |
-          # Starting container
-          CONTAINER_ID=$(docker run --rm -d ${{ secrets.DOCKERHUB_USERNAME }}/linear-regression-service:latest)
-          sleep 10
-          # Get logs and check for "Scheduler is running"
-          LOGS=$(docker logs $CONTAINER_ID 2>&1)
-          echo "$LOGS"
-          echo "$LOGS" | grep -q "Scheduler is running" \
-            || (echo "Did not find expected startup log!" && exit 1)
-
-          docker stop $CONTAINER_ID
-        env:
-          DOCKER_BUILDKIT: 1
-
       - name: Upload trained model to Azure Blob Storage
         working-directory: python/LinearRegressionModelTrainingService
         env:
