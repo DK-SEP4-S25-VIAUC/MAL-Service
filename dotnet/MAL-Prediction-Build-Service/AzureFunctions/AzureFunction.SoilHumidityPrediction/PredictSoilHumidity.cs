@@ -1,12 +1,11 @@
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using Microsoft.Azure.Functions.Worker.Http;
-using Azure.Storage.Blobs;
-using Azure.Identity;
 using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
 using System.Net;
 using System.Text.Json;
+using Sep4.PredictionApp.Interfaces;
 
 namespace Sep4.PredictionApp;
 
@@ -53,10 +52,14 @@ public class PredictSoilHumidity
     /// </summary>
     private readonly ILogger<PredictSoilHumidity> _logger;
     
+    private readonly IEnvironmentService _envService;
+    private readonly IBlobDownloader _blobDownloader;
+    private readonly IModelSessionFactory _sessionFactory;
+    
     /// <summary>
     /// A cached instance of the ONNX model's inference session, shared across function invocations to improve performance.
     /// </summary>
-    private static InferenceSession? _cachedSession;
+    private static IInferenceSession? _cachedSession;
     
     /// <summary>
     /// The URI of the ONNX model in Azure Blob Storage, cached to detect changes in the model URI.
@@ -65,7 +68,7 @@ public class PredictSoilHumidity
 
     // Required features for this model / prediction type:
     private const string FeatureNameSoilHumidity = "soil_humidity";
-    private const string FeatureNamSoilDelta = "soil_delta";
+    private const string FeatureNameSoilDelta = "soil_delta";
     private const string FeatureNameAirHumidity = "air_humidity";
     private const string FeatureNameTemperature = "temperature";
     private const string FeatureNameLight = "light";
@@ -79,9 +82,15 @@ public class PredictSoilHumidity
     /// <exception cref="ArgumentNullException">Thrown if <paramref name="logger"/> is <c>null</c>.</exception>
     /// <remarks>
     /// <param name="logger"> is automatically injected into the constructor using dotnet dependency inversion principles.</param>
+    /// <param name="envService"> is automatically injected into the constructor using dotnet dependency inversion principles.</param>
+    /// <param name="blobDownloader"> is automatically injected into the constructor using dotnet dependency inversion principles.</param>
+    /// <param name="modelSessionFactory"> is automatically injected into the constructor using dotnet dependency inversion principles.</param>
     /// </remarks>
-    public PredictSoilHumidity(ILogger<PredictSoilHumidity> logger) {
+    public PredictSoilHumidity(ILogger<PredictSoilHumidity> logger, IEnvironmentService envService, IBlobDownloader blobDownloader, IModelSessionFactory modelSessionFactory) {
         _logger = logger;
+        _envService = envService;
+        _blobDownloader = blobDownloader;
+        _sessionFactory = modelSessionFactory;
     }
 
     
@@ -100,7 +109,7 @@ public class PredictSoilHumidity
     /// Thrown if the request body cannot be deserialized into a <see cref="PredictionInput"/> object.
     /// </exception>
     // TODO: Test this:
-    // 1. BadRequest if HttpRequestData is null
+    // 1. Exception if HttpRequestData is null
     // 2. BadRequest if HttpRequestData does not contain ALL required parameters.
     // 3. Error if the .onnx model could not be found (or is not proper format)
     // 4. Error if the float arrays for parameters do nat take exactly 1 value!
@@ -117,6 +126,10 @@ public class PredictSoilHumidity
         try {
             // Load ONNX model:
             var session = await GetOrLoadModelAsync();
+            
+            if (session == null) {
+                throw new InvalidOperationException("Failed to create InferenceSession from model.");
+            }
 
             
             // Parse input:
@@ -139,8 +152,8 @@ public class PredictSoilHumidity
                 validationPassed = false;
             }
             
-            if (validationPassed && !inputData!.Inputs.ContainsKey(FeatureNamSoilDelta)) {
-                errorMsg = $"Invalid input: Could not find 'inputs.{FeatureNamSoilDelta}' in received request body.";
+            if (validationPassed && !inputData!.Inputs.ContainsKey(FeatureNameSoilDelta)) {
+                errorMsg = $"Invalid input: Could not find 'inputs.{FeatureNameSoilDelta}' in received request body.";
                 validationPassed = false;
             }
             
@@ -181,8 +194,8 @@ public class PredictSoilHumidity
             var valueSoilHumidity = inputData!.Inputs[FeatureNameSoilHumidity];
             _logger.LogInformation("Serializing {input}: {feature}", FeatureNameSoilHumidity, JsonSerializer.Serialize(valueSoilHumidity));
             
-            var valueSoilDelta = inputData.Inputs[FeatureNamSoilDelta];
-            _logger.LogInformation("Serializing {input}: {feature}", FeatureNamSoilDelta, JsonSerializer.Serialize(valueSoilDelta));
+            var valueSoilDelta = inputData.Inputs[FeatureNameSoilDelta];
+            _logger.LogInformation("Serializing {input}: {feature}", FeatureNameSoilDelta, JsonSerializer.Serialize(valueSoilDelta));
             
             var valueAirHumidity = inputData.Inputs[FeatureNameAirHumidity];
             _logger.LogInformation("Serializing {input}: {feature}", FeatureNameAirHumidity, JsonSerializer.Serialize(valueAirHumidity));
@@ -209,7 +222,7 @@ public class PredictSoilHumidity
             }
             
             if (valueSoilDelta.Length != 1) {
-                errorMsg = $"Invalid input: '{FeatureNamSoilDelta}' must contain exactly 1 value, got {valueSoilDelta.Length} values.";
+                errorMsg = $"Invalid input: '{FeatureNameSoilDelta}' must contain exactly 1 value, got {valueSoilDelta.Length} values.";
                 featureValidationPassed = false;
             }
             
@@ -291,7 +304,7 @@ public class PredictSoilHumidity
         } catch (Exception ex) {
             _logger.LogError(ex, "Error processing prediction.");
             var errorResponse = req.CreateResponse(HttpStatusCode.InternalServerError);
-            await errorResponse.WriteStringAsync($"Error: {ex.Message}");
+            await errorResponse.WriteStringAsync($"Error: {ex.Message}, Cause {ex.StackTrace}");
             return errorResponse;
         }
     }
@@ -317,8 +330,8 @@ public class PredictSoilHumidity
     /// The ONNX model is cached locally in the Function App to avoid reloading it for each function invocation.
     /// The model is reloaded if the <c>OnnxModelUri</c> environment variable changes.
     /// </remarks>
-    private async Task<InferenceSession> GetOrLoadModelAsync() {
-        string? onnxUri = Environment.GetEnvironmentVariable("OnnxModelUri");
+    private async Task<IInferenceSession> GetOrLoadModelAsync() {
+        string? onnxUri = _envService.GetEnvironmentVariable("OnnxModelUri");
         if (string.IsNullOrEmpty(onnxUri)) {
             _logger.LogCritical("OnnxModelUri is not set in configuration. Set it in Azure Function configuration (environment variables).");
             throw new InvalidOperationException("OnnxModelUri is not set in configuration.");
@@ -330,10 +343,11 @@ public class PredictSoilHumidity
 
             // Downloads to a temporary directory, with the name 'model.onnx'.
             string tempFilePath = Path.Combine(Path.GetTempPath(), "model.onnx");
-            var blobClient = new BlobClient(new Uri(onnxUri), new DefaultAzureCredential());
-            await blobClient.DownloadToAsync(tempFilePath);
+            await _blobDownloader.DownloadAsync(onnxUri, tempFilePath);
 
-            _cachedSession = new InferenceSession(tempFilePath);
+            _cachedSession = _sessionFactory.Create(tempFilePath);
+            // TODO: An error is happening with creating the session during testing...
+            
             _cachedUri = onnxUri;
 
             _logger.LogInformation("ONNX model loaded and cached.");
