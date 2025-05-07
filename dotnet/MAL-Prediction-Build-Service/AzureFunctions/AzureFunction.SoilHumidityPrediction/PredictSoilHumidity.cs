@@ -88,10 +88,9 @@ public class PredictSoilHumidity
     /// Thrown if the request body cannot be deserialized into a <see cref="PredictionInput"/> object.
     /// </exception>
     // TODO: Test this:
-    // 2. BadRequest if HttpRequestData does not contain ALL required parameters.
-    // 3. Error if the .onnx model could not be found (or is not proper format)
-    // 4. Error if the float arrays for parameters do nat take exactly 1 value!
-    // 5. Error if the float arrays are not float arrays (i.e. strings, or something else)
+    // 3. Exception if the .onnx model could not be found (or is not proper format)
+    // 4. Exception if the float arrays for parameters do nat take exactly 1 value!
+    // 5. Exception if the float arrays are not float arrays (i.e. strings, or something else)
     [Function("PredictSoilHumidity")]
     public async Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequestData req) {
         _logger.LogInformation("PredictSoilHumidity function triggered.");
@@ -248,6 +247,53 @@ public class PredictSoilHumidity
                 return errorResponse;
             }
             
+            // Validate the values in each received feature:
+            bool valueValidationPassed = true;
+            // Check if sensor data values are either below 0% or above 100%
+            if (valueSoilHumidity[0] < 0 || valueSoilHumidity[0] > 100) {
+                errorMsg = $"Invalid input. 'soil_humidity' must be between 0% and 100%. Current value is: '{valueSoilHumidity[0]}'";
+                valueValidationPassed = false;
+            }
+            
+            if (valueAirHumidity[0] < 0 || valueAirHumidity[0] > 100) {
+                errorMsg = $"Invalid input. 'air_humidity' must be between 0% and 100%. Current value is: '{valueAirHumidity[0]}'";
+                valueValidationPassed = false;
+            }
+            
+            if (valueTemperature[0] < 0 || valueTemperature[0] > 100) {
+                errorMsg = $"Invalid input. 'temperature' must be between 0% and 100%. Current value is: '{valueTemperature[0]}'";
+                valueValidationPassed = false;
+            }
+            
+            if (valueLight[0] < 0 || valueLight[0] > 100) {
+                errorMsg = $"Invalid input. 'light' must be between 0% and 100%. Current value is: '{valueTemperature[0]}'";
+                valueValidationPassed = false;
+            }
+            
+            if (valueThreshold[0] < 0 || valueThreshold[0] > 100) {
+                errorMsg = $"Invalid input. 'threshold' must be between 0% and 100%. Current value is: '{valueThreshold[0]}'";
+                valueValidationPassed = false;
+            }
+            
+            // Check if sin and cos values are between -1 and 1:
+            if (valueHourSin[0] < -1 || valueHourSin[0] > 1) {
+                errorMsg = $"Invalid input. 'hour_sin' must be between -1 and 1. Current value is: '{valueHourSin[0]}'";
+                valueValidationPassed = false;
+            }
+            
+            if (valueHourCos[0] < -1 || valueHourCos[0] > 1) {
+                errorMsg = $"Invalid input. 'hour_cos' must be between -1 and 1. Current value is: '{valueHourCos[0]}'";
+                valueValidationPassed = false;
+            }
+            
+            if (!valueValidationPassed) {
+                _logger.LogError("{err}", errorMsg);
+                var errorResponse = req.CreateResponse(HttpStatusCode.BadRequest);
+                await errorResponse.WriteStringAsync(errorMsg);
+                return errorResponse;
+            }
+            
+            
             // Build a feature vector to use in inference:
             var featureVector = new[] {
                 valueSoilHumidity[0],
@@ -260,7 +306,7 @@ public class PredictSoilHumidity
                 valueThreshold[0]
             };
             
-            // Create a 2D tensor for a single sample with 7 features [1, 7]:
+            // Create a 2D tensor for a single sample with 8 features [1, 8]:
             var inputTensor = new DenseTensor<float>(featureVector, new[] { 1, 8 });
             _logger.LogInformation("Input tensor shape: [{Shape}]", string.Join(", ", inputTensor.Dimensions.ToArray()));
             
