@@ -18,10 +18,10 @@ from sklearn.metrics import mean_squared_error, r2_score
 from skl2onnx import convert_sklearn
 from skl2onnx.common.data_types import FloatTensorType
 
-from app.upload_model import upload_to_blob
+from LinearRegressionModelTrainingService.app.upload_model import upload_to_blob
 
 # Helper: derive the target variable
-def add_minutes_to_dry(df: pd.DataFrame, threshold: float = 40.0) -> pd.DataFrame:
+def add_minutes_to_dry(df: pd.DataFrame, threshold: float) -> pd.DataFrame:
     """
     Adds a 'minutes_to_dry' column to *df*.
 
@@ -37,7 +37,7 @@ def add_minutes_to_dry(df: pd.DataFrame, threshold: float = 40.0) -> pd.DataFram
 
     ts_minutes = df["timestamp"].values.astype("datetime64[m]").view("int")
 
-    below = np.where(soil < threshold)[0] # indices that are already < 40 %
+    below = np.where(soil < threshold)[0]
     next_idx = np.full(len(df), np.nan, dtype=float) # handle NaNs
 
     for i in range(len(df) - 1):
@@ -51,7 +51,7 @@ def add_minutes_to_dry(df: pd.DataFrame, threshold: float = 40.0) -> pd.DataFram
     return df
 
 # Main training entry point
-def train_model(json_string: str) -> dict:
+def train_model(json_string: str, threshold: int) -> dict:
     # Parse the incoming JSON and
     parsed = json.loads(json_string)
     samples = parsed["response"]["list"]
@@ -63,7 +63,7 @@ def train_model(json_string: str) -> dict:
     df.sort_values("timestamp", inplace=True)
 
     # Create target variable
-    df = add_minutes_to_dry(df)
+    df = add_minutes_to_dry(df, threshold)
     df.dropna(subset=["minutes_to_dry"], inplace=True)
 
     # Feature engineering
