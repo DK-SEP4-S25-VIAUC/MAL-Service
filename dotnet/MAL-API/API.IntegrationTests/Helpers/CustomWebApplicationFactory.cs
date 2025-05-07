@@ -16,19 +16,18 @@ public class CustomWebApplicationFactory<TStartup> : WebApplicationFactory<TStar
     {
         builder.ConfigureServices(services =>
         {
-            // Remove existing IPredictionService
-            var predictionDescriptor = services.SingleOrDefault(d =>
-                d.ServiceType == typeof(IPredictionService));
+         
+            var predictionDescriptor = services.SingleOrDefault(
+                d => d.ServiceType == typeof(IPredictionService));
             if (predictionDescriptor != null)
                 services.Remove(predictionDescriptor);
 
-            // Remove existing ISensorDataService
-            var sensorDescriptor = services.SingleOrDefault(d =>
-                d.ServiceType == typeof(ISensorDataService));
+           
+            var sensorDescriptor = services.SingleOrDefault(
+                d => d.ServiceType == typeof(ISensorDataService));
             if (sensorDescriptor != null)
                 services.Remove(sensorDescriptor);
-
-            // Add mocks
+            
             services.AddSingleton(MockPredictionService.Object);
             services.AddSingleton(MockSensorDataService.Object);
         });

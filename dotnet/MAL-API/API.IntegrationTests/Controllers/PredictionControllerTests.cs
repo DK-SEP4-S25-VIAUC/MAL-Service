@@ -18,10 +18,14 @@ public class PredictionControllerTests : IClassFixture<CustomWebApplicationFacto
     {
         _factory = factory;
 
-        // Default mock setup for successful prediction
+        // Default mock setup
         _factory.MockPredictionService
             .Setup(x => x.GetPredictionAsync(It.IsAny<double?>()))
             .ReturnsAsync(new ForecastDTO(180));
+
+        _factory.MockSensorDataService
+            .Setup(x => x.getSoilHumiLowerThresholdAsync())
+            .ReturnsAsync(20.0);
 
         _client = factory.CreateClient();
     }
@@ -39,16 +43,22 @@ public class PredictionControllerTests : IClassFixture<CustomWebApplicationFacto
     }
 
     [Fact]
-    public async Task GetPrediction_WhenServiceReturnsNull_ReturnsServiceUnavailable()
+    public async Task GetPrediction_WhenServiceReturnsNull_ReturnsBadGateway()
     {
         _factory.MockPredictionService
             .Setup(x => x.GetPredictionAsync(It.IsAny<double?>()))
             .ReturnsAsync((ForecastDTO?)null);
 
+        _factory.MockSensorDataService
+            .Setup(x => x.getSoilHumiLowerThresholdAsync())
+            .ReturnsAsync(20.0);
+
         var response = await _client.GetAsync("/soilhumidity/forecast");
 
-        response.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
+        response.StatusCode.Should().Be(HttpStatusCode.BadGateway);
     }
+
+
 
     [Fact]
     public async Task GetPrediction_WhenServiceThrowsException_ReturnsInternalServerError()
@@ -56,6 +66,10 @@ public class PredictionControllerTests : IClassFixture<CustomWebApplicationFacto
         _factory.MockPredictionService
             .Setup(x => x.GetPredictionAsync(It.IsAny<double?>()))
             .ThrowsAsync(new Exception("Prediction failure"));
+
+        _factory.MockSensorDataService
+            .Setup(x => x.getSoilHumiLowerThresholdAsync())
+            .ReturnsAsync(20.0);
 
         var response = await _client.GetAsync("/soilhumidity/forecast");
 
@@ -68,6 +82,10 @@ public class PredictionControllerTests : IClassFixture<CustomWebApplicationFacto
         _factory.MockPredictionService
             .Setup(x => x.GetPredictionAsync(It.IsAny<double?>()))
             .ReturnsAsync(new ForecastDTO(0));
+
+        _factory.MockSensorDataService
+            .Setup(x => x.getSoilHumiLowerThresholdAsync())
+            .ReturnsAsync(20.0);
 
         var response = await _client.GetAsync("/soilhumidity/forecast");
 
