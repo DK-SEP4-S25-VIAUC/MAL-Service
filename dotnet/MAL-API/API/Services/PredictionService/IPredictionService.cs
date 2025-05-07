@@ -4,5 +4,7 @@ namespace API.Services.PredictionService;
 
 public interface IPredictionService
 {
-    public Task<ForecastDTO> GetPredictionAsync(double? lowerThreshold);
+    public Task<ForecastDTO> GetPredictionAsync();
+
+    public Task<PredictionInput> BuildPredictionInputAsync();
 }

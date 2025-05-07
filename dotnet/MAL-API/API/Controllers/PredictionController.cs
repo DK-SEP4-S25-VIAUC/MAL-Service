@@ -26,14 +26,7 @@ public class PredictionController : ControllerBase
     {
         try
         {
-            var lowerThreshold = await sensorDataService.getSoilHumiLowerThresholdAsync();
-
-            if (!lowerThreshold.HasValue)
-            {
-                return StatusCode(503, "Unable to retrieve soil humidity threshold.");
-            }
-
-            var forecast = await predictionService.GetPredictionAsync(lowerThreshold.Value);
+            var forecast = await predictionService.GetPredictionAsync();
 
             if (forecast == null)
             {
