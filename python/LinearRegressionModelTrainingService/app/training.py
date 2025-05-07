@@ -91,7 +91,7 @@ def train_model(json_string: str) -> dict:
     pipe = make_pipeline(StandardScaler(), Ridge())
 
     # Time-series cross-validation
-    # By using time-series split instead of train-test-split, we omit breaking the chronologically order, which we need in order to perdict minutes to dry
+    # By using time-series split instead of train-test-split, we omit breaking the chronologically order, which we need in order to predict minutes to dry
     # In a running / production flow, we need the entire historical dataset to train the actual model, CV-folds acts as our train/validation process, but still keeping the chronologically order
     tscv = TimeSeriesSplit(n_splits=5)
     param_grid = {"ridge__alpha": np.logspace(-4, 3, 20)}
