@@ -46,6 +46,8 @@ def add_minutes_to_dry(df: pd.DataFrame, threshold: float = 40.0) -> pd.DataFram
             next_idx[i] = ts_minutes[j[0]] - ts_minutes[i]
 
     df["minutes_to_dry"] = next_idx
+    df["threshold"] = threshold
+
     return df
 
 # Main training entry point
@@ -79,6 +81,7 @@ def train_model(json_string: str) -> dict:
         "light",
         "hour_sin",
         "hour_cos",
+        "threshold",
     ]
 
     X = df[feature_cols].astype(float)
