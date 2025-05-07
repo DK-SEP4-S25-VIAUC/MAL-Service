@@ -13,7 +13,7 @@ from sklearn.linear_model import Ridge
 from sklearn.model_selection import TimeSeriesSplit, GridSearchCV
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.metrics import r2_score
 
 from skl2onnx import convert_sklearn
 from skl2onnx.common.data_types import FloatTensorType
@@ -51,12 +51,16 @@ def add_minutes_to_dry(df: pd.DataFrame, threshold: float) -> pd.DataFrame:
     return df
 
 # Main training entry point
-def train_model(json_string: str, threshold: int) -> dict:
-    # Parse the incoming JSON and
-    parsed = json.loads(json_string)
-    samples = parsed["response"]["list"]
+def train_model(json_samples: str, json_threshold: str) -> dict:
+    # Parse the incoming JSON
+    parsed_samples = json.loads(json_samples)
+    samples = parsed_samples["response"]["list"]
     sample_data = [item["SampleDTO"] for item in samples]
     df = pd.DataFrame(sample_data)
+
+    # Parse incoming JSON threshold
+    parsed_threshold = json.loads(json_threshold)
+    threshold = parsed_threshold["threshold"]
 
     # Data pre-processing
     df["timestamp"] = pd.to_datetime(df["timestamp"])
