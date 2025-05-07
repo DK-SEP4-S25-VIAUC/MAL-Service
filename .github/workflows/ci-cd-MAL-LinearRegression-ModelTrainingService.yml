@@ -17,7 +17,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Check directory structure (debug)
-        run: ls -la && ls -la python-dev/LinearRegressionModelTrainingService
+        run: ls -la && ls -la python/LinearRegressionModelTrainingService
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v4
@@ -25,14 +25,14 @@ jobs:
           python-version: "3.11"
 
       - name: Install dependencies
-        working-directory: python-dev/LinearRegressionModelTrainingService
+        working-directory: python/LinearRegressionModelTrainingService
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install pytest
 
       - name: Test with pytest
-        working-directory: python-dev/LinearRegressionModelTrainingService
+        working-directory: python/LinearRegressionModelTrainingService
         run: pytest || echo "No tests yet – skipping"
 
       - name: Log in to Docker Hub
@@ -47,8 +47,8 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: python-dev/LinearRegressionModelTrainingService
-          file: python-dev/LinearRegressionModelTrainingService/Dockerfile
+          context: python/LinearRegressionModelTrainingService
+          file: python/LinearRegressionModelTrainingService/Dockerfile
           push: true
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/linear-regression-service:${{ github.sha }}
