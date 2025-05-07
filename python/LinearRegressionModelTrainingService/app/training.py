@@ -52,31 +52,6 @@ def add_minutes_to_dry(df: pd.DataFrame, threshold: float) -> pd.DataFrame:
 
 # Main training entry point
 def train_model(json_samples: str, json_threshold: str) -> dict:
-    """
-    Train a linear (Ridge) regression baseline that predicts
-    “minutes until soil humidity drops below 20 %”.
-
-    Parameters:
-        json_samples (str): A JSON string containing the training samples. 
-            Expected format:
-            {
-                "response": {
-                    "list": [
-                        {"SampleDTO": {"timestamp": "...", "soil_humidity": ...}},
-                        ...
-                    ]
-                }
-            }
-
-        json_threshold (str): A JSON string containing the soil humidity threshold.
-            Expected format:
-            {
-                "threshold": <float>
-            }
-
-    Returns:
-        dict: A dictionary containing the trained model and associated metadata.
-    """
     # Parse the incoming JSON
     parsed_samples = json.loads(json_samples)
     samples = parsed_samples["response"]["list"]
