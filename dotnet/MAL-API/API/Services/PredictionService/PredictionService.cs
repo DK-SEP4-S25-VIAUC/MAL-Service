@@ -26,8 +26,19 @@ public class PredictionService : IPredictionService
         // Get samples from last 3 hours
         var result = await _sensorDataService.getSamples(threeHoursAgo, now) as OkObjectResult;
 
-        if (result?.Value is not List<SampleDTO> samples || samples.Count < 2)
-            return null; // Not enough data
+        var samples = result?.Value as List<SampleDTO>;
+
+        if (samples == null)
+        {
+            Console.WriteLine("Fallback data could not be cast to List<SampleDTO>.");
+            return null;
+        }
+
+        if (samples.Count < 2)
+        {
+            Console.WriteLine("Not enough samples in fallback data.");
+            return null;
+        }
 
         // Sort samples descending to get the latest first
         var sortedSamples = samples.OrderByDescending(s => s.Timestamp).Take(2).ToList();
@@ -35,15 +46,24 @@ public class PredictionService : IPredictionService
         var latest = sortedSamples[0];
         var previous = sortedSamples[1];
 
-        return PredictionInput.FromValues(
-            soilHumidity: latest.Soil_Humidity,
-            previousSoilHumidity: previous.Soil_Humidity,
-            airHumidity: latest.Air_Humidity,
-            temperature: latest.Air_Temperature,
-            light: latest.Light_Value,
-            timestamp: latest.Timestamp,
-            threshold: latest.Lower_Threshold
-        );
+        try
+        {
+            return PredictionInput.FromValues(
+                soilHumidity: latest.Soil_Humidity,
+                previousSoilHumidity: previous.Soil_Humidity,
+                airHumidity: latest.Air_Humidity,
+                temperature: latest.Air_Temperature,
+                light: latest.Light_Value,
+                timestamp: latest.Timestamp,
+                threshold: await _sensorDataService.getSoilHumiLowerThresholdAsync()
+            );
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
+        
     }
 
     public async Task<ForecastDTO> GetPredictionAsync()
@@ -52,6 +72,12 @@ public class PredictionService : IPredictionService
         var endpoint = $"PredictSoilHumidity?code={apiKey}";
 
         var input = await BuildPredictionInputAsync();
+        
+        if (input == null)
+        {
+            Console.WriteLine("Input null");
+            return null;
+        }
         
         var body = new
         {
@@ -67,6 +93,8 @@ public class PredictionService : IPredictionService
                 threshold = input.Threshold
             }
         };
+        
+        Console.WriteLine(body);
 
         var response = await _httpClient.PostAsJsonAsync(endpoint, body);
 

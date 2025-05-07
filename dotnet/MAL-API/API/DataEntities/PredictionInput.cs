@@ -9,7 +9,7 @@ namespace API.DataEntities
         public double Light { get; set; }
         public double HourSin { get; set; }
         public double HourCos { get; set; }
-        public double Threshold { get; set; }
+        public double? Threshold { get; set; }
 
         public static PredictionInput FromValues(
             double soilHumidity,
@@ -18,7 +18,7 @@ namespace API.DataEntities
             double temperature,
             double light,
             DateTime timestamp,
-            double threshold)
+            double? threshold)
         {
             double soilDelta = soilHumidity - previousSoilHumidity;
 

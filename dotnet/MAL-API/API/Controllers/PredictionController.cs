@@ -30,7 +30,7 @@ public class PredictionController : ControllerBase
 
             if (forecast == null)
             {
-                return StatusCode(502, "Prediction service failed to return a forecast.");
+                return NotFound("Not enough recent samples available to make a prediction.");
             }
 
             return Ok(forecast);
