@@ -7,6 +7,7 @@ on:
 
 jobs:
   check-source-branch:
+    name: check-source-branch
     runs-on: ubuntu-latest
     steps:
       - name: Fail if PR is not from 'development' branch
@@ -15,4 +16,6 @@ jobs:
           if [ "${{ github.head_ref }}" != "development" ]; then
             echo "❌ Pull requests to main are only allowed from the 'development' branch."
             exit 1
+          else
+            echo "✅ Source branch is 'development'."
           fi
