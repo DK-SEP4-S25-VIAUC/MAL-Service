@@ -1,5 +1,4 @@
-fastapi
-uvicorn[standard]
+requests
 pydantic
 datetime
 scikit-learn
@@ -13,3 +12,6 @@ azure-storage-blob
 azure-identity
 pytest
 pathlib
+asyncio
+os
+pytz

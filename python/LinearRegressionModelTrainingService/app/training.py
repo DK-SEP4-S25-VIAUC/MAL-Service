@@ -13,15 +13,15 @@ from sklearn.linear_model import Ridge
 from sklearn.model_selection import TimeSeriesSplit, GridSearchCV
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.metrics import r2_score
 
 from skl2onnx import convert_sklearn
 from skl2onnx.common.data_types import FloatTensorType
 
-from app.upload_model import upload_to_blob
+from LinearRegressionModelTrainingService.app.upload_model import upload_to_blob
 
 # Helper: derive the target variable
-def add_minutes_to_dry(df: pd.DataFrame, threshold: float = 40.0) -> pd.DataFrame:
+def add_minutes_to_dry(df: pd.DataFrame, threshold: float) -> pd.DataFrame:
     """
     Adds a 'minutes_to_dry' column to *df*.
 
@@ -37,7 +37,7 @@ def add_minutes_to_dry(df: pd.DataFrame, threshold: float = 40.0) -> pd.DataFram
 
     ts_minutes = df["timestamp"].values.astype("datetime64[m]").view("int")
 
-    below = np.where(soil < threshold)[0] # indices that are already < 40 %
+    below = np.where(soil < threshold)[0]
     next_idx = np.full(len(df), np.nan, dtype=float) # handle NaNs
 
     for i in range(len(df) - 1):
@@ -51,19 +51,48 @@ def add_minutes_to_dry(df: pd.DataFrame, threshold: float = 40.0) -> pd.DataFram
     return df
 
 # Main training entry point
-def train_model(json_string: str) -> dict:
-    # Parse the incoming JSON and
-    parsed = json.loads(json_string)
-    samples = parsed["response"]["list"]
+def train_model(json_samples: str, json_threshold: str) -> dict:
+    """
+    Train a linear (Ridge) regression baseline that predicts
+    “minutes until soil humidity drops below 20 %”.
+
+    Parameters:
+        json_samples (str): A JSON string containing the training samples. 
+            Expected format:
+            {
+                "response": {
+                    "list": [
+                        {"SampleDTO": {"timestamp": "...", "soil_humidity": ...}},
+                        ...
+                    ]
+                }
+            }
+
+        json_threshold (str): A JSON string containing the soil humidity threshold.
+            Expected format:
+            {
+                "threshold": <float>
+            }
+
+    Returns:
+        dict: A dictionary containing the trained model and associated metadata.
+    """
+    # Parse the incoming JSON
+    parsed_samples = json.loads(json_samples)
+    samples = parsed_samples["response"]["list"]
     sample_data = [item["SampleDTO"] for item in samples]
     df = pd.DataFrame(sample_data)
+
+    # Parse incoming JSON threshold
+    parsed_threshold = json.loads(json_threshold)
+    threshold = parsed_threshold["threshold"]
 
     # Data pre-processing
     df["timestamp"] = pd.to_datetime(df["timestamp"])
     df.sort_values("timestamp", inplace=True)
 
     # Create target variable
-    df = add_minutes_to_dry(df)
+    df = add_minutes_to_dry(df, threshold)
     df.dropna(subset=["minutes_to_dry"], inplace=True)
 
     # Feature engineering
