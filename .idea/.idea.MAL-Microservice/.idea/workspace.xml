@@ -4,7 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="5f264db4-4929-4187-8c2b-6fc2e93aa420" name="Changes" comment="" />
+    <list default="true" id="5f264db4-4929-4187-8c2b-6fc2e93aa420" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.MAL-Microservice/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.MAL-Microservice/.idea/workspace.xml" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -27,6 +29,7 @@
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.git.unshallow": "true",
     "git-widget-placeholder": "feature/integrationtests",
+    "last_opened_file_path": "/src",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
@@ -43,8 +46,8 @@
       <window_info id="Commit_Guest" show_stripe_button="false" />
       <window_info id="Pull Requests" show_stripe_button="false" />
       <window_info id="Learn" show_stripe_button="false" />
-      <window_info content_ui="combo" id="Project" order="0" weight="0.29785156" />
-      <window_info active="true" id="Commit" order="1" visible="true" weight="0.29785156" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.29785156" />
+      <window_info id="Commit" order="1" weight="0.29785156" />
       <window_info id="Structure" order="2" show_stripe_button="false" side_tool="true" weight="0.3300866" />
       <window_info active="true" id="Azure Explorer" order="3" visible="true" weight="0.17161459" />
       <window_info anchor="bottom" id="Database Changes" />
@@ -62,7 +65,7 @@
       <window_info anchor="bottom" id="Version Control" order="0" weight="0.24512354" />
       <window_info anchor="bottom" id="Problems" order="1" />
       <window_info anchor="bottom" id="Problems View" order="2" />
-      <window_info active="true" anchor="bottom" id="Terminal" order="3" visible="true" weight="0.2310049" />
+      <window_info active="true" anchor="bottom" id="Terminal" order="3" visible="true" weight="0.4834559" />
       <window_info anchor="bottom" id="Services" order="4" />
       <window_info anchor="bottom" id="Find" order="5" visible="true" weight="0.32964888" />
       <window_info anchor="bottom" id="Dynamic Program Analysis" order="6" show_stripe_button="false" weight="0.32994187" />
@@ -143,7 +146,7 @@
       <workItem from="1744137036615" duration="433000" />
       <workItem from="1744137502737" duration="1919000" />
       <workItem from="1744139679708" duration="1159000" />
-      <workItem from="1746602310716" duration="304000" />
+      <workItem from="1746602310716" duration="1313000" />
     </task>
     <servers />
   </component>
