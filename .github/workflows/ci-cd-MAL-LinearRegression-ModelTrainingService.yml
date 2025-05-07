@@ -64,5 +64,7 @@ jobs:
           echo "$LOGS"
           echo "$LOGS" | grep -q "Scheduler is running" \
             || (echo "Did not find expected startup log!" && exit 1)
+
+          docker stop $CONTAINER_ID
         env:
           DOCKER_BUILDKIT: 1
