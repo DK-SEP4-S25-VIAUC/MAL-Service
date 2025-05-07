@@ -11,10 +11,15 @@ namespace PredictionBuildService.Infrastructure.Build;
 
 
 /// <summary>
-/// https://learn.microsoft.com/en-us/azure/azure-functions/
-/// https://learn.microsoft.com/en-us/azure/azure-functions/functions-create-function-app-portal?pivots=programming-language-csharp
-/// https://blog.jetbrains.com/dotnet/2020/10/29/build-serverless-apps-with-azure-functions/
+/// This class is responsible for building and deploying/updating associated Azure Functions, that handle each prediction type (I.e. SoilHumidityPredictions, etc.).
+/// It subscribes and listens for appropriate events, and acts one these, when a new optimal/best model has been identified for each prediction type.
 /// </summary>
+/// <remarks>
+/// Check out these documentations/tutorials for more info on implementation details:<br />
+/// https://learn.microsoft.com/en-us/azure/azure-functions/<br />
+/// https://learn.microsoft.com/en-us/azure/azure-functions/functions-create-function-app-portal?pivots=programming-language-csharp<br />
+/// https://blog.jetbrains.com/dotnet/2020/10/29/build-serverless-apps-with-azure-functions/<br />
+/// </remarks>
 public class BuildServiceImpl : IBuildService
 { 
     private readonly ILogger<BuildServiceImpl> _logger;
@@ -23,6 +28,13 @@ public class BuildServiceImpl : IBuildService
     private readonly ArmClient _armClient;
     private Func<object, EvaluatedAllLinearRegressionModelsEventArgs, Task>? _evaluatedLinearRegModelEventHandler;
      
+    /// <summary>
+    /// Primary constructor. It is recommended to use dependency injection to inject the specified arguments, instead of manual injection.
+    /// </summary>
+    /// <param name="logger">A logging service, that can handle logging of messages</param>
+    /// <param name="modelEvaluationService"></param>
+    /// <param name="settings">The settings class, defining access settings to the Azure Functions App containing the functions</param>
+    /// <param name="armClient">The Azure Resource Manager Client (ArmClient) that handles interactions with the Azure Functions App on Azure, with proper credentials assigned</param>
     public BuildServiceImpl(
         ILogger<BuildServiceImpl> logger, 
         IModelEvaluationService modelEvaluationService,
@@ -41,6 +53,8 @@ public class BuildServiceImpl : IBuildService
     
     
     // Implement the IEventSubscriber interface:
+    // TODO: Test
+    // Is the class properly subscribed to NewModelsAdded, after this has run?
     public void Subscribe() {
         _evaluatedLinearRegModelEventHandler = async (sender, e) => await HandleEventAsync(sender, e);
         _modelEvaluationService.LinearRegModelsEvaluated += _evaluatedLinearRegModelEventHandler;
@@ -48,6 +62,8 @@ public class BuildServiceImpl : IBuildService
     }
 
     
+    // TODO: Test
+    // Is the class properly unsubscribed to NewModelsAdded, after this has run?
     public void Unsubscribe() {
         if (_evaluatedLinearRegModelEventHandler != null) {
             _modelEvaluationService.LinearRegModelsEvaluated -= _evaluatedLinearRegModelEventHandler;
@@ -57,6 +73,9 @@ public class BuildServiceImpl : IBuildService
     }
 
     
+    // TODO: Test
+    // Are LinearRegressionModels properly evaluated when EvaluatedAllLinearRegressionModelsEventArgs are fired/received?
+    // What if an unknown Event is registered?
     public async Task HandleEventAsync(object? sender, EventArgs e) {
         switch (e) {
             case EvaluatedAllLinearRegressionModelsEventArgs eventArgs:

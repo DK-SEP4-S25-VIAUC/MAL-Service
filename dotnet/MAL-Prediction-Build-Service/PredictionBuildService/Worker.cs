@@ -6,8 +6,11 @@ using PredictionBuildService.core.Interfaces;
 namespace PredictionBuildService;
 
 /// <summary>
-/// https://learn.microsoft.com/en-us/azure/storage/blobs/storage-blob-download
+/// Main worker thread, responsible to instantiating and running all services, as well as responsible for shutting these services down gracefully.
 /// </summary>
+/// <remarks>
+/// https://learn.microsoft.com/en-us/azure/storage/blobs/storage-blob-download
+/// </remarks>
 public class Worker : BackgroundService
 {
     private readonly IBlobStorageMonitorService _monitorService;
@@ -58,7 +61,7 @@ public class Worker : BackgroundService
         var models = _modelCache.ListModelsAsync();
         var modelsAsString = "Loaded these models:\n";
         await foreach (var model in models) {
-            modelsAsString += "type: " + model.Type + ", version: " + model.Version + "\n";
+            modelsAsString += "type: " + model.Type + ", version: " + model.TrainingTimestamp + "\n";
         }
         _logger.LogInformation("{modelsAsString}", modelsAsString);
         

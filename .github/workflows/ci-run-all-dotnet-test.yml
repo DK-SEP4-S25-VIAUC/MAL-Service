@@ -16,9 +16,11 @@ jobs:
       checks: write
       contents: read
     steps:
+    
       # Checkout the repository
       - name: Checkout code
         uses: actions/checkout@v4
+
 
       # Set up .NET environment
       - name: Set up .NET
@@ -26,9 +28,21 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
+
+      # Cache any NuGet Packages for improved workflow run-time.
+      - name: Cache NuGet packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+
       # Restore dependencies
       - name: Restore dependencies
         run: dotnet restore dotnet/MAL-Microservice.sln
+
 
       # Run tests, collect code coverage, and generate TRX results
       - name: Run tests with coverage
@@ -40,6 +54,7 @@ jobs:
             --collect:"XPlat Code Coverage" \
             -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura
 
+
       # Publish test results to GitHub UI (pass/fail overview)
       - name: Publish test results
         if: always()
@@ -49,9 +64,11 @@ jobs:
           path: test-results/*.trx
           reporter: dotnet-trx
 
+
       # Install reportgenerator to process coverage data
       - name: Install reportgenerator
         run: dotnet tool install -g dotnet-reportgenerator-globaltool
+
 
       # Generate and display coverage report in GitHub UI
       - name: Generate coverage report
@@ -61,4 +78,3 @@ jobs:
             -targetdir:"coverage-report" \
             -reporttypes:"MarkdownSummary"
           cat coverage-report/Summary.md >> $GITHUB_STEP_SUMMARY
-
