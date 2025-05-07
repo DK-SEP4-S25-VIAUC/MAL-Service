@@ -48,25 +48,9 @@ namespace Sep4.PredictionApp;
 /// </example>
 public class PredictSoilHumidity
 {
-    /// <summary>
-    /// The logger instance used to log information, warnings, and errors during the function's execution.
-    /// </summary>
     private readonly ILogger<PredictSoilHumidity> _logger;
+    private readonly IModelLoader _modelLoader;
     
-    private readonly IEnvironmentService _envService;
-    private readonly IBlobDownloader _blobDownloader;
-    private readonly IModelSessionFactory _sessionFactory;
-    
-    /// <summary>
-    /// A cached instance of the ONNX model's inference session, shared across function invocations to improve performance.
-    /// </summary>
-    private static IInferenceSession? _cachedSession;
-    
-    /// <summary>
-    /// The URI of the ONNX model in Azure Blob Storage, cached to detect changes in the model URI.
-    /// </summary>
-    private static string? _cachedUri;
-
     // Required features for this model / prediction type:
     private const string FeatureNameSoilHumidity = "soil_humidity";
     private const string FeatureNameSoilDelta = "soil_delta";
@@ -81,18 +65,11 @@ public class PredictSoilHumidity
     /// Initializes a new instance of the <see cref="PredictSoilHumidity"/> class.
     /// </summary>
     /// <param name="logger">The logger instance used for logging function execution details.</param>
+    /// <param name="modelLoader">The IModelLoader instance used for loading the onnx model to use for predictions.</param>
     /// <exception cref="ArgumentNullException">Thrown if <paramref name="logger"/> is <c>null</c>.</exception>
-    /// <remarks>
-    /// <param name="logger"> is automatically injected into the constructor using dotnet dependency inversion principles.</param>
-    /// <param name="envService"> is automatically injected into the constructor using dotnet dependency inversion principles.</param>
-    /// <param name="blobDownloader"> is automatically injected into the constructor using dotnet dependency inversion principles.</param>
-    /// <param name="modelSessionFactory"> is automatically injected into the constructor using dotnet dependency inversion principles.</param>
-    /// </remarks>
-    public PredictSoilHumidity(ILogger<PredictSoilHumidity> logger, IEnvironmentService envService, IBlobDownloader blobDownloader, IModelSessionFactory modelSessionFactory) {
+    public PredictSoilHumidity(ILogger<PredictSoilHumidity> logger, IModelLoader modelLoader) {
         _logger = logger;
-        _envService = envService;
-        _blobDownloader = blobDownloader;
-        _sessionFactory = modelSessionFactory;
+        _modelLoader = modelLoader;
     }
 
     
@@ -111,7 +88,6 @@ public class PredictSoilHumidity
     /// Thrown if the request body cannot be deserialized into a <see cref="PredictionInput"/> object.
     /// </exception>
     // TODO: Test this:
-    // 1. Exception if HttpRequestData is null
     // 2. BadRequest if HttpRequestData does not contain ALL required parameters.
     // 3. Error if the .onnx model could not be found (or is not proper format)
     // 4. Error if the float arrays for parameters do nat take exactly 1 value!
@@ -127,7 +103,7 @@ public class PredictSoilHumidity
         
         try {
             // Load ONNX model:
-            var session = await GetOrLoadModelAsync();
+            var session = await _modelLoader.GetOrLoadModelAsync();
             
             if (session == null) {
                 throw new InvalidOperationException("Failed to create InferenceSession from model.");
@@ -321,51 +297,5 @@ public class PredictSoilHumidity
             await errorResponse.WriteStringAsync($"Error: {ex.Message}, Cause {ex.StackTrace}");
             return errorResponse;
         }
-    }
-    
-    
-    /// <summary>
-    /// Loads the ONNX model from Azure Blob Storage or returns the cached instance if already loaded.
-    /// </summary>
-    /// <returns>
-    /// A task that represents the asynchronous operation. The task result is an <see cref="InferenceSession"/>
-    /// object representing the loaded ONNX model.
-    /// </returns>
-    /// <exception cref="InvalidOperationException">
-    /// Thrown if the <c>OnnxModelUri</c> environment variable is not set.
-    /// </exception>
-    /// <exception cref="Azure.RequestFailedException">
-    /// Thrown if the ONNX model cannot be downloaded from Azure Blob Storage.
-    /// </exception>
-    /// <exception cref="IOException">
-    /// Thrown if there is an error writing the model file to the temporary path.
-    /// </exception>
-    /// <remarks>
-    /// The ONNX model is cached locally in the Function App to avoid reloading it for each function invocation.
-    /// The model is reloaded if the <c>OnnxModelUri</c> environment variable changes.
-    /// </remarks>
-    private async Task<IInferenceSession> GetOrLoadModelAsync() {
-        string? onnxUri = _envService.GetEnvironmentVariable("OnnxModelUri");
-        if (string.IsNullOrEmpty(onnxUri)) {
-            _logger.LogCritical("OnnxModelUri is not set in configuration. Set it in Azure Function configuration (environment variables).");
-            throw new InvalidOperationException("OnnxModelUri is not set in configuration.");
-        }
-
-        // Download the specified model to a temp directory:
-        if (_cachedSession == null || _cachedUri != onnxUri) {
-            _logger.LogInformation("Loading ONNX model...");
-
-            // Downloads to a temporary directory, with the name 'model.onnx'.
-            string tempFilePath = Path.Combine(Path.GetTempPath(), "model.onnx");
-            await _blobDownloader.DownloadAsync(onnxUri, tempFilePath);
-
-            _cachedSession = _sessionFactory.Create(tempFilePath);
-            // TODO: An error is happening with creating the session during testing...
-            
-            _cachedUri = onnxUri;
-
-            _logger.LogInformation("ONNX model loaded and cached.");
-        }
-        return _cachedSession;
     }
 }

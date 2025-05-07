@@ -11,6 +11,7 @@ var builder = FunctionsApplication.CreateBuilder(args);
 builder.Services.AddSingleton<IEnvironmentService, EnvironmentService>();
 builder.Services.AddSingleton<IBlobDownloader, BlobDownloader>();
 builder.Services.AddSingleton<IModelSessionFactory, ModelSessionFactory>();
+builder.Services.AddSingleton<IModelLoader, ModelLoader>();
 builder.Services.AddSingleton<PredictSoilHumidity>();
 
 // Set up the Azure Functions worker:
