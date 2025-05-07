@@ -28,7 +28,8 @@ public class PredictionInput
     ///     "temperature": [45.7],
     ///     "light": [45.7],
     ///     "hour_sin": [45.7],
-    ///     "hour_cos": [45.7]
+    ///     "hour_cos": [45.7],
+    ///     "threshold": [20.0]
     ///   }
     /// }
     /// </code>

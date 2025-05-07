@@ -33,7 +33,8 @@ namespace Sep4.PredictionApp;
 ///     "temperature": [45.7],
 ///     "light": [45.7],
 ///     "hour_sin": [45.7],
-///     "hour_cos": [45.7]
+///     "hour_cos": [45.7],
+///     "threshold": [20.0]
 ///   }
 /// }
 /// </code>
@@ -74,6 +75,7 @@ public class PredictSoilHumidity
     private const string FeatureNameLight = "light";
     private const string FeatureNameHourSin = "hour_sin";
     private const string FeatureNameHourCos = "hour_cos";
+    private const string FeatureNameThreshold = "threshold";
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PredictSoilHumidity"/> class.
@@ -181,7 +183,11 @@ public class PredictSoilHumidity
                 errorMsg = $"Invalid input: Could not find 'inputs.{FeatureNameHourCos}' in received request body.";
                 validationPassed = false;
             }
-
+            
+            if (validationPassed && !inputData!.Inputs.ContainsKey(FeatureNameThreshold)) {
+                errorMsg = $"Invalid input: Could not find 'inputs.{FeatureNameThreshold}' in received request body.";
+                validationPassed = false;
+            }
             if (!validationPassed) {
                 _logger.LogError("{err}", errorMsg);
                 var errorResponse = req.CreateResponse(HttpStatusCode.BadRequest);
@@ -211,6 +217,9 @@ public class PredictSoilHumidity
             
             var valueHourCos = inputData.Inputs[FeatureNameHourCos];
             _logger.LogInformation("Serializing {input}: {feature}", FeatureNameHourCos, JsonSerializer.Serialize(valueHourCos));
+            
+            var valueThreshold = inputData.Inputs[FeatureNameThreshold];
+            _logger.LogInformation("Serializing {input}: {feature}", FeatureNameThreshold, JsonSerializer.Serialize(valueThreshold));
             
             
             // Validate the input length for each feature (model expects exactly 1 value):
@@ -250,6 +259,11 @@ public class PredictSoilHumidity
                 errorMsg = $"Invalid input: '{FeatureNameHourCos}' must contain exactly 1 value, got {valueHourCos.Length} values.";
                 featureValidationPassed = false;
             }
+            
+            if (valueThreshold.Length != 1) {
+                errorMsg = $"Invalid input: '{FeatureNameThreshold}' must contain exactly 1 value, got {valueThreshold.Length} values.";
+                featureValidationPassed = false;
+            }
 
             if (!featureValidationPassed) {
                 _logger.LogError("{err}", errorMsg);
@@ -266,11 +280,12 @@ public class PredictSoilHumidity
                 valueTemperature[0],
                 valueLight[0],
                 valueHourSin[0],
-                valueHourCos[0]
+                valueHourCos[0],
+                valueThreshold[0]
             };
             
             // Create a 2D tensor for a single sample with 7 features [1, 7]:
-            var inputTensor = new DenseTensor<float>(featureVector, new[] { 1, 7 });
+            var inputTensor = new DenseTensor<float>(featureVector, new[] { 1, 8 });
             _logger.LogInformation("Input tensor shape: [{Shape}]", string.Join(", ", inputTensor.Dimensions.ToArray()));
             
             
@@ -287,9 +302,8 @@ public class PredictSoilHumidity
 
             
             // Build json response:
-            var resultJson = JsonSerializer.Serialize(new
-            {
-                description = "Prediction describes how many minutes are estimated before soil humidity falls below a 20% threshold",
+            var resultJson = JsonSerializer.Serialize(new {
+                description = $"Predicts the estimated minutes until soil humidity falls below a {valueThreshold[0]}% threshold",
                 minutes_to_dry = predictionValue
             });
             
