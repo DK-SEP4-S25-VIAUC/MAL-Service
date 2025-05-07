@@ -20,6 +20,6 @@ public class TestHttpRequestData : HttpRequestData
     public override string Method => "POST";
 
     public override HttpResponseData CreateResponse() {
-        return new TestHttpResponseData(FunctionContext); // Let the response be created dynamically
+        return new TestHttpResponseData(FunctionContext);
     }
 }

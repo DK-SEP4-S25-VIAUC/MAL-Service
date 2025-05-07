@@ -55,26 +55,40 @@ public class ModelLoader : IModelLoader {
     /// The model is reloaded if the <c>OnnxModelUri</c> environment variable changes.
     /// </remarks>
     public async Task<IInferenceSession> GetOrLoadModelAsync() {
-        string? onnxUri = _envService.GetEnvironmentVariable("OnnxModelUri");
-        if (string.IsNullOrEmpty(onnxUri)) {
-            _logger.LogCritical("OnnxModelUri is not set in configuration. Set it in Azure Function configuration (environment variables).");
-            throw new InvalidOperationException("OnnxModelUri is not set in configuration.");
+        try {
+            string? onnxUri = _envService.GetEnvironmentVariable("OnnxModelUri");
+            if (string.IsNullOrEmpty(onnxUri))
+                throw new InvalidOperationException("OnnxModelUri is not set in configuration.");
+
+            // Download the specified model to a temp directory:
+            if (_cachedSession == null || _cachedUri != onnxUri) {
+                _logger.LogInformation("Loading ONNX model...");
+
+                // Downloads to a temporary directory, with the name 'model.onnx'.
+                string tempFilePath = Path.Combine(Path.GetTempPath(), "model.onnx");
+                await _blobDownloader.DownloadAsync(onnxUri, tempFilePath);
+
+                _cachedSession = _sessionFactory.Create(tempFilePath);
+
+                _cachedUri = onnxUri;
+
+                _logger.LogInformation("ONNX model loaded and cached.");
+            }
+
+            return _cachedSession;
+        }
+        catch (InvalidOperationException ex) {
+            _logger.LogCritical(
+                "OnnxModelUri is not set in configuration. Set it in Azure Function configuration (environment variables).");
+            throw new InvalidOperationException(ex.Message);
+        } catch (FileNotFoundException ex) {
+            _logger.LogError(
+                "No Prediction model found at location specified in azure environment variable. Please ensure that a model exists.");
+            throw new FileNotFoundException(ex.Message);
+        } catch (Exception ex) {
+            _logger.LogError(ex.Message);
+            throw new Exception(ex.Message);
         }
 
-        // Download the specified model to a temp directory:
-        if (_cachedSession == null || _cachedUri != onnxUri) {
-            _logger.LogInformation("Loading ONNX model...");
-
-            // Downloads to a temporary directory, with the name 'model.onnx'.
-            string tempFilePath = Path.Combine(Path.GetTempPath(), "model.onnx");
-            await _blobDownloader.DownloadAsync(onnxUri, tempFilePath);
-
-            _cachedSession = _sessionFactory.Create(tempFilePath);
-            
-            _cachedUri = onnxUri;
-
-            _logger.LogInformation("ONNX model loaded and cached.");
-        }
-        return _cachedSession;
     }
 }

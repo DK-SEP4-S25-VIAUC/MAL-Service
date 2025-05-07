@@ -33,6 +33,6 @@ public class TestHttpResponseData : HttpResponseData
     public async Task WriteStringAsync(string text, CancellationToken cancellationToken = default) {
         await _writer.WriteAsync(text);
         await _writer.FlushAsync();
-        _bodyStream.Position = 0; // Reset for reading later
+        _bodyStream.Position = 0;
     }
 }

@@ -23,7 +23,7 @@ public class PredictSoilHumidityTests : IDisposable
     private Mock<IInferenceSession>? _inferenceSessionMock;
     private Mock<IEnvironmentService>? _envServiceMock;
     private Mock<IModelSessionFactory>? _sessionFactoryMock;
-    private Mock<IModelLoader> _modelLoaderMock;
+    private Mock<IModelLoader>? _modelLoaderMock;
     private TestHttpResponseData? _mockHttpResponseData;
     private TestHttpRequestData? _mockHttpRequestData;
     private PredictSoilHumidity? _function;
@@ -65,8 +65,8 @@ public class PredictSoilHumidityTests : IDisposable
         _modelLoaderMock = null;
         
         // Reset static fields to avoid test interference:
-        typeof(PredictSoilHumidity).GetField("_cachedSession", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)?.SetValue(null, null);
-        typeof(PredictSoilHumidity).GetField("_cachedUri", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)?.SetValue(null, null);
+        typeof(PredictSoilHumidity).GetField("_cachedSession", BindingFlags.NonPublic | BindingFlags.Static)?.SetValue(null, null);
+        typeof(PredictSoilHumidity).GetField("_cachedUri", BindingFlags.NonPublic | BindingFlags.Static)?.SetValue(null, null);
     }
     
     
@@ -81,8 +81,7 @@ public class PredictSoilHumidityTests : IDisposable
     
     
     [Fact]
-    public async Task Run_ReturnsOkWithPrediction_WhenHttpRequestIsValid()
-    {
+    public async Task Run_ReturnsOkWithPrediction_WhenHttpRequestIsValid() {
         // Arrange:
         // Note: These steps below took my quite a few hours to nail.
         // Mocking Microsoft.ML.OnnxRuntime is a 'pain in the ass' to say it mildly.
@@ -183,8 +182,7 @@ public class PredictSoilHumidityTests : IDisposable
     
     
     [Fact]
-    public async Task Run_ReturnsBadRequest_WhenHttpRequestIsMissingRequiredParameter()
-    {
+    public async Task Run_ReturnsBadRequest_WhenHttpRequestIsMissingRequiredSoilHumidityParameter() {
         // Arrange:
         _modelLoaderMock.Setup(m => m.GetOrLoadModelAsync())
             .ReturnsAsync(Mock.Of<IInferenceSession>());
@@ -224,5 +222,1356 @@ public class PredictSoilHumidityTests : IDisposable
         _output.WriteLine($"Response Body: {responseBody}");
 
         Assert.Contains("soil_humidity", responseBody);
+    }
+    
+    
+    [Fact]
+    public async Task Run_ReturnsBadRequest_WhenHttpRequestIsMissingRequiredSoilDeltaParameter() {
+        // Arrange:
+        _modelLoaderMock.Setup(m => m.GetOrLoadModelAsync())
+            .ReturnsAsync(Mock.Of<IInferenceSession>());
+
+        var function = new PredictSoilHumidity(_loggerMock.Object, _modelLoaderMock.Object);
+        
+        var input = new {
+            inputs = new Dictionary<string, float[]> {
+                { "soil_humidity", new[] { 0.1f }},
+                // Missing 'soil_delta'
+                { "air_humidity", new[] { 2.0f } },
+                { "temperature", new[] { 3.0f } },
+                { "light", new[] { 4.0f } },
+                { "hour_sin", new[] { 5.0f } },
+                { "hour_cos", new[] { 6.0f } },
+                { "threshold", new[] { 7.0f } }
+            }
+        };
+
+        string requestBody = JsonSerializer.Serialize(input);
+        var bodyStream = new MemoryStream(Encoding.UTF8.GetBytes(requestBody));
+        
+        var context = new Mock<FunctionContext>().Object;
+        var request = new TestHttpRequestData(context, bodyStream);
+
+        
+        // Act:
+        var result = await function.Run(request);
+
+        
+        // Assert:
+        Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
+
+        result.Body.Position = 0;
+        using var reader = new StreamReader(result.Body);
+        string responseBody = await reader.ReadToEndAsync();
+        _output.WriteLine($"Response Body: {responseBody}");
+
+        Assert.Contains("soil_delta", responseBody);
+    }
+    
+    
+    [Fact]
+    public async Task Run_ReturnsBadRequest_WhenHttpRequestIsMissingRequiredAirHumidityParameter() {
+        // Arrange:
+        _modelLoaderMock.Setup(m => m.GetOrLoadModelAsync())
+            .ReturnsAsync(Mock.Of<IInferenceSession>());
+
+        var function = new PredictSoilHumidity(_loggerMock.Object, _modelLoaderMock.Object);
+        
+        var input = new {
+            inputs = new Dictionary<string, float[]> {
+                { "soil_humidity", new[] { 0.1f }},
+                { "soil_delta", new[] { 1.0f } },
+                // Missing 'air_humidity'
+                { "temperature", new[] { 3.0f } },
+                { "light", new[] { 4.0f } },
+                { "hour_sin", new[] { 5.0f } },
+                { "hour_cos", new[] { 6.0f } },
+                { "threshold", new[] { 7.0f } }
+            }
+        };
+
+        string requestBody = JsonSerializer.Serialize(input);
+        var bodyStream = new MemoryStream(Encoding.UTF8.GetBytes(requestBody));
+        
+        var context = new Mock<FunctionContext>().Object;
+        var request = new TestHttpRequestData(context, bodyStream);
+
+        
+        // Act:
+        var result = await function.Run(request);
+
+        
+        // Assert:
+        Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
+
+        result.Body.Position = 0;
+        using var reader = new StreamReader(result.Body);
+        string responseBody = await reader.ReadToEndAsync();
+        _output.WriteLine($"Response Body: {responseBody}");
+
+        Assert.Contains("air_humidity", responseBody);
+    }
+    
+    
+    [Fact]
+    public async Task Run_ReturnsBadRequest_WhenHttpRequestIsMissingRequiredTemperatureParameter() {
+        // Arrange:
+        _modelLoaderMock.Setup(m => m.GetOrLoadModelAsync())
+            .ReturnsAsync(Mock.Of<IInferenceSession>());
+
+        var function = new PredictSoilHumidity(_loggerMock.Object, _modelLoaderMock.Object);
+        
+        var input = new {
+            inputs = new Dictionary<string, float[]> {
+                { "soil_humidity", new[] { 0.1f }},
+                { "soil_delta", new[] { 1.0f } },
+                { "air_humidity", new[] { 2.0f } },
+                // Missing 'temperature'
+                { "light", new[] { 4.0f } },
+                { "hour_sin", new[] { 5.0f } },
+                { "hour_cos", new[] { 6.0f } },
+                { "threshold", new[] { 7.0f } }
+            }
+        };
+
+        string requestBody = JsonSerializer.Serialize(input);
+        var bodyStream = new MemoryStream(Encoding.UTF8.GetBytes(requestBody));
+        
+        var context = new Mock<FunctionContext>().Object;
+        var request = new TestHttpRequestData(context, bodyStream);
+
+        
+        // Act:
+        var result = await function.Run(request);
+
+        
+        // Assert:
+        Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
+
+        result.Body.Position = 0;
+        using var reader = new StreamReader(result.Body);
+        string responseBody = await reader.ReadToEndAsync();
+        _output.WriteLine($"Response Body: {responseBody}");
+
+        Assert.Contains("temperature", responseBody);
+    }
+    
+    
+    [Fact]
+    public async Task Run_ReturnsBadRequest_WhenHttpRequestIsMissingRequiredLightParameter() {
+        // Arrange:
+        _modelLoaderMock.Setup(m => m.GetOrLoadModelAsync())
+            .ReturnsAsync(Mock.Of<IInferenceSession>());
+
+        var function = new PredictSoilHumidity(_loggerMock.Object, _modelLoaderMock.Object);
+        
+        var input = new {
+            inputs = new Dictionary<string, float[]> {
+                { "soil_humidity", new[] { 0.1f }},
+                { "soil_delta", new[] { 1.0f } },
+                { "air_humidity", new[] { 2.0f } },
+                { "temperature", new[] { 3.0f } },
+                // Missing 'light'
+                { "hour_sin", new[] { 5.0f } },
+                { "hour_cos", new[] { 6.0f } },
+                { "threshold", new[] { 7.0f } }
+            }
+        };
+
+        string requestBody = JsonSerializer.Serialize(input);
+        var bodyStream = new MemoryStream(Encoding.UTF8.GetBytes(requestBody));
+        
+        var context = new Mock<FunctionContext>().Object;
+        var request = new TestHttpRequestData(context, bodyStream);
+
+        
+        // Act:
+        var result = await function.Run(request);
+
+        
+        // Assert:
+        Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
+
+        result.Body.Position = 0;
+        using var reader = new StreamReader(result.Body);
+        string responseBody = await reader.ReadToEndAsync();
+        _output.WriteLine($"Response Body: {responseBody}");
+
+        Assert.Contains("light", responseBody);
+    }
+    
+    
+    [Fact]
+    public async Task Run_ReturnsBadRequest_WhenHttpRequestIsMissingRequiredHourSinParameter() {
+        // Arrange:
+        _modelLoaderMock.Setup(m => m.GetOrLoadModelAsync())
+            .ReturnsAsync(Mock.Of<IInferenceSession>());
+
+        var function = new PredictSoilHumidity(_loggerMock.Object, _modelLoaderMock.Object);
+        
+        var input = new {
+            inputs = new Dictionary<string, float[]> {
+                { "soil_humidity", new[] { 0.1f }},
+                { "soil_delta", new[] { 1.0f } },
+                { "air_humidity", new[] { 2.0f } },
+                { "temperature", new[] { 3.0f } },
+                { "light", new[] { 4.0f } },
+                // Missing 'hour_sin'
+                { "hour_cos", new[] { 6.0f } },
+                { "threshold", new[] { 7.0f } }
+            }
+        };
+
+        string requestBody = JsonSerializer.Serialize(input);
+        var bodyStream = new MemoryStream(Encoding.UTF8.GetBytes(requestBody));
+        
+        var context = new Mock<FunctionContext>().Object;
+        var request = new TestHttpRequestData(context, bodyStream);
+
+        
+        // Act:
+        var result = await function.Run(request);
+
+        
+        // Assert:
+        Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
+
+        result.Body.Position = 0;
+        using var reader = new StreamReader(result.Body);
+        string responseBody = await reader.ReadToEndAsync();
+        _output.WriteLine($"Response Body: {responseBody}");
+
+        Assert.Contains("hour_sin", responseBody);
+    }
+    
+    
+    [Fact]
+    public async Task Run_ReturnsBadRequest_WhenHttpRequestIsMissingRequiredHourCosParameter() {
+        // Arrange:
+        _modelLoaderMock.Setup(m => m.GetOrLoadModelAsync())
+            .ReturnsAsync(Mock.Of<IInferenceSession>());
+
+        var function = new PredictSoilHumidity(_loggerMock.Object, _modelLoaderMock.Object);
+        
+        var input = new {
+            inputs = new Dictionary<string, float[]> {
+                { "soil_humidity", new[] { 0.1f }},
+                { "soil_delta", new[] { 1.0f } },
+                { "air_humidity", new[] { 2.0f } },
+                { "temperature", new[] { 3.0f } },
+                { "light", new[] { 4.0f } },
+                { "hour_sin", new[] { 5.0f } },
+                // Missing 'hour_cos'
+                { "threshold", new[] { 7.0f } }
+            }
+        };
+
+        string requestBody = JsonSerializer.Serialize(input);
+        var bodyStream = new MemoryStream(Encoding.UTF8.GetBytes(requestBody));
+        
+        var context = new Mock<FunctionContext>().Object;
+        var request = new TestHttpRequestData(context, bodyStream);
+
+        
+        // Act:
+        var result = await function.Run(request);
+
+        
+        // Assert:
+        Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
+
+        result.Body.Position = 0;
+        using var reader = new StreamReader(result.Body);
+        string responseBody = await reader.ReadToEndAsync();
+        _output.WriteLine($"Response Body: {responseBody}");
+
+        Assert.Contains("hour_cos", responseBody);
+    }
+    
+    
+    [Fact]
+    public async Task Run_ReturnsBadRequest_WhenHttpRequestIsMissingRequiredThresholdParameter() {
+        // Arrange:
+        _modelLoaderMock.Setup(m => m.GetOrLoadModelAsync())
+            .ReturnsAsync(Mock.Of<IInferenceSession>());
+
+        var function = new PredictSoilHumidity(_loggerMock.Object, _modelLoaderMock.Object);
+        
+        var input = new {
+            inputs = new Dictionary<string, float[]> {
+                { "soil_humidity", new[] { 0.1f }},
+                { "soil_delta", new[] { 1.0f } },
+                { "air_humidity", new[] { 2.0f } },
+                { "temperature", new[] { 3.0f } },
+                { "light", new[] { 4.0f } },
+                { "hour_sin", new[] { 5.0f } },
+                { "hour_cos", new[] { 5.0f } },
+                // Missing 'threshold'
+            }
+        };
+
+        string requestBody = JsonSerializer.Serialize(input);
+        var bodyStream = new MemoryStream(Encoding.UTF8.GetBytes(requestBody));
+        
+        var context = new Mock<FunctionContext>().Object;
+        var request = new TestHttpRequestData(context, bodyStream);
+
+        
+        // Act:
+        var result = await function.Run(request);
+
+        
+        // Assert:
+        Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
+
+        result.Body.Position = 0;
+        using var reader = new StreamReader(result.Body);
+        string responseBody = await reader.ReadToEndAsync();
+        _output.WriteLine($"Response Body: {responseBody}");
+
+        Assert.Contains("threshold", responseBody);
+    }
+    
+    
+    [Fact]
+    public async Task Run_ReturnsBadRequest_WhenHttpRequestThresholdParameterIsBelow0() {
+        // Arrange:
+        _modelLoaderMock.Setup(m => m.GetOrLoadModelAsync())
+            .ReturnsAsync(Mock.Of<IInferenceSession>());
+
+        var function = new PredictSoilHumidity(_loggerMock.Object, _modelLoaderMock.Object);
+        
+        var input = new {
+            inputs = new Dictionary<string, float[]> {
+                { "soil_humidity", new[] { 0.1f }},
+                { "soil_delta", new[] { 1.0f } },
+                { "air_humidity", new[] { 2.0f } },
+                { "temperature", new[] { 3.0f } },
+                { "light", new[] { 4.0f } },
+                { "hour_sin", new[] { -1.0f } },
+                { "hour_cos", new[] { 1.0f } },
+                { "threshold", new[] { -7.0f } }
+            }
+        };
+
+        string requestBody = JsonSerializer.Serialize(input);
+        var bodyStream = new MemoryStream(Encoding.UTF8.GetBytes(requestBody));
+        
+        var context = new Mock<FunctionContext>().Object;
+        var request = new TestHttpRequestData(context, bodyStream);
+
+        
+        // Act:
+        var result = await function.Run(request);
+
+        
+        // Assert:
+        Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
+
+        result.Body.Position = 0;
+        using var reader = new StreamReader(result.Body);
+        string responseBody = await reader.ReadToEndAsync();
+        _output.WriteLine($"Response Body: {responseBody}");
+
+        Assert.Contains("threshold", responseBody);
+    }
+    
+    
+    [Fact]
+    public async Task Run_ReturnsBadRequest_WhenHttpRequestThresholdParameterIsAbove100() {
+        // Arrange:
+        _modelLoaderMock.Setup(m => m.GetOrLoadModelAsync())
+            .ReturnsAsync(Mock.Of<IInferenceSession>());
+
+        var function = new PredictSoilHumidity(_loggerMock.Object, _modelLoaderMock.Object);
+        
+        var input = new {
+            inputs = new Dictionary<string, float[]> {
+                { "soil_humidity", new[] { 0.1f }},
+                { "soil_delta", new[] { 1.0f } },
+                { "air_humidity", new[] { 2.0f } },
+                { "temperature", new[] { 3.0f } },
+                { "light", new[] { 4.0f } },
+                { "hour_sin", new[] { -1.0f } },
+                { "hour_cos", new[] { 1.0f } },
+                { "threshold", new[] { 100.1f } }
+            }
+        };
+
+        string requestBody = JsonSerializer.Serialize(input);
+        var bodyStream = new MemoryStream(Encoding.UTF8.GetBytes(requestBody));
+        
+        var context = new Mock<FunctionContext>().Object;
+        var request = new TestHttpRequestData(context, bodyStream);
+
+        
+        // Act:
+        var result = await function.Run(request);
+
+        
+        // Assert:
+        Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
+
+        result.Body.Position = 0;
+        using var reader = new StreamReader(result.Body);
+        string responseBody = await reader.ReadToEndAsync();
+        _output.WriteLine($"Response Body: {responseBody}");
+
+        Assert.Contains("threshold", responseBody);
+    }
+    
+    
+    [Fact]
+    public async Task Run_ReturnsBadRequest_WhenHttpRequestHourCosParameterIsBelowNeg1() {
+        // Arrange:
+        _modelLoaderMock.Setup(m => m.GetOrLoadModelAsync())
+            .ReturnsAsync(Mock.Of<IInferenceSession>());
+
+        var function = new PredictSoilHumidity(_loggerMock.Object, _modelLoaderMock.Object);
+        
+        var input = new {
+            inputs = new Dictionary<string, float[]> {
+                { "soil_humidity", new[] { 0.1f }},
+                { "soil_delta", new[] { 1.0f } },
+                { "air_humidity", new[] { 2.0f } },
+                { "temperature", new[] { 3.0f } },
+                { "light", new[] { 4.0f } },
+                { "hour_sin", new[] { -1.0f } },
+                { "hour_cos", new[] { -1.01f } },
+                { "threshold", new[] { 0.0f } }
+            }
+        };
+
+        string requestBody = JsonSerializer.Serialize(input);
+        var bodyStream = new MemoryStream(Encoding.UTF8.GetBytes(requestBody));
+        
+        var context = new Mock<FunctionContext>().Object;
+        var request = new TestHttpRequestData(context, bodyStream);
+
+        
+        // Act:
+        var result = await function.Run(request);
+
+        
+        // Assert:
+        Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
+
+        result.Body.Position = 0;
+        using var reader = new StreamReader(result.Body);
+        string responseBody = await reader.ReadToEndAsync();
+        _output.WriteLine($"Response Body: {responseBody}");
+
+        Assert.Contains("hour_cos", responseBody);
+    }
+    
+    
+    [Fact]
+    public async Task Run_ReturnsBadRequest_WhenHttpRequestHourCosParameterIsAbove1() {
+        // Arrange:
+        _modelLoaderMock.Setup(m => m.GetOrLoadModelAsync())
+            .ReturnsAsync(Mock.Of<IInferenceSession>());
+
+        var function = new PredictSoilHumidity(_loggerMock.Object, _modelLoaderMock.Object);
+        
+        var input = new {
+            inputs = new Dictionary<string, float[]> {
+                { "soil_humidity", new[] { 0.1f }},
+                { "soil_delta", new[] { 1.0f } },
+                { "air_humidity", new[] { 2.0f } },
+                { "temperature", new[] { 3.0f } },
+                { "light", new[] { 4.0f } },
+                { "hour_sin", new[] { -1.0f } },
+                { "hour_cos", new[] { 1.01f } },
+                { "threshold", new[] { 100.0f } }
+            }
+        };
+
+        string requestBody = JsonSerializer.Serialize(input);
+        var bodyStream = new MemoryStream(Encoding.UTF8.GetBytes(requestBody));
+        
+        var context = new Mock<FunctionContext>().Object;
+        var request = new TestHttpRequestData(context, bodyStream);
+
+        
+        // Act:
+        var result = await function.Run(request);
+
+        
+        // Assert:
+        Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
+
+        result.Body.Position = 0;
+        using var reader = new StreamReader(result.Body);
+        string responseBody = await reader.ReadToEndAsync();
+        _output.WriteLine($"Response Body: {responseBody}");
+
+        Assert.Contains("hour_cos", responseBody);
+    }
+    
+    
+    [Fact]
+    public async Task Run_ReturnsBadRequest_WhenHttpRequestHourSinParameterIsBelowNeg1() {
+        // Arrange:
+        _modelLoaderMock.Setup(m => m.GetOrLoadModelAsync())
+            .ReturnsAsync(Mock.Of<IInferenceSession>());
+
+        var function = new PredictSoilHumidity(_loggerMock.Object, _modelLoaderMock.Object);
+        
+        var input = new {
+            inputs = new Dictionary<string, float[]> {
+                { "soil_humidity", new[] { 0.1f }},
+                { "soil_delta", new[] { 1.0f } },
+                { "air_humidity", new[] { 2.0f } },
+                { "temperature", new[] { 3.0f } },
+                { "light", new[] { 4.0f } },
+                { "hour_sin", new[] { -1.01f } },
+                { "hour_cos", new[] { -1.0f } },
+                { "threshold", new[] { 0.0f } }
+            }
+        };
+
+        string requestBody = JsonSerializer.Serialize(input);
+        var bodyStream = new MemoryStream(Encoding.UTF8.GetBytes(requestBody));
+        
+        var context = new Mock<FunctionContext>().Object;
+        var request = new TestHttpRequestData(context, bodyStream);
+
+        
+        // Act:
+        var result = await function.Run(request);
+
+        
+        // Assert:
+        Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
+
+        result.Body.Position = 0;
+        using var reader = new StreamReader(result.Body);
+        string responseBody = await reader.ReadToEndAsync();
+        _output.WriteLine($"Response Body: {responseBody}");
+
+        Assert.Contains("hour_sin", responseBody);
+    }
+    
+    
+    [Fact]
+    public async Task Run_ReturnsBadRequest_WhenHttpRequestHourSinParameterIsAbove1() {
+        // Arrange:
+        _modelLoaderMock.Setup(m => m.GetOrLoadModelAsync())
+            .ReturnsAsync(Mock.Of<IInferenceSession>());
+
+        var function = new PredictSoilHumidity(_loggerMock.Object, _modelLoaderMock.Object);
+        
+        var input = new {
+            inputs = new Dictionary<string, float[]> {
+                { "soil_humidity", new[] { 0.1f }},
+                { "soil_delta", new[] { 1.0f } },
+                { "air_humidity", new[] { 2.0f } },
+                { "temperature", new[] { 3.0f } },
+                { "light", new[] { 4.0f } },
+                { "hour_sin", new[] { 1.01f } },
+                { "hour_cos", new[] { 1.0f } },
+                { "threshold", new[] { 100.0f } }
+            }
+        };
+
+        string requestBody = JsonSerializer.Serialize(input);
+        var bodyStream = new MemoryStream(Encoding.UTF8.GetBytes(requestBody));
+        
+        var context = new Mock<FunctionContext>().Object;
+        var request = new TestHttpRequestData(context, bodyStream);
+
+        
+        // Act:
+        var result = await function.Run(request);
+
+        
+        // Assert:
+        Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
+
+        result.Body.Position = 0;
+        using var reader = new StreamReader(result.Body);
+        string responseBody = await reader.ReadToEndAsync();
+        _output.WriteLine($"Response Body: {responseBody}");
+
+        Assert.Contains("hour_sin", responseBody);
+    }
+    
+    
+    [Fact]
+    public async Task Run_ReturnsBadRequest_WhenHttpRequestLightParameterIsBelow0() {
+        // Arrange:
+        _modelLoaderMock.Setup(m => m.GetOrLoadModelAsync())
+            .ReturnsAsync(Mock.Of<IInferenceSession>());
+
+        var function = new PredictSoilHumidity(_loggerMock.Object, _modelLoaderMock.Object);
+        
+        var input = new {
+            inputs = new Dictionary<string, float[]> {
+                { "soil_humidity", new[] { 0.1f }},
+                { "soil_delta", new[] { 1.0f } },
+                { "air_humidity", new[] { 2.0f } },
+                { "temperature", new[] { 3.0f } },
+                { "light", new[] { -0.01f } },
+                { "hour_sin", new[] { -1.0f } },
+                { "hour_cos", new[] { -1.0f } },
+                { "threshold", new[] { 0.0f } }
+            }
+        };
+
+        string requestBody = JsonSerializer.Serialize(input);
+        var bodyStream = new MemoryStream(Encoding.UTF8.GetBytes(requestBody));
+        
+        var context = new Mock<FunctionContext>().Object;
+        var request = new TestHttpRequestData(context, bodyStream);
+
+        
+        // Act:
+        var result = await function.Run(request);
+
+        
+        // Assert:
+        Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
+
+        result.Body.Position = 0;
+        using var reader = new StreamReader(result.Body);
+        string responseBody = await reader.ReadToEndAsync();
+        _output.WriteLine($"Response Body: {responseBody}");
+
+        Assert.Contains("light", responseBody);
+    }
+    
+    
+    [Fact]
+    public async Task Run_ReturnsBadRequest_WhenHttpRequestLightParameterIsAbove100() {
+        // Arrange:
+        _modelLoaderMock.Setup(m => m.GetOrLoadModelAsync())
+            .ReturnsAsync(Mock.Of<IInferenceSession>());
+
+        var function = new PredictSoilHumidity(_loggerMock.Object, _modelLoaderMock.Object);
+        
+        var input = new {
+            inputs = new Dictionary<string, float[]> {
+                { "soil_humidity", new[] { 0.1f }},
+                { "soil_delta", new[] { 1.0f } },
+                { "air_humidity", new[] { 2.0f } },
+                { "temperature", new[] { 3.0f } },
+                { "light", new[] { 100.01f } },
+                { "hour_sin", new[] { 1.0f } },
+                { "hour_cos", new[] { 1.0f } },
+                { "threshold", new[] { 100.0f } }
+            }
+        };
+
+        string requestBody = JsonSerializer.Serialize(input);
+        var bodyStream = new MemoryStream(Encoding.UTF8.GetBytes(requestBody));
+        
+        var context = new Mock<FunctionContext>().Object;
+        var request = new TestHttpRequestData(context, bodyStream);
+
+        
+        // Act:
+        var result = await function.Run(request);
+
+        
+        // Assert:
+        Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
+
+        result.Body.Position = 0;
+        using var reader = new StreamReader(result.Body);
+        string responseBody = await reader.ReadToEndAsync();
+        _output.WriteLine($"Response Body: {responseBody}");
+
+        Assert.Contains("light", responseBody);
+    }
+    
+    
+    [Fact]
+    public async Task Run_ReturnsBadRequest_WhenHttpRequestTemperatureParameterIsBelow0() {
+        // Arrange:
+        _modelLoaderMock.Setup(m => m.GetOrLoadModelAsync())
+            .ReturnsAsync(Mock.Of<IInferenceSession>());
+
+        var function = new PredictSoilHumidity(_loggerMock.Object, _modelLoaderMock.Object);
+        
+        var input = new {
+            inputs = new Dictionary<string, float[]> {
+                { "soil_humidity", new[] { 0.1f }},
+                { "soil_delta", new[] { 1.0f } },
+                { "air_humidity", new[] { 2.0f } },
+                { "temperature", new[] { -0.01f } },
+                { "light", new[] { 0.01f } },
+                { "hour_sin", new[] { -1.0f } },
+                { "hour_cos", new[] { -1.0f } },
+                { "threshold", new[] { 0.0f } }
+            }
+        };
+
+        string requestBody = JsonSerializer.Serialize(input);
+        var bodyStream = new MemoryStream(Encoding.UTF8.GetBytes(requestBody));
+        
+        var context = new Mock<FunctionContext>().Object;
+        var request = new TestHttpRequestData(context, bodyStream);
+
+        
+        // Act:
+        var result = await function.Run(request);
+
+        
+        // Assert:
+        Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
+
+        result.Body.Position = 0;
+        using var reader = new StreamReader(result.Body);
+        string responseBody = await reader.ReadToEndAsync();
+        _output.WriteLine($"Response Body: {responseBody}");
+
+        Assert.Contains("temperature", responseBody);
+    }
+    
+    
+    [Fact]
+    public async Task Run_ReturnsBadRequest_WhenHttpRequestTemperatureParameterIsAbove100() {
+        // Arrange:
+        _modelLoaderMock.Setup(m => m.GetOrLoadModelAsync())
+            .ReturnsAsync(Mock.Of<IInferenceSession>());
+
+        var function = new PredictSoilHumidity(_loggerMock.Object, _modelLoaderMock.Object);
+        
+        var input = new {
+            inputs = new Dictionary<string, float[]> {
+                { "soil_humidity", new[] { 0.1f }},
+                { "soil_delta", new[] { 1.0f } },
+                { "air_humidity", new[] { 2.0f } },
+                { "temperature", new[] { 100.01f } },
+                { "light", new[] { 100.0f } },
+                { "hour_sin", new[] { 1.0f } },
+                { "hour_cos", new[] { 1.0f } },
+                { "threshold", new[] { 100.0f } }
+            }
+        };
+
+        string requestBody = JsonSerializer.Serialize(input);
+        var bodyStream = new MemoryStream(Encoding.UTF8.GetBytes(requestBody));
+        
+        var context = new Mock<FunctionContext>().Object;
+        var request = new TestHttpRequestData(context, bodyStream);
+
+        
+        // Act:
+        var result = await function.Run(request);
+
+        
+        // Assert:
+        Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
+
+        result.Body.Position = 0;
+        using var reader = new StreamReader(result.Body);
+        string responseBody = await reader.ReadToEndAsync();
+        _output.WriteLine($"Response Body: {responseBody}");
+
+        Assert.Contains("temperature", responseBody);
+    }
+    
+    
+    [Fact]
+    public async Task Run_ReturnsBadRequest_WhenHttpRequestAirHumidityParameterIsBelow0() {
+        // Arrange:
+        _modelLoaderMock.Setup(m => m.GetOrLoadModelAsync())
+            .ReturnsAsync(Mock.Of<IInferenceSession>());
+
+        var function = new PredictSoilHumidity(_loggerMock.Object, _modelLoaderMock.Object);
+        
+        var input = new {
+            inputs = new Dictionary<string, float[]> {
+                { "soil_humidity", new[] { 0.1f }},
+                { "soil_delta", new[] { 1.0f } },
+                { "air_humidity", new[] { -0.01f } },
+                { "temperature", new[] { 0.01f } },
+                { "light", new[] { 0.01f } },
+                { "hour_sin", new[] { -1.0f } },
+                { "hour_cos", new[] { -1.0f } },
+                { "threshold", new[] { 0.0f } }
+            }
+        };
+
+        string requestBody = JsonSerializer.Serialize(input);
+        var bodyStream = new MemoryStream(Encoding.UTF8.GetBytes(requestBody));
+        
+        var context = new Mock<FunctionContext>().Object;
+        var request = new TestHttpRequestData(context, bodyStream);
+
+        
+        // Act:
+        var result = await function.Run(request);
+
+        
+        // Assert:
+        Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
+
+        result.Body.Position = 0;
+        using var reader = new StreamReader(result.Body);
+        string responseBody = await reader.ReadToEndAsync();
+        _output.WriteLine($"Response Body: {responseBody}");
+
+        Assert.Contains("air_humidity", responseBody);
+    }
+    
+    
+    [Fact]
+    public async Task Run_ReturnsBadRequest_WhenHttpRequestAirHumidityParameterIsAbove100() {
+        // Arrange:
+        _modelLoaderMock.Setup(m => m.GetOrLoadModelAsync())
+            .ReturnsAsync(Mock.Of<IInferenceSession>());
+
+        var function = new PredictSoilHumidity(_loggerMock.Object, _modelLoaderMock.Object);
+        
+        var input = new {
+            inputs = new Dictionary<string, float[]> {
+                { "soil_humidity", new[] { 0.1f }},
+                { "soil_delta", new[] { 1.0f } },
+                { "air_humidity", new[] { 100.01f } },
+                { "temperature", new[] { 100.0f } },
+                { "light", new[] { 100.0f } },
+                { "hour_sin", new[] { 1.0f } },
+                { "hour_cos", new[] { 1.0f } },
+                { "threshold", new[] { 100.0f } }
+            }
+        };
+
+        string requestBody = JsonSerializer.Serialize(input);
+        var bodyStream = new MemoryStream(Encoding.UTF8.GetBytes(requestBody));
+        
+        var context = new Mock<FunctionContext>().Object;
+        var request = new TestHttpRequestData(context, bodyStream);
+
+        
+        // Act:
+        var result = await function.Run(request);
+
+        
+        // Assert:
+        Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
+
+        result.Body.Position = 0;
+        using var reader = new StreamReader(result.Body);
+        string responseBody = await reader.ReadToEndAsync();
+        _output.WriteLine($"Response Body: {responseBody}");
+
+        Assert.Contains("air_humidity", responseBody);
+    }
+    
+    
+    [Fact]
+    public async Task Run_ReturnsBadRequest_WhenHttpRequestSoilHumidityParameterIsBelow0() {
+        // Arrange:
+        _modelLoaderMock.Setup(m => m.GetOrLoadModelAsync())
+            .ReturnsAsync(Mock.Of<IInferenceSession>());
+
+        var function = new PredictSoilHumidity(_loggerMock.Object, _modelLoaderMock.Object);
+        
+        var input = new {
+            inputs = new Dictionary<string, float[]> {
+                { "soil_humidity", new[] { -0.01f }},
+                { "soil_delta", new[] { 1.0f } },
+                { "air_humidity", new[] { 0.01f } },
+                { "temperature", new[] { 0.01f } },
+                { "light", new[] { 0.01f } },
+                { "hour_sin", new[] { -1.0f } },
+                { "hour_cos", new[] { -1.0f } },
+                { "threshold", new[] { 0.0f } }
+            }
+        };
+
+        string requestBody = JsonSerializer.Serialize(input);
+        var bodyStream = new MemoryStream(Encoding.UTF8.GetBytes(requestBody));
+        
+        var context = new Mock<FunctionContext>().Object;
+        var request = new TestHttpRequestData(context, bodyStream);
+
+        
+        // Act:
+        var result = await function.Run(request);
+
+        
+        // Assert:
+        Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
+
+        result.Body.Position = 0;
+        using var reader = new StreamReader(result.Body);
+        string responseBody = await reader.ReadToEndAsync();
+        _output.WriteLine($"Response Body: {responseBody}");
+
+        Assert.Contains("soil_humidity", responseBody);
+    }
+    
+    
+    [Fact]
+    public async Task Run_ReturnsBadRequest_WhenHttpRequestSoilHumidityParameterIsAbove100() {
+        // Arrange:
+        _modelLoaderMock.Setup(m => m.GetOrLoadModelAsync())
+            .ReturnsAsync(Mock.Of<IInferenceSession>());
+
+        var function = new PredictSoilHumidity(_loggerMock.Object, _modelLoaderMock.Object);
+        
+        var input = new {
+            inputs = new Dictionary<string, float[]> {
+                { "soil_humidity", new[] { 100.01f }},
+                { "soil_delta", new[] { 1.0f } },
+                { "air_humidity", new[] { 100.0f } },
+                { "temperature", new[] { 100.0f } },
+                { "light", new[] { 100.0f } },
+                { "hour_sin", new[] { 1.0f } },
+                { "hour_cos", new[] { 1.0f } },
+                { "threshold", new[] { 100.0f } }
+            }
+        };
+
+        string requestBody = JsonSerializer.Serialize(input);
+        var bodyStream = new MemoryStream(Encoding.UTF8.GetBytes(requestBody));
+        
+        var context = new Mock<FunctionContext>().Object;
+        var request = new TestHttpRequestData(context, bodyStream);
+
+        
+        // Act:
+        var result = await function.Run(request);
+
+        
+        // Assert:
+        Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
+
+        result.Body.Position = 0;
+        using var reader = new StreamReader(result.Body);
+        string responseBody = await reader.ReadToEndAsync();
+        _output.WriteLine($"Response Body: {responseBody}");
+
+        Assert.Contains("soil_humidity", responseBody);
+    }
+    
+    
+    [Fact]
+    public async Task Run_ReturnsBadRequest_WhenHttpRequestDataIsNotFormattedAsJson() {
+        // Arrange:
+        _modelLoaderMock.Setup(m => m.GetOrLoadModelAsync())
+            .ReturnsAsync(Mock.Of<IInferenceSession>());
+
+        var function = new PredictSoilHumidity(_loggerMock.Object, _modelLoaderMock.Object);
+
+        string input = "this is not a JSON format";
+
+        string jsonString = JsonSerializer.Serialize(input);
+        
+        var bodyStream = new MemoryStream(Encoding.UTF8.GetBytes(jsonString));
+        
+        var context = new Mock<FunctionContext>().Object;
+        var request = new TestHttpRequestData(context, bodyStream);
+
+        
+        // Act:
+        var result = await function.Run(request);
+
+        
+        // Assert:
+        Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
+
+        result.Body.Position = 0;
+        using var reader = new StreamReader(result.Body);
+        string responseBody = await reader.ReadToEndAsync();
+        _output.WriteLine($"Response Body: {responseBody}");
+    }
+    
+    
+    [Fact]
+    public async Task Run_ReturnsBadRequest_WhenHttpRequestDataIsNotProperlyFormattedAsStringKeysAndFloatValues() {
+        // Arrange:
+        _modelLoaderMock.Setup(m => m.GetOrLoadModelAsync())
+            .ReturnsAsync(Mock.Of<IInferenceSession>());
+
+        var function = new PredictSoilHumidity(_loggerMock.Object, _modelLoaderMock.Object);
+        
+        var input = new {
+            inputs = new Dictionary<string, string> {
+                ["soil_humidity"] = "32.0",
+                ["soil_delta"] = "5.2",
+                ["air_humidity"] = "22.4",
+                ["temperature"] = "16.2" ,
+                ["light"] = "42.1",
+                ["hour_sin"] = "0.72",
+                ["hour_cos"] = "0.32",
+                ["threshold"] = "12.1"
+            }
+        };
+
+        string jsonString = JsonSerializer.Serialize(input);
+        
+        var bodyStream = new MemoryStream(Encoding.UTF8.GetBytes(jsonString));
+        
+        var context = new Mock<FunctionContext>().Object;
+        var request = new TestHttpRequestData(context, bodyStream);
+
+        
+        // Act:
+        var result = await function.Run(request);
+
+        
+        // Assert:
+        Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
+
+        result.Body.Position = 0;
+        using var reader = new StreamReader(result.Body);
+        string responseBody = await reader.ReadToEndAsync();
+        _output.WriteLine($"Response Body: {responseBody}");
+    }
+    
+    
+    [Fact]
+    public async Task Run_ReturnsBadRequest_WhenHttpRequestSoilHumidityParameterContains2FloatValuesInsteadOfThe1Required() {
+        // Arrange:
+        _modelLoaderMock.Setup(m => m.GetOrLoadModelAsync())
+            .ReturnsAsync(Mock.Of<IInferenceSession>());
+
+        var function = new PredictSoilHumidity(_loggerMock.Object, _modelLoaderMock.Object);
+        
+        var input = new {
+            inputs = new Dictionary<string, float[]> {
+                { "soil_humidity", new[] { 100.0f , 100.0f }},
+                { "soil_delta", new[] { 1.0f } },
+                { "air_humidity", new[] { 100.0f } },
+                { "temperature", new[] { 100.0f } },
+                { "light", new[] { 100.0f } },
+                { "hour_sin", new[] { 1.0f } },
+                { "hour_cos", new[] { 1.0f } },
+                { "threshold", new[] { 100.0f } }
+            }
+        };
+
+        string requestBody = JsonSerializer.Serialize(input);
+        var bodyStream = new MemoryStream(Encoding.UTF8.GetBytes(requestBody));
+        
+        var context = new Mock<FunctionContext>().Object;
+        var request = new TestHttpRequestData(context, bodyStream);
+
+        
+        // Act:
+        var result = await function.Run(request);
+
+        
+        // Assert:
+        Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
+
+        result.Body.Position = 0;
+        using var reader = new StreamReader(result.Body);
+        string responseBody = await reader.ReadToEndAsync();
+        _output.WriteLine($"Response Body: {responseBody}");
+
+        Assert.Contains("soil_humidity", responseBody);
+    }
+    
+    
+    [Fact]
+    public async Task Run_ReturnsBadRequest_WhenHttpRequestSoilDeltaParameterContains2FloatValuesInsteadOfThe1Required() {
+        // Arrange:
+        _modelLoaderMock.Setup(m => m.GetOrLoadModelAsync())
+            .ReturnsAsync(Mock.Of<IInferenceSession>());
+
+        var function = new PredictSoilHumidity(_loggerMock.Object, _modelLoaderMock.Object);
+        
+        var input = new {
+            inputs = new Dictionary<string, float[]> {
+                { "soil_humidity", new[] { 100.0f}},
+                { "soil_delta", new[] { 1.0f, 0.8f } },
+                { "air_humidity", new[] { 100.0f } },
+                { "temperature", new[] { 100.0f } },
+                { "light", new[] { 100.0f } },
+                { "hour_sin", new[] { 1.0f } },
+                { "hour_cos", new[] { 1.0f } },
+                { "threshold", new[] { 100.0f } }
+            }
+        };
+
+        string requestBody = JsonSerializer.Serialize(input);
+        var bodyStream = new MemoryStream(Encoding.UTF8.GetBytes(requestBody));
+        
+        var context = new Mock<FunctionContext>().Object;
+        var request = new TestHttpRequestData(context, bodyStream);
+
+        
+        // Act:
+        var result = await function.Run(request);
+
+        
+        // Assert:
+        Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
+
+        result.Body.Position = 0;
+        using var reader = new StreamReader(result.Body);
+        string responseBody = await reader.ReadToEndAsync();
+        _output.WriteLine($"Response Body: {responseBody}");
+
+        Assert.Contains("soil_delta", responseBody);
+    }
+    
+    
+    [Fact]
+    public async Task Run_ReturnsBadRequest_WhenHttpRequestAirHumidityParameterContains2FloatValuesInsteadOfThe1Required() {
+        // Arrange:
+        _modelLoaderMock.Setup(m => m.GetOrLoadModelAsync())
+            .ReturnsAsync(Mock.Of<IInferenceSession>());
+
+        var function = new PredictSoilHumidity(_loggerMock.Object, _modelLoaderMock.Object);
+        
+        var input = new {
+            inputs = new Dictionary<string, float[]> {
+                { "soil_humidity", new[] { 100.0f}},
+                { "soil_delta", new[] { 1.0f } },
+                { "air_humidity", new[] { 100.0f, 99.0f } },
+                { "temperature", new[] { 100.0f } },
+                { "light", new[] { 100.0f } },
+                { "hour_sin", new[] { 1.0f } },
+                { "hour_cos", new[] { 1.0f } },
+                { "threshold", new[] { 100.0f } }
+            }
+        };
+
+        string requestBody = JsonSerializer.Serialize(input);
+        var bodyStream = new MemoryStream(Encoding.UTF8.GetBytes(requestBody));
+        
+        var context = new Mock<FunctionContext>().Object;
+        var request = new TestHttpRequestData(context, bodyStream);
+
+        
+        // Act:
+        var result = await function.Run(request);
+
+        
+        // Assert:
+        Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
+
+        result.Body.Position = 0;
+        using var reader = new StreamReader(result.Body);
+        string responseBody = await reader.ReadToEndAsync();
+        _output.WriteLine($"Response Body: {responseBody}");
+
+        Assert.Contains("air_humidity", responseBody);
+    }
+    
+    
+    [Fact]
+    public async Task Run_ReturnsBadRequest_WhenHttpRequestTemperatureParameterContains2FloatValuesInsteadOfThe1Required() {
+        // Arrange:
+        _modelLoaderMock.Setup(m => m.GetOrLoadModelAsync())
+            .ReturnsAsync(Mock.Of<IInferenceSession>());
+
+        var function = new PredictSoilHumidity(_loggerMock.Object, _modelLoaderMock.Object);
+        
+        var input = new {
+            inputs = new Dictionary<string, float[]> {
+                { "soil_humidity", new[] { 100.0f}},
+                { "soil_delta", new[] { 1.0f } },
+                { "air_humidity", new[] { 100.0f } },
+                { "temperature", new[] { 100.0f, 5.0f } },
+                { "light", new[] { 100.0f } },
+                { "hour_sin", new[] { 1.0f } },
+                { "hour_cos", new[] { 1.0f } },
+                { "threshold", new[] { 100.0f } }
+            }
+        };
+
+        string requestBody = JsonSerializer.Serialize(input);
+        var bodyStream = new MemoryStream(Encoding.UTF8.GetBytes(requestBody));
+        
+        var context = new Mock<FunctionContext>().Object;
+        var request = new TestHttpRequestData(context, bodyStream);
+
+        
+        // Act:
+        var result = await function.Run(request);
+
+        
+        // Assert:
+        Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
+
+        result.Body.Position = 0;
+        using var reader = new StreamReader(result.Body);
+        string responseBody = await reader.ReadToEndAsync();
+        _output.WriteLine($"Response Body: {responseBody}");
+
+        Assert.Contains("temperature", responseBody);
+    }
+    
+    
+    [Fact]
+    public async Task Run_ReturnsBadRequest_WhenHttpRequestLightParameterContains2FloatValuesInsteadOfThe1Required() {
+        // Arrange:
+        _modelLoaderMock.Setup(m => m.GetOrLoadModelAsync())
+            .ReturnsAsync(Mock.Of<IInferenceSession>());
+
+        var function = new PredictSoilHumidity(_loggerMock.Object, _modelLoaderMock.Object);
+        
+        var input = new {
+            inputs = new Dictionary<string, float[]> {
+                { "soil_humidity", new[] { 100.0f}},
+                { "soil_delta", new[] { 1.0f } },
+                { "air_humidity", new[] { 100.0f } },
+                { "temperature", new[] { 100.0f } },
+                { "light", new[] { 100.0f, 42.0f } },
+                { "hour_sin", new[] { 1.0f } },
+                { "hour_cos", new[] { 1.0f } },
+                { "threshold", new[] { 100.0f } }
+            }
+        };
+
+        string requestBody = JsonSerializer.Serialize(input);
+        var bodyStream = new MemoryStream(Encoding.UTF8.GetBytes(requestBody));
+        
+        var context = new Mock<FunctionContext>().Object;
+        var request = new TestHttpRequestData(context, bodyStream);
+
+        
+        // Act:
+        var result = await function.Run(request);
+
+        
+        // Assert:
+        Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
+
+        result.Body.Position = 0;
+        using var reader = new StreamReader(result.Body);
+        string responseBody = await reader.ReadToEndAsync();
+        _output.WriteLine($"Response Body: {responseBody}");
+
+        Assert.Contains("light", responseBody);
+    }
+    
+    
+    [Fact]
+    public async Task Run_ReturnsBadRequest_WhenHttpRequestHourSinParameterContains2FloatValuesInsteadOfThe1Required() {
+        // Arrange:
+        _modelLoaderMock.Setup(m => m.GetOrLoadModelAsync())
+            .ReturnsAsync(Mock.Of<IInferenceSession>());
+
+        var function = new PredictSoilHumidity(_loggerMock.Object, _modelLoaderMock.Object);
+        
+        var input = new {
+            inputs = new Dictionary<string, float[]> {
+                { "soil_humidity", new[] { 100.0f}},
+                { "soil_delta", new[] { 1.0f } },
+                { "air_humidity", new[] { 100.0f } },
+                { "temperature", new[] { 100.0f } },
+                { "light", new[] { 100.0f } },
+                { "hour_sin", new[] { 1.0f, 0.9f } },
+                { "hour_cos", new[] { 1.0f } },
+                { "threshold", new[] { 100.0f } }
+            }
+        };
+
+        string requestBody = JsonSerializer.Serialize(input);
+        var bodyStream = new MemoryStream(Encoding.UTF8.GetBytes(requestBody));
+        
+        var context = new Mock<FunctionContext>().Object;
+        var request = new TestHttpRequestData(context, bodyStream);
+
+        
+        // Act:
+        var result = await function.Run(request);
+
+        
+        // Assert:
+        Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
+
+        result.Body.Position = 0;
+        using var reader = new StreamReader(result.Body);
+        string responseBody = await reader.ReadToEndAsync();
+        _output.WriteLine($"Response Body: {responseBody}");
+
+        Assert.Contains("hour_sin", responseBody);
+    }
+    
+    
+    [Fact]
+    public async Task Run_ReturnsBadRequest_WhenHttpRequestHourCosParameterContains2FloatValuesInsteadOfThe1Required() {
+        // Arrange:
+        _modelLoaderMock.Setup(m => m.GetOrLoadModelAsync())
+            .ReturnsAsync(Mock.Of<IInferenceSession>());
+
+        var function = new PredictSoilHumidity(_loggerMock.Object, _modelLoaderMock.Object);
+        
+        var input = new {
+            inputs = new Dictionary<string, float[]> {
+                { "soil_humidity", new[] { 100.0f}},
+                { "soil_delta", new[] { 1.0f } },
+                { "air_humidity", new[] { 100.0f } },
+                { "temperature", new[] { 100.0f } },
+                { "light", new[] { 100.0f } },
+                { "hour_sin", new[] { 1.0f } },
+                { "hour_cos", new[] { 1.0f, 0.8f } },
+                { "threshold", new[] { 100.0f } }
+            }
+        };
+
+        string requestBody = JsonSerializer.Serialize(input);
+        var bodyStream = new MemoryStream(Encoding.UTF8.GetBytes(requestBody));
+        
+        var context = new Mock<FunctionContext>().Object;
+        var request = new TestHttpRequestData(context, bodyStream);
+
+        
+        // Act:
+        var result = await function.Run(request);
+
+        
+        // Assert:
+        Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
+
+        result.Body.Position = 0;
+        using var reader = new StreamReader(result.Body);
+        string responseBody = await reader.ReadToEndAsync();
+        _output.WriteLine($"Response Body: {responseBody}");
+
+        Assert.Contains("hour_cos", responseBody);
+    }
+    
+    
+    [Fact]
+    public async Task Run_ReturnsBadRequest_WhenHttpRequestThresholdParameterContains2FloatValuesInsteadOfThe1Required() {
+        // Arrange:
+        _modelLoaderMock.Setup(m => m.GetOrLoadModelAsync())
+            .ReturnsAsync(Mock.Of<IInferenceSession>());
+
+        var function = new PredictSoilHumidity(_loggerMock.Object, _modelLoaderMock.Object);
+        
+        var input = new {
+            inputs = new Dictionary<string, float[]> {
+                { "soil_humidity", new[] { 100.0f}},
+                { "soil_delta", new[] { 1.0f } },
+                { "air_humidity", new[] { 100.0f } },
+                { "temperature", new[] { 100.0f } },
+                { "light", new[] { 100.0f } },
+                { "hour_sin", new[] { 1.0f } },
+                { "hour_cos", new[] { 1.0f } },
+                { "threshold", new[] { 100.0f, 98.2f } }
+            }
+        };
+
+        string requestBody = JsonSerializer.Serialize(input);
+        var bodyStream = new MemoryStream(Encoding.UTF8.GetBytes(requestBody));
+        
+        var context = new Mock<FunctionContext>().Object;
+        var request = new TestHttpRequestData(context, bodyStream);
+
+        
+        // Act:
+        var result = await function.Run(request);
+
+        
+        // Assert:
+        Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
+
+        result.Body.Position = 0;
+        using var reader = new StreamReader(result.Body);
+        string responseBody = await reader.ReadToEndAsync();
+        _output.WriteLine($"Response Body: {responseBody}");
+
+        Assert.Contains("threshold", responseBody);
     }
 }
