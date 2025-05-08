@@ -10,6 +10,7 @@ namespace API.DataEntities
         public double HourSin { get; set; }
         public double HourCos { get; set; }
         public double? Threshold { get; set; }
+        public DateTime Timestamp { get; set; }
 
         public static PredictionInput FromValues(
             double soilHumidity,
@@ -35,7 +36,8 @@ namespace API.DataEntities
                 Light = light,
                 HourSin = hourSin,
                 HourCos = hourCos,
-                Threshold = threshold
+                Threshold = threshold,
+                Timestamp = timestamp
             };
         }
     }
