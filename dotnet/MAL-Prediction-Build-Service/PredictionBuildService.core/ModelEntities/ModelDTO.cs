@@ -3,23 +3,33 @@ using Newtonsoft.Json;
 namespace PredictionBuildService.core.ModelEntities;
 
 [JsonObject]
-public class ModelDTO
+public abstract class ModelDTO
 {
+    // Injected variables through JSON deserialization:
     [JsonProperty("model_type")]
-    public string? Type { get; set; }            // I.e.: LinearRegression
+    public string? Type { get; set; }
     
-    [JsonProperty("model_version")]
-    public string? Version { get; set; }         // I.e.: v1
+    [JsonProperty("training_timestamp_utc")]
+    public string? TrainingTimestamp { get; set; }
     
-    public string? DownloadUrl { get; set; }    // Is manually set after metadata is loaded.
-    public DateTime TrainingDate { get; set; }  // TODO: Evaluate if this data is part of the actual metadata!
+    [JsonProperty("target")]
+    public string? Target { get; set; }
+    
+    [JsonProperty("feature_names")]
+    public string[]? FeaturesNames { get; set; }
+    
+    
+    // Programmatically set variables:
+    public string? DownloadUrl { get; set; }
+    
     
     public override string ToString() {
         return (
             "Type: " + Type + 
-            ", Version: " + Version + 
-            ", DownloadUrl: " + DownloadUrl + 
-            ", TrainingDate: " + TrainingDate
+            "\n, Training_timestamp_utc: " + TrainingTimestamp + 
+            "\n, DownloadUrl: " + DownloadUrl +
+            "\n, target: " + Target + 
+            "\n, feature_names: " + FeaturesNames
             );
     }
 };

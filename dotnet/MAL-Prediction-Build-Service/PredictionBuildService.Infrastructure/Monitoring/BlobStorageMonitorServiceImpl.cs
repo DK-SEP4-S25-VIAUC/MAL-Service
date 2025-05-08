@@ -7,49 +7,67 @@ using Azure.Storage.Queues.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using PredictionBuildService.Configurations;
-using PredictionBuildService.core;
 using PredictionBuildService.core.EventArgs;
 using PredictionBuildService.core.Interfaces;
 
 namespace PredictionBuildService.Infrastructure.Monitoring;
 
 /// <summary>
-/// ...
+/// This class is responsible for continuously monitoring/listening for changes in the EvenGrid associated with the BlobStorage that contains the prediction models.
+/// When changes are detected, the class ensures proper update of the in-memory ModelCache as well as the proper firing of EventListeners to the other services that observe/subscribe to this class.
 /// </summary>
 /// <remarks>
-/// Implmentation logic is based on available Microsoft tutorials, i.e.:<br />
+/// Implementation logic is based on available Microsoft tutorials, i.e.:<br />
 /// https://learn.microsoft.com/en-us/dotnet/api/overview/azure/messaging.eventgrid-readme?view=azure-dotnet <br />
 /// https://learn.microsoft.com/en-us/dotnet/api/overview/azure/storage.queues-readme?view=azure-dotnet <br />
 /// </remarks>
 public class BlobStorageMonitorServiceImpl : IBlobStorageMonitorService
 {
+    // Variables
     private readonly ILogger<BlobStorageMonitorServiceImpl> _logger;
     private readonly QueueClient _queueClient;
-    private readonly AzureBlobStorageSettings _settings;
+    private readonly AzureBlobStorageSettings _blobStorageSettings;
     private readonly IModelCache _modelCache;
     private readonly IBlobStorageInteractionHelper _blobStorageInteractionHelper;
     private readonly BlobServiceClient _blobServiceClient;
+    private readonly WorkerSettings _workerSettings;
     
+    // Events this class fires:
     public event Func<object, AddedNewModelsEventArgs, Task>? NewModelsAdded;
     
+    /// <summary>
+    /// Primary constructor. It is recommended to use dependency injection to inject the specified arguments, instead of manual injection.
+    /// </summary>
+    /// <param name="logger">A logging service, that can handle logging of messages</param>
+    /// <param name="blobStorageSettings">The settings class, defining access settings to the BlobStorage</param>
+    /// <param name="queueClient">The Azure QueueClient that handles interactions with the EventGrid queue on Azure</param>
+    /// <param name="modelCache">The local in-memory cache that holds all currently registered prediction models.</param>
+    /// <param name="blobStorageInteractionHelper">Helper class to handle conversions between BlobStorage format and Application formats. Exposes relevant helper methods. </param>
+    /// <param name="blobServiceClient">The Azure BlobServiceClient that handles interactions with the BlobStorage on Azure.</param>
+    /// <param name="workerSettings">The settings class, defining access settings applicable to the primary Worker class</param>
     public BlobStorageMonitorServiceImpl(
         ILogger<BlobStorageMonitorServiceImpl> logger, 
-        IOptions<AzureBlobStorageSettings> settings,
+        IOptions<AzureBlobStorageSettings> blobStorageSettings,
         QueueClient queueClient,
         IModelCache modelCache,
         IBlobStorageInteractionHelper blobStorageInteractionHelper,
-        BlobServiceClient blobServiceClient
-        ) {
+        BlobServiceClient blobServiceClient,
+        IOptions<WorkerSettings> workerSettings) {
         _logger = logger;
         _queueClient = queueClient;
-        _settings = settings.Value;
+        _blobStorageSettings = blobStorageSettings.Value;
         _modelCache = modelCache;
         _blobStorageInteractionHelper = blobStorageInteractionHelper;
         _blobServiceClient = blobServiceClient;
+        _workerSettings = workerSettings.Value;
     }
     
     
     // Define Event Handler invokers:
+    /// <summary>
+    /// Fires an 'AddedNewModelsEventArgs' event when new models are registered in the BlobStorage.
+    /// Allows for listeners to react to this and do stuff, such as evaluate the model and if needed, redeploy.
+    /// </summary>
     private async Task OnNewModelsAdded() {
         // Fire the event if there are more than null subscribers.
         if (NewModelsAdded != null) {
@@ -65,11 +83,14 @@ public class BlobStorageMonitorServiceImpl : IBlobStorageMonitorService
         _logger.LogInformation("Blob Storage Monitoring Service started at: {time}", DateTimeOffset.Now);
         
         // Start the monitoring loop:
+        // This is designed to check for changes only once an hour to ensure Azure costs to CPU usage remain as low as possible.
         while (!token.IsCancellationRequested) {
             try {
+                _logger.LogInformation("Checking for changes in Blob Storage at: {time}", DateTimeOffset.Now);
                 // Wait to receive a message from the Azure Storage Queue:
                 var response = await _queueClient.ReceiveMessagesAsync(maxMessages: 1, cancellationToken: token);
                 if (response?.Value != null && response.Value.Length > 0) {
+                    // Theres something in the event queue. Let's handle it.
                     await HandleQueueResponse(response, token);
                     // Check if there are more messages waiting to be processed:
                     bool moreMessagesWaiting = false;
@@ -84,20 +105,30 @@ public class BlobStorageMonitorServiceImpl : IBlobStorageMonitorService
                         _logger.LogInformation("Processed entire queue.");
                         await NotifySubscribersAsync();
                     }
+                    // Sleep for a few seconds before processing next event:
+                    await Task.Delay(3000, token);
+                    
+                } else {
+                    // Queue is empty...
+                    // Sleep for 1 hour (or whatever is set in the settings) to minimize CPU usage:
+                    _logger.LogInformation("Finished processing changes at: {time}.\nSleeping for {delay} minutes...", DateTimeOffset.Now, _workerSettings.SleepBetweenChecksInterval);
+                    await Task.Delay(TimeSpan.FromHours(int.Parse(_workerSettings.SleepBetweenChecksInterval)), token);
                 }
+                
             } catch (JsonException ex) {
                 _logger.LogError(ex, "Failed to deserialize Event Grid message");
             } catch (Exception ex) {
-                _logger.LogError(ex, "Error processing message from queue");
+                if (ex is not TaskCanceledException) {
+                    _logger.LogError(ex, "Error processing Blob Storage changes.\nSleeping for 10 minutes before retrying...");
+                    await Task.Delay(TimeSpan.FromMinutes(10), token);
+                } else {
+                    _logger.LogError(ex, "Error processing message from queue");
+                }
             }
-            
-            // Wait a little while, to save system resources:
-            await Task.Delay(5000, token);
         }
-        
         _logger.LogInformation("Blob Storage Monitoring Service stopped at: {time}", DateTimeOffset.Now);
     }
-
+    
     public async Task NotifySubscribersAsync() {
         _logger.LogInformation("Notifying subscribers of changes...");
         await OnNewModelsAdded();
@@ -144,12 +175,12 @@ public class BlobStorageMonitorServiceImpl : IBlobStorageMonitorService
                 _logger.LogInformation("Processing blob creation event for URI: {blobUri} with name: {blobName}", blobUri, blobName);
                 
                 // ModelMetaDataFormat is set in appsettings.json. Maybe it's like '.metadata.json' - maybe some other format:
-                if (blobUri.Contains(_settings.ModelMetaDataFormat)) {
+                if (blobUri.Contains(_blobStorageSettings.ModelMetaDataFormat)) {
                     
                     // Download the model metadata:
-                    BlobClient blobClient = _blobServiceClient.GetBlobContainerClient(_settings.ContainerName).GetBlobClient(blobName);
+                    BlobClient blobClient = _blobServiceClient.GetBlobContainerClient(_blobStorageSettings.ContainerName).GetBlobClient(blobName);
                     var modelMetaData = await _blobStorageInteractionHelper.DownloadBlobToStringAsync(blobClient, token);
-                    var model = _blobStorageInteractionHelper.ConvertFromJsonMetadataToModelDTO(modelMetaData, _settings.ModelMetaDataFormat, _settings.ModelFileType, blobClient);
+                    var model = _blobStorageInteractionHelper.ConvertFromJsonMetadataToModelDTO(modelMetaData, _blobStorageSettings.ModelMetaDataFormat, _blobStorageSettings.ModelFileType, blobClient);
                     
                     // Add the newly found model to the ModelCache:
                     await _modelCache.AddModelAsync(model);

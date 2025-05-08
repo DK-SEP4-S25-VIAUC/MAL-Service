@@ -1,20 +1,35 @@
 using Microsoft.Extensions.Logging;
-using PredictionBuildService.core;
 using PredictionBuildService.core.EventArgs;
 using PredictionBuildService.core.Interfaces;
 using PredictionBuildService.core.ModelEntities;
+using PredictionBuildService.Infrastructure.Evaluation.EvaluationWorkflows;
 
 namespace PredictionBuildService.Infrastructure.Evaluation;
 
+/// <summary>
+/// Implementation of the IModelEvaluationService interface that handles evaluating identified .
+/// </summary>
 public class ModelEvaluationServiceImpl : IModelEvaluationService
 {
+    // Variables
     private readonly ILogger<ModelEvaluationServiceImpl> _logger;
     private readonly IModelCache _modelCache;
     private readonly IBlobStorageMonitorService _blobStorageMonitorService;
+    private readonly EvaluationInvoker _evaluationInvoker = new();
+    
+    // Events this class subscribes to:
     private Func<object, AddedNewModelsEventArgs, Task>? _newModelsAddedEventHandler;
     
+    // Events this class fires:
     public event Func<object, EvaluatedAllLinearRegressionModelsEventArgs, Task>? LinearRegModelsEvaluated;
 
+    
+    /// <summary>
+    /// Primary constructor. It is recommended to use dependency injection to inject the specified arguments, instead of manual injection.
+    /// </summary>
+    /// <param name="logger">A logging service, that can handle logging of messages</param>
+    /// <param name="modelCache">The local in-memory cache that holds all currently registered prediction models.</param>
+    /// <param name="blobStorageMonitorService">The observable BlobStorageMonitorService responsible for firing events when specific changes occur in the blob storage.</param>
     public ModelEvaluationServiceImpl(
         ILogger<ModelEvaluationServiceImpl> logger, 
         IModelCache modelCache,
@@ -29,7 +44,12 @@ public class ModelEvaluationServiceImpl : IModelEvaluationService
         Subscribe();
     }
     
+    
     // Define Event Handler invokers:
+    /// <summary>
+    /// Fires an 'EvaluatedAllLinearRegressionModelsEventArgs' event when all the identified LinearRegressionModels have been evaluated.
+    /// Allows for listeners to react to this and do stuff, such as build the best the model and if needed, redeploy.
+    /// </summary>
     private async Task OnLinearRegModelsEvaluated(ModelDTO bestModel) {
         // Fire the event if there are more than null subscribers.
         if (LinearRegModelsEvaluated != null) {
@@ -41,12 +61,16 @@ public class ModelEvaluationServiceImpl : IModelEvaluationService
     
     
     // Implement the IEventSubscriber interface:
+    // TODO: Test
+    // Is the class properly subscribed to NewModelsAdded, after this has run?
     public void Subscribe() {
         _newModelsAddedEventHandler = async (sender, e) => await HandleEventAsync(sender, e);
         _blobStorageMonitorService.NewModelsAdded += _newModelsAddedEventHandler;
         _logger.LogInformation("ModelEvaluationService subscribed to events from BlobStorageMonitorService");
     }
 
+    // TODO: Test
+    // Is the class properly unsubscribed to NewModelsAdded, after this has run?
     public void Unsubscribe() {
         if (_newModelsAddedEventHandler != null) {
             _blobStorageMonitorService.NewModelsAdded -= _newModelsAddedEventHandler;
@@ -55,6 +79,9 @@ public class ModelEvaluationServiceImpl : IModelEvaluationService
         _logger.LogInformation("ModelEvaluationService unsubscribed to events from BlobStorageMonitorService");
     }
 
+    // TODO: Test
+    // Are LinearRegressionModels properly evaluated when AddedNewModelsEventArgs are fired/received?
+    // What if an unknown Event is registered?
     public async Task HandleEventAsync(object? sender, EventArgs e) {
         switch (e) {
             case AddedNewModelsEventArgs eventArgs:
@@ -88,7 +115,7 @@ public class ModelEvaluationServiceImpl : IModelEvaluationService
             return;
         }
         
-        _logger.LogInformation("Evaluation found best model to be: Type={ModelType}, Version={ModelVersion}", firstModel.Type, firstModel.Version);
+        _logger.LogInformation("Evaluation found best model to be: Type={ModelType}, Version={ModelVersion}", firstModel.Type, firstModel.TrainingTimestamp);
         
         // Notify Subscribers:
         _logger.LogInformation("Now notifying subscribers...");

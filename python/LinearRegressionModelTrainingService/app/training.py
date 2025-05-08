@@ -1,27 +1,25 @@
 """
 Train a linear (Ridge) regression baseline that predicts
-“minutes until soil humidity drops below 20 %”.
+“minutes until soil humidity drops below a certain threshold %”.
 """
 
 import os
 import json
 from datetime import datetime
-
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import Ridge
 from sklearn.model_selection import TimeSeriesSplit, GridSearchCV
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import mean_squared_error, r2_score
-
+from sklearn.metrics import r2_score
 from skl2onnx import convert_sklearn
 from skl2onnx.common.data_types import FloatTensorType
 
-from app.upload_model import upload_to_blob
+from upload_model import upload_to_blob
 
 # Helper: derive the target variable
-def add_minutes_to_dry(df: pd.DataFrame, threshold: float = 40.0) -> pd.DataFrame:
+def add_minutes_to_dry(df: pd.DataFrame, threshold: float) -> pd.DataFrame:
     """
     Adds a 'minutes_to_dry' column to *df*.
 
@@ -37,31 +35,37 @@ def add_minutes_to_dry(df: pd.DataFrame, threshold: float = 40.0) -> pd.DataFram
 
     ts_minutes = df["timestamp"].values.astype("datetime64[m]").view("int")
 
-    below = np.where(soil < threshold)[0] # indices that are already < 40 %
+    below = np.where(soil < threshold)[0]
     next_idx = np.full(len(df), np.nan, dtype=float) # handle NaNs
 
     for i in range(len(df) - 1):
-        j = below[below > i] # first future index < 40 %
+        j = below[below > i]
         if j.size:
             next_idx[i] = ts_minutes[j[0]] - ts_minutes[i]
 
     df["minutes_to_dry"] = next_idx
+    df["threshold"] = threshold
+
     return df
 
 # Main training entry point
-def train_model(json_string: str) -> dict:
-    # Parse the incoming JSON and
-    parsed = json.loads(json_string)
-    samples = parsed["response"]["list"]
+def train_model(json_samples: str, json_threshold: str) -> dict:
+    # Parse the incoming JSON
+    parsed_samples = json.loads(json_samples)
+    samples = parsed_samples["response"]["list"]
     sample_data = [item["SampleDTO"] for item in samples]
     df = pd.DataFrame(sample_data)
+
+    # Parse incoming JSON threshold
+    parsed_threshold = json.loads(json_threshold)
+    threshold = parsed_threshold["threshold"]
 
     # Data pre-processing
     df["timestamp"] = pd.to_datetime(df["timestamp"])
     df.sort_values("timestamp", inplace=True)
 
     # Create target variable
-    df = add_minutes_to_dry(df)
+    df = add_minutes_to_dry(df, threshold)
     df.dropna(subset=["minutes_to_dry"], inplace=True)
 
     # Feature engineering
@@ -79,6 +83,7 @@ def train_model(json_string: str) -> dict:
         "light",
         "hour_sin",
         "hour_cos",
+        "threshold",
     ]
 
     X = df[feature_cols].astype(float)
@@ -127,7 +132,7 @@ def train_model(json_string: str) -> dict:
     # Produce metadata
     metadata = {
         "model_type": "Ridge (linear)",
-        "target": "minutes_to_dry (<20 % soil humidity)",
+        "target": f"minutes_to_dry (<{threshold}% soil humidity)",
         "feature_names": feature_cols,
         "alpha": gscv.best_params_["ridge__alpha"],
         "cross_val_splits": tscv.n_splits,
