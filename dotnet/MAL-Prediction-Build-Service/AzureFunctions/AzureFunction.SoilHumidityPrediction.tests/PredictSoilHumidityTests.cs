@@ -842,7 +842,7 @@ public class PredictSoilHumidityTests : IDisposable
     
     
     [Fact]
-    public async Task Run_ReturnsBadRequest_WhenHttpRequestLightParameterIsAbove100() {
+    public async Task Run_ReturnsBadRequest_WhenHttpRequestLightParameterIsAbove10000() {
         // Arrange:
         _modelLoaderMock.Setup(m => m.GetOrLoadModelAsync())
             .ReturnsAsync(Mock.Of<IInferenceSession>());
@@ -855,7 +855,7 @@ public class PredictSoilHumidityTests : IDisposable
                 { "soil_delta", new[] { 1.0f } },
                 { "air_humidity", new[] { 2.0f } },
                 { "temperature", new[] { 3.0f } },
-                { "light", new[] { 100.01f } },
+                { "light", new[] { 10000.01f } },
                 { "hour_sin", new[] { 1.0f } },
                 { "hour_cos", new[] { 1.0f } },
                 { "threshold", new[] { 100.0f } }
@@ -886,7 +886,7 @@ public class PredictSoilHumidityTests : IDisposable
     
     
     [Fact]
-    public async Task Run_ReturnsBadRequest_WhenHttpRequestTemperatureParameterIsBelow0() {
+    public async Task Run_ReturnsBadRequest_WhenHttpRequestTemperatureParameterIsBelowNeg20() {
         // Arrange:
         _modelLoaderMock.Setup(m => m.GetOrLoadModelAsync())
             .ReturnsAsync(Mock.Of<IInferenceSession>());
@@ -898,7 +898,7 @@ public class PredictSoilHumidityTests : IDisposable
                 { "soil_humidity", new[] { 0.1f }},
                 { "soil_delta", new[] { 1.0f } },
                 { "air_humidity", new[] { 2.0f } },
-                { "temperature", new[] { -0.01f } },
+                { "temperature", new[] { -20.01f } },
                 { "light", new[] { 0.01f } },
                 { "hour_sin", new[] { -1.0f } },
                 { "hour_cos", new[] { -1.0f } },
@@ -1106,7 +1106,7 @@ public class PredictSoilHumidityTests : IDisposable
     
     
     [Fact]
-    public async Task Run_ReturnsBadRequest_WhenHttpRequestSoilHumidityParameterIsAbove100() {
+    public async Task Run_ReturnsBadRequest_WhenHttpRequestSoilHumidityParameterIsAbove1023() {
         // Arrange:
         _modelLoaderMock.Setup(m => m.GetOrLoadModelAsync())
             .ReturnsAsync(Mock.Of<IInferenceSession>());
@@ -1115,7 +1115,7 @@ public class PredictSoilHumidityTests : IDisposable
         
         var input = new {
             inputs = new Dictionary<string, float[]> {
-                { "soil_humidity", new[] { 100.01f }},
+                { "soil_humidity", new[] { 1023.01f }},
                 { "soil_delta", new[] { 1.0f } },
                 { "air_humidity", new[] { 100.0f } },
                 { "temperature", new[] { 100.0f } },

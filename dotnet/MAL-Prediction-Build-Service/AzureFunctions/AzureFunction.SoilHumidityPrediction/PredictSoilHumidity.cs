@@ -264,10 +264,10 @@ public class PredictSoilHumidity
 
             // Validate the values in each received feature:
             bool valueValidationPassed = true;
-            // Check if sensor data values are either below 0% or above 100%
-            if (valueSoilHumidity[0] < 0 || valueSoilHumidity[0] > 100) {
+            // Check if sensor data values are either below 0 or above 1023
+            if (valueSoilHumidity[0] < 0 || valueSoilHumidity[0] > 1023) {
                 errorMsg =
-                    $"Invalid input. 'soil_humidity' must be between 0% and 100%. Current value is: '{valueSoilHumidity[0]}'";
+                    $"Invalid input. 'soil_humidity' must be between 0 and 1023. Current value is: '{valueSoilHumidity[0]}'";
                 valueValidationPassed = false;
             }
 
@@ -277,21 +277,21 @@ public class PredictSoilHumidity
                 valueValidationPassed = false;
             }
 
-            if (valueTemperature[0] < 0 || valueTemperature[0] > 100) {
+            if (valueTemperature[0] < -20 || valueTemperature[0] > 100) {
                 errorMsg =
-                    $"Invalid input. 'temperature' must be between 0% and 100%. Current value is: '{valueTemperature[0]}'";
+                    $"Invalid input. 'temperature' must be between -20 and 100 degrees celsius. Current value is: '{valueTemperature[0]}'";
                 valueValidationPassed = false;
             }
 
-            if (valueLight[0] < 0 || valueLight[0] > 100) {
+            if (valueLight[0] < 0 || valueLight[0] > 10000) {
                 errorMsg =
-                    $"Invalid input. 'light' must be between 0% and 100%. Current value is: '{valueTemperature[0]}'";
+                    $"Invalid input. 'light' must be between 0 and 10000. Current value is: '{valueLight[0]}'";
                 valueValidationPassed = false;
             }
 
             if (valueThreshold[0] < 0 || valueThreshold[0] > 100) {
                 errorMsg =
-                    $"Invalid input. 'threshold' must be between 0% and 100%. Current value is: '{valueThreshold[0]}'";
+                    $"Invalid input. 'threshold' must be between 0 and 100%. Current value is: '{valueThreshold[0]}'";
                 valueValidationPassed = false;
             }
 
