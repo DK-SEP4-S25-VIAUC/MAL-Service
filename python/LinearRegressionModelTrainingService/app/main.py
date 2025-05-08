@@ -1,6 +1,9 @@
+import threading
 from datetime import datetime
 import os
 import asyncio
+from http.server import BaseHTTPRequestHandler, HTTPServer
+
 import requests
 from pytz import timezone
 from apscheduler.schedulers.blocking import BlockingScheduler
@@ -11,6 +14,21 @@ from training import train_model
 BASEURL = os.environ.get("SENSOR_API_BASE_URL")
 DATA_ENDPOINT = BASEURL + "/sensor/data"
 THRESHOLD_ENDPOINT = BASEURL + "/sensor/threshold"
+
+# --- Health endpoint setup ---
+
+class HealthHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b"OK")
+
+def start_health_server(port: int = 80):
+    server = HTTPServer(('', port), HealthHandler)
+    print(f"Health endpoint running on port {port}")
+    server.serve_forever()
+
+
 
 def job():
     # Defining parameters for period of time
@@ -40,6 +58,10 @@ def job():
 
 
 def main():
+    # Starting health server in the background
+    t = threading.Thread(target=start_health_server, daemon=True)
+    t.start()
+
     tz = timezone("Europe/Copenhagen")
     scheduler = BlockingScheduler(timezone=tz)
 
