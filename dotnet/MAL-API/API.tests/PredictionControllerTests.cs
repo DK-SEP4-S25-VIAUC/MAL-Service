@@ -38,7 +38,8 @@ namespace API.Tests
         public async Task GetForecast_ReturnsOk_WhenForecastIsAvailable()
         {
             // Arrange
-            var forecast = new ForecastDTO(120);
+            var lastSampleTime = DateTime.UtcNow;
+            var forecast = new ForecastDTO(120, lastSampleTime);
             _mockPredictionService.Setup(p => p.GetPredictionAsync()).ReturnsAsync(forecast);
 
             // Act

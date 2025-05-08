@@ -4,7 +4,6 @@ using Moq.Protected;
 using System.Net;
 using System.Net.Http;
 using System.Text;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
@@ -12,6 +11,7 @@ using API.Services.PredictionService;
 using API.Services.SensorDataService;
 using API.DataEntities;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json.Linq;
 
 namespace API.Tests
 {
@@ -51,10 +51,11 @@ namespace API.Tests
         public async Task GetPredictionAsync_ReturnsForecastDTO_WhenValid()
         {
             // Arrange
+            var latestTimestamp = DateTime.UtcNow;
             var samples = new List<SampleDTO>
             {
-                new() { Timestamp = DateTime.UtcNow.AddMinutes(-5), Soil_Humidity = 30, Air_Humidity = 40, Air_Temperature = 20, Light_Value = 100 },
-                new() { Timestamp = DateTime.UtcNow.AddMinutes(-10), Soil_Humidity = 32, Air_Humidity = 42, Air_Temperature = 21, Light_Value = 110 }
+                new() { Timestamp = latestTimestamp, Soil_Humidity = 30, Air_Humidity = 40, Air_Temperature = 20, Light_Value = 100 },
+                new() { Timestamp = latestTimestamp.AddMinutes(-10), Soil_Humidity = 32, Air_Humidity = 42, Air_Temperature = 21, Light_Value = 110 }
             };
 
             _mockSensorDataService.Setup(s => s.getSamples(It.IsAny<DateTime>(), It.IsAny<DateTime>()))
@@ -62,9 +63,10 @@ namespace API.Tests
 
             _mockSensorDataService.Setup(s => s.getSoilHumiLowerThresholdAsync()).ReturnsAsync(12.0);
 
+            var responseContent = @"{""minutes_to_dry"": 45}";
             var response = new HttpResponseMessage(HttpStatusCode.OK)
             {
-                Content = new StringContent("Prediction: 45", Encoding.UTF8, "application/json")
+                Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
             };
 
             _mockHttpHandler
@@ -80,14 +82,14 @@ namespace API.Tests
 
             // Assert
             Assert.That(result, Is.Not.Null);
-            Assert.That(result.next_watering_time, Is.EqualTo(45));
+            Assert.That((result.next_watering_time - latestTimestamp).TotalMinutes, Is.EqualTo(45).Within(0.1));
         }
 
         [Test]
         public async Task GetPredictionAsync_ReturnsNull_WhenSamplesAreMissing()
         {
             _mockSensorDataService.Setup(s => s.getSamples(It.IsAny<DateTime>(), It.IsAny<DateTime>()))
-                .ReturnsAsync(new OkObjectResult(new List<SampleDTO> { }));
+                .ReturnsAsync(new OkObjectResult(new List<SampleDTO>()));
 
             var result = await _service.GetPredictionAsync();
 
@@ -138,7 +140,7 @@ namespace API.Tests
 
             var response = new HttpResponseMessage(HttpStatusCode.OK)
             {
-                Content = new StringContent("No prediction found", Encoding.UTF8, "application/json")
+                Content = new StringContent("{}", Encoding.UTF8, "application/json")
             };
 
             _mockHttpHandler
