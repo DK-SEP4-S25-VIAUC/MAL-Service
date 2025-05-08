@@ -108,8 +108,17 @@ public class BlobStorageInteractionHelperImpl : IBlobStorageInteractionHelper
     }
     
     
-    // TODO Tests:
-    // What happens if jsonMetaData is not proper json?
+    /// <summary>
+    /// Converts a received blob Uri pointing towards a metadata file into a ModelDTO class containing all available model metadata information.
+    /// </summary>
+    /// <param name="jsonMetaData">The jsonMetadata file contents downloaded from blob storage.</param>
+    /// <param name="modelMetaDataFormat">The format that the metadata file is in (i.e. .metadata.json), set in appsettings / environment variable.</param>
+    /// <param name="modelFormat">The format that the prediction model file is in (i.e. .onnx), set in appsettings / environment variable.</param>
+    /// <param name="blobClient">The Azure BlobServiceClient instance that handles interactions with the BlobStorage on Azure.</param>
+    /// <returns>A ModelDTO containing all the model metadata in a class compatible with dotnet.</returns>
+    /// <exception cref="MissingFieldException">Thrown if any of the required fields in the metadata is missing (i.e. "model_type", or other, json keys are missing)</exception>
+    /// <exception cref="JsonException">Thrown if conversion from json to ModelDTO fails, due to json formatting/content issues.</exception>
+    /// <exception cref="FormatException">Thrown if one (or more) of the values associated with each key is unrecognized (i.e. "model_type": "supermanPredictor", where supermanPredictor is not a recognized model type)</exception>
     public ModelDTO ConvertFromJsonMetadataToModelDTO(string jsonMetaData, string modelMetaDataFormat, string modelFormat, BlobClient blobClient) {
         
         // Extract model_type from the given json metadata, if it exists:
