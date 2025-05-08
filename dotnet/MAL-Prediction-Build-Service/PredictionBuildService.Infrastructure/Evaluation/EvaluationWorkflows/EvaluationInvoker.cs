@@ -15,7 +15,7 @@ public class EvaluationInvoker
     private readonly Dictionary<string, IEvaluationWorkflow> _evaluationModels = new();
 
     /// <summary>
-    /// Primary constructor. Takes no external arguments. Automatically registers all workflows defined in classes located in the same folder as this class. It takes the filename, strips the 'Workflow' part and uses that as the key.
+    /// Primary constructor. Takes no external arguments. Automatically registers all workflows defined in classes located in the same folder as this class. It takes the filename, strips the 'Workflow' part and uses that as the key/command.
     /// <br />
     /// With a workflow class called 'EvaluateSoilHumidityWorkflow' the corresponding command to get this workflow is 'EvaluateSoilHumidity'.
     /// </summary>

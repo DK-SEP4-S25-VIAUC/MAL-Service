@@ -26,7 +26,7 @@ public class BuildServiceImpl : IBuildService
     private readonly IModelEvaluationService _modelEvaluationService;
     private readonly AzureFunctionsSettings _settings;
     private readonly ArmClient _armClient;
-    private Func<object, EvaluatedAllLinearRegressionModelsEventArgs, Task>? _evaluatedLinearRegModelEventHandler;
+    private Func<object, EvaluatedAllSoilHumidityPredictionModelsEventArgs, Task>? _evaluatedAllSoilHumidityModelsEventHandler;
      
     /// <summary>
     /// Primary constructor. It is recommended to use dependency injection to inject the specified arguments, instead of manual injection.
@@ -56,8 +56,8 @@ public class BuildServiceImpl : IBuildService
     // TODO: Test
     // Is the class properly subscribed to NewModelsAdded, after this has run?
     public void Subscribe() {
-        _evaluatedLinearRegModelEventHandler = async (sender, e) => await HandleEventAsync(sender, e);
-        _modelEvaluationService.LinearRegModelsEvaluated += _evaluatedLinearRegModelEventHandler;
+        _evaluatedAllSoilHumidityModelsEventHandler = async (sender, e) => await HandleEventAsync(sender, e);
+        _modelEvaluationService.AllSoilHumidityModelsEvaluated += _evaluatedAllSoilHumidityModelsEventHandler;
         _logger.LogInformation("BuildService subscribed to events from ModelEvaluationService");
     }
 
@@ -65,20 +65,20 @@ public class BuildServiceImpl : IBuildService
     // TODO: Test
     // Is the class properly unsubscribed to NewModelsAdded, after this has run?
     public void Unsubscribe() {
-        if (_evaluatedLinearRegModelEventHandler != null) {
-            _modelEvaluationService.LinearRegModelsEvaluated -= _evaluatedLinearRegModelEventHandler;
-            _evaluatedLinearRegModelEventHandler = null;
+        if (_evaluatedAllSoilHumidityModelsEventHandler != null) {
+            _modelEvaluationService.AllSoilHumidityModelsEvaluated -= _evaluatedAllSoilHumidityModelsEventHandler;
+            _evaluatedAllSoilHumidityModelsEventHandler = null;
         }
         _logger.LogInformation("BuildService unsubscribed to events from ModelEvaluationService");
     }
 
     
     // TODO: Test
-    // Are LinearRegressionModels properly evaluated when EvaluatedAllLinearRegressionModelsEventArgs are fired/received?
+    // Are LinearRegressionModels properly evaluated when EvaluatedAllSoilHumidityPredictionModelsEventArgs are fired/received?
     // What if an unknown Event is registered?
     public async Task HandleEventAsync(object? sender, EventArgs e) {
         switch (e) {
-            case EvaluatedAllLinearRegressionModelsEventArgs eventArgs:
+            case EvaluatedAllSoilHumidityPredictionModelsEventArgs eventArgs:
                 await HandleEventAsync(sender, eventArgs);
                 break;
             default:
@@ -90,9 +90,9 @@ public class BuildServiceImpl : IBuildService
     
     // Re-direct each EventArgs type to a specific overloaded implementation of HandleEventAsync method.
     // This allows for future scalability in the number of events this class can handle!
-    private async Task HandleEventAsync(object? sender, EvaluatedAllLinearRegressionModelsEventArgs e) {
+    private async Task HandleEventAsync(object? sender, EvaluatedAllSoilHumidityPredictionModelsEventArgs e) {
         try {
-            _logger.LogInformation("BuildService received EvaluatedAllLinearRegressionModelsEventArgs event. Building and deploying updated Linear Model to Azure Functions App");
+            _logger.LogInformation("BuildService received EvaluatedAllSoilHumidityPredictionModelsEventArgs event. Building and deploying updated Linear Model to Azure Functions App");
             
             // Get the Function App resource:
             var resourceGroup = _armClient.GetResourceGroupResource(ResourceGroupResource.CreateResourceIdentifier(_settings.SubscriptionId, _settings.ResourceGroupName));

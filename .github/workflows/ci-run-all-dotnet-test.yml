@@ -44,15 +44,32 @@ jobs:
         run: dotnet restore dotnet/MAL-Microservice.sln
 
 
-      # Run tests, collect code coverage, and generate TRX results
-      - name: Run tests with coverage
+      # Run test project-wise and collect results
+      - name: Run tests with per-project results
         run: |
-          dotnet test dotnet/MAL-Microservice.sln \
-            --configuration Release \
-            --logger "trx;LogFileName=test-results.trx" \
-            --results-directory ./test-results \
-            --collect:"XPlat Code Coverage" \
-            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura
+          mkdir -p test-results
+          mkdir -p coverage-results
+
+          for proj in $(find dotnet -name '*.csproj'); do
+            projName=$(basename "$proj" .csproj)
+            resultsDir="test-results/$projName"
+            coverageDir="coverage-results/$projName"
+            mkdir -p "$resultsDir" "$coverageDir"
+
+            dotnet test "$proj" \
+              --no-build \
+              --configuration Release \
+              --logger "trx;LogFileName=${projName}.trx" \
+              --results-directory "$resultsDir" \
+              --collect:"XPlat Code Coverage" \
+              -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura
+
+            # Move coverage file to separate directory
+            coverageFile=$(find "$resultsDir" -name 'coverage.cobertura.xml' | head -n 1)
+            if [ -f "$coverageFile" ]; then
+              mv "$coverageFile" "$coverageDir/coverage.cobertura.xml"
+            fi
+          done
 
 
       # Publish test results to GitHub UI (pass/fail overview)
@@ -60,8 +77,8 @@ jobs:
         if: always()
         uses: dorny/test-reporter@v1
         with:
-          name: Test Results
-          path: test-results/*.trx
+          name: Combined Test Results
+          path: test-results/**/*.trx
           reporter: dotnet-trx
 
 
@@ -71,10 +88,11 @@ jobs:
 
 
       # Generate and display coverage report in GitHub UI
-      - name: Generate coverage report
+      - name: Generate combined coverage report
         run: |
           reportgenerator \
-            -reports:"./test-results/**/coverage.cobertura.xml" \
+            -reports:"coverage-results/**/coverage.cobertura.xml" \
             -targetdir:"coverage-report" \
             -reporttypes:"MarkdownSummary"
+
           cat coverage-report/Summary.md >> $GITHUB_STEP_SUMMARY
