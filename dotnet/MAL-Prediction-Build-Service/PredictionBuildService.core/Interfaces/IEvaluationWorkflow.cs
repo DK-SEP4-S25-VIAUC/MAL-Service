@@ -1,3 +1,5 @@
+using PredictionBuildService.core.ModelEntities;
+
 namespace PredictionBuildService.core.Interfaces;
 
 /// <summary>
@@ -8,5 +10,5 @@ public interface IEvaluationWorkflow
     /// <summary>
     /// Executes the given evaluation logic associated with the specific evaluation model workflow.
     /// </summary>
-    Task ExecuteEvaluationAsync();
+    Task<ModelDTO> ExecuteEvaluationAsync(List<ModelDTO> models);
 }

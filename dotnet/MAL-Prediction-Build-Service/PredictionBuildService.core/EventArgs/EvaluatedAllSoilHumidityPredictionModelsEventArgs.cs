@@ -7,11 +7,11 @@ namespace PredictionBuildService.core.EventArgs;
 /// This class is intended to be used to signal that a evaluation of all identified Linear Regression models has completed,
 /// and the best one (most optimal one) has been identified as is ready for building and then deployment.
 /// </summary>
-public class EvaluatedAllLinearRegressionModelsEventArgs : System.EventArgs
+public class EvaluatedAllSoilHumidityPredictionModelsEventArgs : System.EventArgs
 {
     public ModelDTO BestModel { get; set; }
 
-    public EvaluatedAllLinearRegressionModelsEventArgs(ModelDTO bestModel) {
+    public EvaluatedAllSoilHumidityPredictionModelsEventArgs(ModelDTO bestModel) {
         BestModel = bestModel;
     }
 }

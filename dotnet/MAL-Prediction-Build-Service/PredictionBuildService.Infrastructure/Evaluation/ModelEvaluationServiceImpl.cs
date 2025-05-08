@@ -21,7 +21,7 @@ public class ModelEvaluationServiceImpl : IModelEvaluationService
     private Func<object, AddedNewModelsEventArgs, Task>? _newModelsAddedEventHandler;
     
     // Events this class fires:
-    public event Func<object, EvaluatedAllLinearRegressionModelsEventArgs, Task>? LinearRegModelsEvaluated;
+    public event Func<object, EvaluatedAllSoilHumidityPredictionModelsEventArgs, Task>? AllSoilHumidityModelsEvaluated;
 
     
     /// <summary>
@@ -47,15 +47,15 @@ public class ModelEvaluationServiceImpl : IModelEvaluationService
     
     // Define Event Handler invokers:
     /// <summary>
-    /// Fires an 'EvaluatedAllLinearRegressionModelsEventArgs' event when all the identified LinearRegressionModels have been evaluated.
+    /// Fires an 'EvaluatedAllSoilHumidityPredictionModelsEventArgs' event when all the identified LinearRegressionModels have been evaluated.
     /// Allows for listeners to react to this and do stuff, such as build the best the model and if needed, redeploy.
     /// </summary>
-    private async Task OnLinearRegModelsEvaluated(ModelDTO bestModel) {
+    private async Task OnAllSoilPredictionModelsEvaluated(ModelDTO bestModel) {
         // Fire the event if there are more than null subscribers.
-        if (LinearRegModelsEvaluated != null) {
-            await LinearRegModelsEvaluated.Invoke(this, new EvaluatedAllLinearRegressionModelsEventArgs(bestModel));
+        if (AllSoilHumidityModelsEvaluated != null) {
+            await AllSoilHumidityModelsEvaluated.Invoke(this, new EvaluatedAllSoilHumidityPredictionModelsEventArgs(bestModel));
         } else {
-            _logger.LogWarning("No subscribers to the LinearRegModelsEvaluated event.");
+            _logger.LogWarning("No subscribers to the AllSoilHumidityModelsEvaluated event.");
         }
     }
     
@@ -97,12 +97,8 @@ public class ModelEvaluationServiceImpl : IModelEvaluationService
     // Re-direct each EventArgs type to a specific overloaded implementation of HandleEventAsync method.
     // This allows for future scalability in the number of events this class can handle!
     private async Task HandleEventAsync(object? sender, AddedNewModelsEventArgs e) {
-        // Initially we just pick the 1st model from the modelCache and build/deploy this - as proof-of-concept.
-        // This should be expanded to perform proper model evaluation
-        // TODO: PROPERLY IMPLEMENT THIS METHOD!
-
-        // --------------- Temporary: Proof-of-Concept (Below): ---------------
         
+        // Read Models from Cache:
         var models = _modelCache.ListModelsAsync();
         ModelDTO firstModel = null;
         await foreach (var model in models) {
@@ -110,25 +106,41 @@ public class ModelEvaluationServiceImpl : IModelEvaluationService
             break;
         }
 
+        // Validate read models:
         if (firstModel == null) {
             _logger.LogWarning("No models found in the cache.");
             return;
         }
         
-        _logger.LogInformation("Evaluation found best model to be: Type={ModelType}, Version={ModelVersion}", firstModel.Type, firstModel.TrainingTimestamp);
+        // Handle all SoilPrediction models:
+        try {
+            await HandleSoilPredictionEvaluation();
+        } catch (Exception ex) {
+            // TODO Improve this.
+        }
+        
+        // Add more evaluation methods below for other prediction types,
+        // with corresponding private method implementations (i.e. handleAirTemperaturePredictionEvaluation(), etc.)
+    }
+
+    
+    private async Task HandleSoilPredictionEvaluation() {
+
+        var soilPredictionModels = new List<ModelDTO>();
+
+        await foreach (var model in _modelCache.ListModelsAsync()) {
+            if (model.Target != null && model.Target.Contains("minutes_to_dry")) {
+                soilPredictionModels.Add(model);
+            }
+        }
+        
+        var soilHumidityEvaluationWorkflow = _evaluationInvoker.GetEvaluationWorkflow("EvaluateSoilHumidity");
+        var bestSoilPredictionModel = await soilHumidityEvaluationWorkflow.ExecuteEvaluationAsync(soilPredictionModels);
+        
+        _logger.LogInformation("Evaluation found best model to be: Type={ModelType}, Version={ModelVersion}", bestSoilPredictionModel.Type, bestSoilPredictionModel.TrainingTimestamp);
         
         // Notify Subscribers:
         _logger.LogInformation("Now notifying subscribers...");
-        await OnLinearRegModelsEvaluated(firstModel);
-        
-        // --------------- Temporary: Proof-of-Concept (Above): ---------------
-        
-        // This method should instead:
-        // 1. Read the models from the cache.
-        // 2. Execute a method for each main type of model (i.e.)
-        //      EvaluateLinearRegressionModelsAsync(List_of_Linear_models);
-        //      EvaluateLogisticRegressionModelsAsync(List_of_logistic_models);
-        //      etc.
-        // 3. Each method should fire a relevant event that can be picked up by the build service.
+        await OnAllSoilPredictionModelsEvaluated(bestSoilPredictionModel);
     }
 }

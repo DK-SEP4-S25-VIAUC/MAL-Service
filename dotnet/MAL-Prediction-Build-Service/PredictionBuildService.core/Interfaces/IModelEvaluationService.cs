@@ -8,7 +8,7 @@ namespace PredictionBuildService.core.Interfaces;
 public interface IModelEvaluationService : IEventSubscriber
 {
     // Events implementing classes must be able to publish/fire:
-    event Func<object, EvaluatedAllLinearRegressionModelsEventArgs, Task> LinearRegModelsEvaluated;
+    event Func<object, EvaluatedAllSoilHumidityPredictionModelsEventArgs, Task> AllSoilHumidityModelsEvaluated;
     
     // Add more Events above if other predictions models are implemented later (i.e. a LogisticRegModelsEvaluated for any logistic regression models, etc.)
 }
