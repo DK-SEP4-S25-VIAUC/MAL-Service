@@ -1,12 +1,11 @@
 """
 Train a linear (Ridge) regression baseline that predicts
-“minutes until soil humidity drops below 20 %”.
+“minutes until soil humidity drops below a certain threshold %”.
 """
 
 import os
 import json
 from datetime import datetime
-
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import Ridge
@@ -14,11 +13,10 @@ from sklearn.model_selection import TimeSeriesSplit, GridSearchCV
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import r2_score
-
 from skl2onnx import convert_sklearn
 from skl2onnx.common.data_types import FloatTensorType
 
-from LinearRegressionModelTrainingService.app.upload_model import upload_to_blob
+from upload_model import upload_to_blob
 
 # Helper: derive the target variable
 def add_minutes_to_dry(df: pd.DataFrame, threshold: float) -> pd.DataFrame:
@@ -41,7 +39,7 @@ def add_minutes_to_dry(df: pd.DataFrame, threshold: float) -> pd.DataFrame:
     next_idx = np.full(len(df), np.nan, dtype=float) # handle NaNs
 
     for i in range(len(df) - 1):
-        j = below[below > i] # first future index < 40 %
+        j = below[below > i]
         if j.size:
             next_idx[i] = ts_minutes[j[0]] - ts_minutes[i]
 
@@ -134,7 +132,7 @@ def train_model(json_samples: str, json_threshold: str) -> dict:
     # Produce metadata
     metadata = {
         "model_type": "Ridge (linear)",
-        "target": "minutes_to_dry (<20 % soil humidity)",
+        "target": f"minutes_to_dry (<{threshold}% soil humidity)",
         "feature_names": feature_cols,
         "alpha": gscv.best_params_["ridge__alpha"],
         "cross_val_splits": tscv.n_splits,

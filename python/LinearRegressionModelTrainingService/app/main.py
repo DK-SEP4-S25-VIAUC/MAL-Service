@@ -5,7 +5,7 @@ import requests
 from pytz import timezone
 from apscheduler.schedulers.blocking import BlockingScheduler
 
-from LinearRegressionModelTrainingService.app.training import train_model
+from training import train_model
 
 # Get endpoints
 BASEURL = os.environ.get("SENSOR_API_BASE_URL")
