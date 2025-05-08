@@ -30,4 +30,20 @@ public class SensorDataController : ControllerBase
             return StatusCode(500, "An internal server error occurred while fetching sensor data.");
         }
     }
+
+    [HttpGet("soilhumiditytreshold")]
+
+    public async Task<IActionResult?> GetSoilHumThresholdAsync()
+    {
+        try
+        {
+            return Ok(await sensorDataService.getSoilHumiLowerThresholdAsync());
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "An error occurred while retrieving sensor soil humidity threshold.");
+            return StatusCode(500, "An internal server error occurred while fetching soil humidity threshold.");
+        }
+    }
+    
 }
