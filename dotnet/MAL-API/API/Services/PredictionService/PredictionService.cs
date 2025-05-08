@@ -1,6 +1,7 @@
 using API.DataEntities;
 using API.Services.SensorDataService;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json.Linq;
 
 namespace API.Services.PredictionService;
 
@@ -81,16 +82,16 @@ public class PredictionService : IPredictionService
         
         var body = new
         {
-            inputs = new
+            inputs = new Dictionary<string, double[]>
             {
-                soil_humidity = input.SoilHumidity,
-                soil_delta = input.SoilDelta,
-                air_humidity = input.AirHumidity,
-                temperature = input.Temperature,
-                light = input.Light,
-                hour_sin = input.HourSin,
-                hour_cos = input.HourCos,
-                threshold = input.Threshold
+                {"soil_humidity", new[] {input.SoilHumidity}},
+                {"soil_delta", new[] {input.SoilDelta}},
+                {"air_humidity", new[] {input.AirHumidity}},
+                {"temperature", new[] {input.Temperature}},
+                {"light", new[] {input.Light}},
+                {"hour_sin", new[] {input.HourSin}},
+                {"hour_cos", new[] {input.HourCos}},
+                {"threshold", new[] {input.Threshold ?? 0.0}}
             }
         };
         
@@ -105,14 +106,14 @@ public class PredictionService : IPredictionService
 
         var rawContent = await response.Content.ReadAsStringAsync();
 
-        var match = System.Text.RegularExpressions.Regex.Match(rawContent, @"\d+");
+        var json = JObject.Parse(rawContent);
 
-        if (!match.Success)
+        if (!json.TryGetValue("minutes_to_dry", out JToken? minutesToken))
         {
-            throw new Exception("Could not extract prediction number from response.");
+            throw new Exception("Could not find 'minutes_to_dry' in response.");
         }
 
-        int minutes = int.Parse(match.Value);
-        return new ForecastDTO(minutes);
+        double minutes = minutesToken.Value<double>();
+        return new ForecastDTO(minutes, input.Timestamp);
     }
 }
