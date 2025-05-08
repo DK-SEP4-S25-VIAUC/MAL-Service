@@ -114,8 +114,7 @@ public class WorkerTests
     /// <summary>
     /// Helper method to create an empty IAsyncEnumerable:
     /// </summary>
-    private static async IAsyncEnumerable<T> GetEmptyAsyncEnumerable<T>()
-    {
+    private static async IAsyncEnumerable<T> GetEmptyAsyncEnumerable<T>() {
         yield break;
     }
 }
