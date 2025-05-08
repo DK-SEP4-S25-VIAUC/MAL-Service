@@ -90,7 +90,7 @@ public class BlobStorageMonitorServiceImpl : IBlobStorageMonitorService
                 // Wait to receive a message from the Azure Storage Queue:
                 var response = await _queueClient.ReceiveMessagesAsync(maxMessages: 1, cancellationToken: token);
                 if (response?.Value != null && response.Value.Length > 0) {
-                    // Theres something in the event queue. Let's handle it.
+                    // There's something in the event queue. Let's handle it.
                     await HandleQueueResponse(response, token);
                     // Check if there are more messages waiting to be processed:
                     bool moreMessagesWaiting = false;
@@ -142,10 +142,10 @@ public class BlobStorageMonitorServiceImpl : IBlobStorageMonitorService
         var msg = response.Value[0];
 
         // Deserialize the message body (Event Grid sends an array of events). The body is base64 coded, and must be decoded:
-        string decodedReponse;
+        string decodedResponse;
         try {
-            decodedReponse = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(msg.Body.ToString()));
-            _logger.LogInformation("Decoded this message from Queue: {body}", decodedReponse);
+            decodedResponse = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(msg.Body.ToString()));
+            _logger.LogInformation("Decoded this message from Queue: {body}", decodedResponse);
         } catch (FormatException ex) {
             _logger.LogError(ex, "Queue message is not base64-encoded: {body}", msg.Body.ToString());
             
@@ -154,42 +154,68 @@ public class BlobStorageMonitorServiceImpl : IBlobStorageMonitorService
             return;
         }
 
-        var eventGridEvent = EventGridEvent.Parse(BinaryData.FromString(decodedReponse));
+        var eventGridEvent = EventGridEvent.Parse(BinaryData.FromString(decodedResponse));
 
         // Extract the EventType from the grid. We only look for the 'BlobCreated' event - when new models are added to the model registry:
-        if (eventGridEvent?.EventType == "Microsoft.Storage.BlobCreated") {
-            
-            // Deserialize the event data to access the URL:
-            var eventData = JsonSerializer.Deserialize<Dictionary<string, object>>(eventGridEvent.Data.ToString());
-            string? blobUri = null;
-            if (eventData?.ContainsKey("url") == true) {
-                blobUri = eventData["url"].ToString();
-            }
-
-            // Check if the blob URL contains reference to 'model metadata', if not we simply ignore it. Models without correct metadata are not evaluated nor deployed:
-            if (!string.IsNullOrEmpty(blobUri)) {
-                
-                // Extract the blobName from the Uri (the part after the final '/'):
-                string blobName = new Uri(blobUri).Segments.Last();
-                
-                _logger.LogInformation("Processing blob creation event for URI: {blobUri} with name: {blobName}", blobUri, blobName);
-                
-                // ModelMetaDataFormat is set in appsettings.json. Maybe it's like '.metadata.json' - maybe some other format:
-                if (blobUri.Contains(_blobStorageSettings.ModelMetaDataFormat)) {
-                    
-                    // Download the model metadata:
-                    BlobClient blobClient = _blobServiceClient.GetBlobContainerClient(_blobStorageSettings.ContainerName).GetBlobClient(blobName);
-                    var modelMetaData = await _blobStorageInteractionHelper.DownloadBlobToStringAsync(blobClient, token);
-                    var model = _blobStorageInteractionHelper.ConvertFromJsonMetadataToModelDTO(modelMetaData, _blobStorageSettings.ModelMetaDataFormat, _blobStorageSettings.ModelFileType, blobClient);
-                    
-                    // Add the newly found model to the ModelCache:
-                    await _modelCache.AddModelAsync(model);
+        switch (eventGridEvent?.EventType) {
+            case "Microsoft.Storage.BlobCreated":
+                // Deserialize the event data to access the URL:
+                var eventData = JsonSerializer.Deserialize<Dictionary<string, object>>(eventGridEvent.Data.ToString());
+                string? blobUri = null;
+                if (eventData?.TryGetValue("url", out var value) is true) {
+                    blobUri = value.ToString();
                 }
-            } else  {
-                _logger.LogWarning("Blob URI not found in event data: {eventData}", eventGridEvent.Data.ToString());
-            }
-        }  else  {
-            _logger.LogWarning("Received unexpected event type: {eventType}.\nNo action was performed on this event.", eventGridEvent?.EventType);
+
+                // Check if the blob URL contains reference to 'model metadata', if not we simply ignore it. Models without correct metadata are not evaluated nor deployed:
+                if (!string.IsNullOrEmpty(blobUri)) {
+                
+                    // Extract the blobName from the Uri (the part after the final '/'):
+                    string blobName = new Uri(blobUri).Segments.Last();
+                
+                    _logger.LogInformation("Processing blob creation event for URI: {blobUri} with name: {blobName}", blobUri, blobName);
+                
+                    // ModelMetaDataFormat is set in appsettings.json. Maybe it's like '.metadata.json' - maybe some other format:
+                    if (blobUri.Contains(_blobStorageSettings.ModelMetaDataFormat)) {
+                    
+                        // Download the model metadata:
+                        BlobClient blobClient = _blobServiceClient.GetBlobContainerClient(_blobStorageSettings.ContainerName).GetBlobClient(blobName);
+                        var modelMetaData = await _blobStorageInteractionHelper.DownloadBlobToStringAsync(blobClient, token);
+                        var model = _blobStorageInteractionHelper.ConvertFromJsonMetadataToModelDTO(modelMetaData, _blobStorageSettings.ModelMetaDataFormat, _blobStorageSettings.ModelFileType, blobClient);
+                    
+                        // Add the newly found model to the ModelCache:
+                        await _modelCache.AddModelAsync(model);
+                    }
+                } else  {
+                    _logger.LogWarning("Blob URI not found in event data: {eventData}", eventGridEvent.Data.ToString());
+                }
+                break;
+            
+            case "Microsoft.Storage.BlobDeleted" or "Microsoft.Storage.BlobRenamed":
+                // Reset ModelCache and reload all the current models again:
+                await foreach (var model in _modelCache.ListModelsAsync().WithCancellation(token)) {
+                    if (model.Type != null && model.TrainingTimestamp != null) {
+                        await _modelCache.RemoveModelAsync(model.Type, model.TrainingTimestamp);
+                    }
+                }
+                
+                // Check that modelCache is now empty:
+                if (_modelCache.CacheSize() != 0) {
+                    // Cache was not reset. Throw an error.
+                    _logger.LogError("Registered a new '{eventData}' even. Failed to reset cache.\nCause: Removing existing (old) models from cache failed", eventGridEvent.EventType);
+                    throw new InvalidOperationException($"Registered a new '{eventGridEvent.EventType}' even. Failed to reset cache.\nCause: Removing existing (old) models from cache failed");
+                }
+                
+                // Reload all existing models (if there are any):
+                await _blobStorageInteractionHelper.LoadAllModelsIntoCacheAsync(_blobServiceClient, token, 
+                    _blobStorageSettings.ContainerName, 
+                    _blobStorageSettings.ModelMetaDataFormat, 
+                    _blobStorageSettings.ModelFileType);
+                
+                break;
+            
+            default:
+                _logger.LogWarning("Received unexpected event type: {eventType}.\nNo action was performed on this event.", eventGridEvent?.EventType);
+                break;
         }
 
         // Delete the message after processing
