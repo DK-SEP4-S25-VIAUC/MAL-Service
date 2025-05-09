@@ -1,4 +1,4 @@
-﻿# This image is an official Microsoft .NET SDK (Software Development Kit) image, based on Debian (similar to Ubuntu).
+# This image is an official Microsoft .NET SDK (Software Development Kit) image, based on Debian (similar to Ubuntu).
 # It includes the full .NET 8.0 SDK.
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 
@@ -14,16 +14,21 @@ ENV GIT_USER_EMAIL=${GIT_USER_EMAIL}
 
 # Install dependencies and configure Git using the build args
 RUN apt-get update && apt-get install -y \
-    unzip zip git python3 python3-pip python3-venv build-essential ca-certificates libsecret-1-0 libsecret-1-dev libglib2.0-0 curl gpg wget  \
-    && curl -sL https://aka.ms/InstallAzureCLIDeb | bash \
+    unzip zip git python3 python3-pip python3-venv build-essential ca-certificates \
+    libsecret-1-0 libsecret-1-dev libglib2.0-0 curl gpg wget libfuse2 \
     # Add Microsoft package repository for Azure Functions Core Tools \
+    && curl -sL https://aka.ms/InstallAzureCLIDeb | bash \
     && wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg \
     && wget -q https://packages.microsoft.com/config/debian/12/prod.list -O /etc/apt/sources.list.d/microsoft-prod.list \
     && chown root:root /usr/share/keyrings/microsoft-prod.gpg \
     && chown root:root /etc/apt/sources.list.d/microsoft-prod.list \
     && apt-get update && apt-get install -y azure-functions-core-tools-4 libicu-dev \
-    # Configure Git user detail import \
     && rm -rf /var/lib/apt/lists/* \
+    # Optional: Ensure /dev/fuse exists (required by JetBrains backend in some environments) \
+    && if [ ! -e /dev/fuse ]; then \
+         mknod -m 666 /dev/fuse c 10 229 || true; \
+       fi \
+    # Configure Git user detail import \
     && if [ -n "$GIT_USER_NAME" ] && [ -n "$GIT_USER_EMAIL" ]; then \
          git config --global user.name "$GIT_USER_NAME" && \
          git config --global user.email "$GIT_USER_EMAIL"; \
@@ -56,10 +61,10 @@ ENV ASPNETCORE_ENVIRONMENT=Development
 ENV ASPNETCORE_Kestrel__Certificates__Default__Path=/https/localhost_custom.pfx
 ENV ASPNETCORE_Kestrel__Certificates__Default__Password=DevPassword
 
-#HTTP port
-EXPOSE 8080 
+# HTTP port
+EXPOSE 8080
 
-#HTTPS port
-EXPOSE 8081 
+# HTTPS port
+EXPOSE 8081
 
 CMD ["/bin/bash"]
