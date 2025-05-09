@@ -13,7 +13,7 @@ RUN apt-get update && apt-get install -y \
     && wget -q https://packages.microsoft.com/config/debian/12/prod.list -O /etc/apt/sources.list.d/microsoft-prod.list \
     && chown root:root /usr/share/keyrings/microsoft-prod.gpg \
     && chown root:root /etc/apt/sources.list.d/microsoft-prod.list \
-    && apt-get update && apt-get install -y azure-functions-core-tools-4 libicu-dev \
+    && apt-get update && apt-get install -y azure-functions-core-tools-4 libicu-dev
 
 # Install dotnet-ef globally:
 RUN /usr/share/dotnet/dotnet tool install --ignore-failed-sources --add-source https://api.nuget.org/v3/index.json --global dotnet-ef \
