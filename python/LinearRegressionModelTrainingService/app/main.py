@@ -42,6 +42,9 @@ def job():
     print(f"[{start}] starting model training")
 
     try:
+        url = DATA_ENDPOINT
+        print("DEBUG URL:", url, flush=True)
+
         # Get samples
         resp_data = requests.get(DATA_ENDPOINT, timeout=60)
         resp_data.raise_for_status()
