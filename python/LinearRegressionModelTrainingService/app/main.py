@@ -19,7 +19,7 @@ if not SENSOR_BASE_URL:
 DATA_ENDPOINT      = SENSOR_BASE_URL.rstrip("/") + "/sensor/data"
 THRESHOLD_ENDPOINT = SENSOR_BASE_URL.rstrip("/") + "/sensor/threshold"
 
-HEALTH_PORT = int(os.getenv("HEALTH_PORT", "80"))
+HEALTH_PORT = int(os.getenv("HEALTH_PORT", "8081"))
 
 # --- Health endpoint setup ---
 class HealthHandler(BaseHTTPRequestHandler):
