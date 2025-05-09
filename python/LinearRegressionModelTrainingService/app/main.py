@@ -12,14 +12,11 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from training import train_model
 
 # Get endpoints
-SENSOR_BASE_URL = os.environ.get("SENSOR_API_BASE_URL")
-if not SENSOR_BASE_URL:
-    raise RuntimeError("Du skal sætte miljø‐variablen SENSOR_API_BASE_URL")
-
+SENSOR_BASE_URL = "https://mal-service-api-whitebush-734a9017.northeurope.azurecontainerapps.io"
 DATA_ENDPOINT      = SENSOR_BASE_URL.rstrip("/") + "/sensor/data"
 THRESHOLD_ENDPOINT = SENSOR_BASE_URL.rstrip("/") + "/sensor/threshold"
 
-HEALTH_PORT = int(os.getenv("HEALTH_PORT", "8081"))
+HEALTH_PORT = "8081"
 
 # --- Health endpoint setup ---
 class HealthHandler(BaseHTTPRequestHandler):
