@@ -19,7 +19,7 @@
   "remoteUser": "root",
   "customizations": {
     "jetbrains": {
-      "backend": "Rider",
+      "backend": "JetBrainsInstaller",
       "plugins": [
         "org.jetbrains.plugins.github",
         "com.intellij.resharper.azure"
