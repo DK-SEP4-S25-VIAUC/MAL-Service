@@ -14,7 +14,7 @@ ENV GIT_USER_EMAIL=${GIT_USER_EMAIL}
 
 # Install dependencies and configure Git using the build args
 RUN apt-get update && apt-get install -y \
-    unzip zip git python3 python3-pip python3-venv build-essential ca-certificates libsecret-1-0 libsecret-1-dev libglib2.0-0 curl gpg wget  \
+    unzip zip git python3 python3-pip python3-venv build-essential ca-certificates libxext libxtst libxrender libxi freetype procps gcompat libsecret-1-0 libsecret-1-dev libglib2.0-0 curl gpg wget ps  \
     && curl -sL https://aka.ms/InstallAzureCLIDeb | bash \
     # Add Microsoft package repository for Azure Functions Core Tools \
     && wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg \
@@ -44,17 +44,7 @@ RUN python3 -m venv /venv \
     && . /venv/bin/activate \
     && pip install pythonnet==3.0.5 azureml-core azureml-mlflow onnxruntime==1.17.1 numpy scipy
 
-# Create a directory for SSL certificates:
-RUN mkdir -p /https
-
-# SSL Certificates should be defined in the lines below here:
-COPY .certs/localhost_custom.pfx /https/localhost_custom.pfx
-COPY .certs/localhost_custom.crt /src/localhost_custom.crt
-RUN chmod 644 /https/localhost_custom.pfx
-
 ENV ASPNETCORE_ENVIRONMENT=Development
-ENV ASPNETCORE_Kestrel__Certificates__Default__Path=/https/localhost_custom.pfx
-ENV ASPNETCORE_Kestrel__Certificates__Default__Password=DevPassword
 
 #HTTP port
 EXPOSE 8080 
