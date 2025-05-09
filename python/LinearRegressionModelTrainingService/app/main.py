@@ -1,16 +1,35 @@
+import threading
+import time
 from datetime import datetime
 import os
 import asyncio
+from http.server import BaseHTTPRequestHandler, HTTPServer
+
 import requests
 from pytz import timezone
-from apscheduler.schedulers.blocking import BlockingScheduler
+from apscheduler.schedulers.background import BackgroundScheduler
 
-from LinearRegressionModelTrainingService.app.training import train_model
+from training import train_model
 
 # Get endpoints
-BASEURL = os.environ.get("SENSOR_API_BASE_URL")
-DATA_ENDPOINT = BASEURL + "/sensor/data"
-THRESHOLD_ENDPOINT = BASEURL + "/sensor/threshold"
+SENSOR_BASE_URL = "https://mal-api.whitebush-734a9017.northeurope.azurecontainerapps.io"
+DATA_ENDPOINT      = SENSOR_BASE_URL.rstrip("/") + "/sensor/data"
+THRESHOLD_ENDPOINT = SENSOR_BASE_URL.rstrip("/") + "/sensor/soilhumiditythreshold"
+
+HEALTH_PORT = 8081
+
+# --- Health endpoint setup ---
+class HealthHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b"OK")
+
+def start_health_server(port: int | str = HEALTH_PORT):
+    port = int(port)
+    server = HTTPServer(('', port), HealthHandler)
+    print(f"[{datetime.now()}] Health endpoint listening on port {port}")
+    server.serve_forever()
 
 def job():
     # Defining parameters for period of time
@@ -23,8 +42,11 @@ def job():
     print(f"[{start}] starting model training")
 
     try:
+        url = DATA_ENDPOINT
+        print("DEBUG URL:", url, flush=True)
+
         # Get samples
-        resp_data = requests.get(DATA_ENDPOINT, params=params, timeout=60)
+        resp_data = requests.get(DATA_ENDPOINT, timeout=60)
         resp_data.raise_for_status()
         json_data = resp_data.json()
 
@@ -40,20 +62,31 @@ def job():
 
 
 def main():
-    tz = timezone("Europe/Copenhagen")
-    scheduler = BlockingScheduler(timezone=tz)
+    # Starting health server in the background
+    t = threading.Thread(target=start_health_server, args=(HEALTH_PORT,), daemon=True)
+    t.start()
 
-    # Manual test-call
-    print("Testing job() manually")
-    job()
+    tz = timezone("Europe/Copenhagen")
+    scheduler = BackgroundScheduler(timezone=tz)
 
     # Scheduling daily job
     scheduler.add_job(job, trigger="cron", hour=0, minute=0)
     scheduler.start()
     print("Scheduler is running, next training begins at kl. 00.00 Copenhagen-time")
 
-    asyncio.get_event_loop().run_forever()
 
+    # Manual test-call
+    print("Testing job() manually")
+    job()
+
+    print(f"[{datetime.now()}] Scheduler is running. Health endpoint at port {HEALTH_PORT}.")
+
+    try:
+        while True:
+            time.sleep(1)
+    except (KeyboardInterrupt, SystemExit):
+        scheduler.shutdown()
+        print("Shutdown scheduler og exit.")
 
 if __name__ == "__main__":
     main()
