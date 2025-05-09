@@ -25,6 +25,7 @@
         "com.intellij.resharper.azure"
       ]
     }
-  }
+  },
+  "overrideCommand": false
 }
 
