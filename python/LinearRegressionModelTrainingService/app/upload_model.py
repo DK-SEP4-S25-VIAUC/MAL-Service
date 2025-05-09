@@ -4,8 +4,8 @@ from azure.storage.blob import BlobServiceClient
 
 def upload_to_blob(local_path: str, blob_name: str):
     try:
-        connect_str = os.environ["AZURE_STORAGE_CONNECTION_STRING"]
-        container_name = os.environ.get("AZURE_CONTAINER_NAME", "model-registry")
+        connect_str = "DefaultEndpointsProtocol=https;AccountName=modelregistrymal;AccountKey=DIN_HEMMELIGE_NØGLE;EndpointSuffix=core.windows.net"
+        container_name = "models"
 
         blob_service_client = BlobServiceClient.from_connection_string(connect_str)
         blob_client = blob_service_client.get_blob_client(container=container_name, blob=blob_name)
