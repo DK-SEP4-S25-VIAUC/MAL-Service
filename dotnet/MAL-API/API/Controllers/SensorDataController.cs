@@ -31,7 +31,7 @@ public class SensorDataController : ControllerBase
         }
     }
 
-    [HttpGet("soilhumiditytreshold")]
+    [HttpGet("soilhumiditythreshold")]
 
     public async Task<IActionResult?> GetSoilHumThresholdAsync()
     {
