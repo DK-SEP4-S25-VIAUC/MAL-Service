@@ -25,7 +25,8 @@ class HealthHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(b"OK")
 
-def start_health_server(port: int = HEALTH_PORT):
+def start_health_server(port: int | str = HEALTH_PORT):
+    port = int(port)
     server = HTTPServer(('', port), HealthHandler)
     print(f"[{datetime.now()}] Health endpoint listening on port {port}")
     server.serve_forever()
@@ -42,7 +43,7 @@ def job():
 
     try:
         # Get samples
-        resp_data = requests.get(DATA_ENDPOINT, params=params, timeout=60)
+        resp_data = requests.get(DATA_ENDPOINT, timeout=60)
         resp_data.raise_for_status()
         json_data = resp_data.json()
 

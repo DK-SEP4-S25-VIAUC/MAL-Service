@@ -1,6 +1,9 @@
 # LinearRegressionModelTrainingService/Dockerfile
 FROM python:3.11-slim
 
+# ► gør stdout/err ubufferet (ingen forsinkelse i log-streamen)
+ENV PYTHONUNBUFFERED=1
+
 WORKDIR /app
 
 COPY requirements.txt .
