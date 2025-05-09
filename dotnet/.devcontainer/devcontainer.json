@@ -1,12 +1,17 @@
 {
   "name": "dotnet Dev Environment",
+  "image": "ubuntu:latest",
   "build": {
     "dockerfile": "../Dockerfile",
     "context": ".."
   },
   "workspaceFolder": "/src",
   "forwardPorts": [8080, 8081],
-  "postCreateCommand": "echo 'export PATH=\"$PATH:/root/.dotnet/tools\"' >> ~/.bashrc && . ~/.bashrc",
+  "postCreateCommand": {
+	"update": "apt update && apt -y upgrade",,
+	"installDependencies": "apt install -y git",
+	"echo 'export PATH=\"$PATH:/root/.dotnet/tools\"' >> ~/.bashrc && . ~/.bashrc",
+  },
   "containerEnv": {
     "AZURE_AUTH_USE_KEYCHAIN": "false",
 	"PATH": "${PATH}:/root/.dotnet/tools"
