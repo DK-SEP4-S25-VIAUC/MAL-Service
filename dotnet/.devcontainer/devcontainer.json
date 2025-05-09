@@ -26,7 +26,7 @@
   "remoteUser": "root",
   "customizations": {
     "jetbrains": {
-      "backend": "Rider:2024.3",
+      "backend": "Rider",
       "plugins": [
         "org.jetbrains.plugins.github",
         "com.intellij.resharper.azure"
