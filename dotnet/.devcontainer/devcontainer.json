@@ -6,11 +6,7 @@
   },
   "workspaceFolder": "/src",
   "forwardPorts": [8080, 8081],
-  "postCreateCommand": {
-	"update": "apt update && apt -y upgrade",,
-	"installDependencies": "apt install -y git",
-	"echo 'export PATH=\"$PATH:/root/.dotnet/tools\"' >> ~/.bashrc && . ~/.bashrc",
-  },
+  "postCreateCommand": "echo 'export PATH=\"$PATH:/root/.dotnet/tools\"' >> ~/.bashrc && . ~/.bashrc",
   "containerEnv": {
     "AZURE_AUTH_USE_KEYCHAIN": "false",
 	"PATH": "${PATH}:/root/.dotnet/tools"
@@ -18,7 +14,7 @@
   "remoteUser": "root",
   "customizations": {
     "jetbrains": {
-      "backend": "Rider",
+      "backend": "Rider:2024.3",
       "plugins": [
         "org.jetbrains.plugins.github",
         "com.intellij.resharper.azure"
