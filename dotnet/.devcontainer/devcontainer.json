@@ -11,11 +11,6 @@
     "AZURE_AUTH_USE_KEYCHAIN": "false",
 	"PATH": "${PATH}:/root/.dotnet/tools"
   },
-  "features": {
-    "ghcr.io/devcontainers/features/azure-cli:1": {
-      "version": "latest"
-    }
-  },
   "remoteUser": "root",
   "customizations": {
     "jetbrains": {
@@ -26,6 +21,5 @@
       ]
     }
   },
-  "overrideCommand": false
 }
 
