@@ -23,11 +23,6 @@ RUN /usr/share/dotnet/dotnet tool install --ignore-failed-sources --add-source h
 COPY . .
 RUN dotnet restore MAL-Microservice.sln
 
-# Install packages relevant for machine learning and Azure:
-RUN python3 -m venv /venv \
-    && . /venv/bin/activate \
-    && pip install pythonnet==3.0.5 azureml-core azureml-mlflow onnxruntime==1.17.1 numpy scipy
-
 ENV ASPNETCORE_ENVIRONMENT=Development
 
 #HTTP port
