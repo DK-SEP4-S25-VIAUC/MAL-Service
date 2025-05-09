@@ -16,7 +16,7 @@ SENSOR_BASE_URL = "https://mal-api.whitebush-734a9017.northeurope.azurecontainer
 DATA_ENDPOINT      = SENSOR_BASE_URL.rstrip("/") + "/sensor/data"
 THRESHOLD_ENDPOINT = SENSOR_BASE_URL.rstrip("/") + "/sensor/soilhumiditythreshold"
 
-HEALTH_PORT = "8081"
+HEALTH_PORT = 8081
 
 # --- Health endpoint setup ---
 class HealthHandler(BaseHTTPRequestHandler):
