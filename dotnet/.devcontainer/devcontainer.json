@@ -1,6 +1,5 @@
 {
   "name": "dotnet Dev Environment",
-  "image": "ubuntu:latest",
   "build": {
     "dockerfile": "../Dockerfile",
     "context": ".."
