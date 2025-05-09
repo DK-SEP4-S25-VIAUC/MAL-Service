@@ -6,7 +6,7 @@ WORKDIR /src
 
 # Install dependencies and configure Git using the build args
 RUN apt-get update && apt-get install -y \
-    unzip zip git python3 python3-pip python3-venv build-essential ca-certificates procps libsecret-1-0 libsecret-1-dev libglib2.0-0 curl gpg wget coreutils \
+    unzip zip git python3 python3-pip python3-venv build-essential libxext6 libxrender1 libxtst6 libxi6 libfreetype6 ca-certificates procps gcompat libsecret-1-0 libsecret-1-dev libglib2.0-0 curl gpg wget coreutils \
 	&& curl -sL https://aka.ms/InstallAzureCLIDeb | bash \
     # Add Microsoft package repository for Azure Functions Core Tools \
     && wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg \
