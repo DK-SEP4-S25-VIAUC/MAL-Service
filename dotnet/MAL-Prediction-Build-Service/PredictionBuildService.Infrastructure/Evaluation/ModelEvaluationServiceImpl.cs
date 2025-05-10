@@ -116,6 +116,7 @@ public class ModelEvaluationServiceImpl : IModelEvaluationService
         try {
             await HandleSoilPredictionEvaluation();
         } catch (Exception ex) {
+            throw new Exception(ex.Message);
             // TODO Improve this.
         }
         
@@ -137,7 +138,7 @@ public class ModelEvaluationServiceImpl : IModelEvaluationService
         var soilHumidityEvaluationWorkflow = _evaluationInvoker.GetEvaluationWorkflow("EvaluateSoilHumidity");
         var bestSoilPredictionModel = await soilHumidityEvaluationWorkflow.ExecuteEvaluationAsync(soilPredictionModels);
         
-        _logger.LogInformation("Evaluation found best model to be: Type={ModelType}, Version={ModelVersion}", bestSoilPredictionModel.Type, bestSoilPredictionModel.TrainingTimestamp);
+        _logger.LogInformation("Evaluation found best SoilHumidityPrediction model to be: Type={ModelType}, Version={ModelVersion}", bestSoilPredictionModel.Type, bestSoilPredictionModel.TrainingTimestamp);
         
         // Notify Subscribers:
         _logger.LogInformation("Now notifying subscribers...");

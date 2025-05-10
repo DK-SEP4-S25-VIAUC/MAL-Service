@@ -33,14 +33,6 @@ public class BlobStorageInteractionHelperImpl : IBlobStorageInteractionHelper
     }
 
     
-    // TODO Tests?
-    // What if conversion to json fails?
-    // What if download fails?
-    // What if download takes forever?
-    // What if there are zero models in the blob?
-    // What if containerName is rubbish?
-    // What if modelFormat is rubbish?
-    // What if modelMetaDataFormat is rubbish?
     public async Task LoadAllModelsIntoCacheAsync(BlobServiceClient blobServiceClient, CancellationToken token, string containerName, string modelMetaDataFormat, string modelFormat) {
         _logger.LogInformation("Loading existing models from Azure Blob Storage into local cache");
 
@@ -51,8 +43,7 @@ public class BlobStorageInteractionHelperImpl : IBlobStorageInteractionHelper
         await Parallel.ForEachAsync(blobNames,
             new ParallelOptions { MaxDegreeOfParallelism = 4, CancellationToken = token },
             async (blobName, cancellationToken) => {
-                try
-                {
+                try {
                     if (blobName.Contains(modelMetaDataFormat)) {
                         // Create the client connection to interact with this specific azure blob:
                         BlobClient blobClient = blobServiceClient.GetBlobContainerClient(containerName).GetBlobClient(blobName);
@@ -70,7 +61,7 @@ public class BlobStorageInteractionHelperImpl : IBlobStorageInteractionHelper
                 } catch (JsonException jx) {
                     _logger.LogError(jx, "Could not deserialize into ModelDTO: {blobName}", blobName);
                 } catch (Exception ex) {
-                    _logger.LogError(ex, "Error occured while downloading: {blobName}", blobName);
+                    _logger.LogError(ex, "Error occurred while downloading: {blobName}", blobName);
                 }
             });
 
@@ -78,9 +69,6 @@ public class BlobStorageInteractionHelperImpl : IBlobStorageInteractionHelper
     }
 
     
-    // TODO Tests:
-    // What happens if the container is empty?
-    // What happens if the containerName is invalid?
     public async Task<List<string>> ListAllBlobsAsync(BlobServiceClient blobServiceClient, string containerName, CancellationToken token) {
         _logger.LogInformation("Listing blobs in container: {ContainerName}", containerName);
 
@@ -107,9 +95,7 @@ public class BlobStorageInteractionHelperImpl : IBlobStorageInteractionHelper
         }
     }
     
-    
-    // TODO Tests:
-    // What happens if jsonMetaData is not proper json?
+
     public ModelDTO ConvertFromJsonMetadataToModelDTO(string jsonMetaData, string modelMetaDataFormat, string modelFormat, BlobClient blobClient) {
         
         // Extract model_type from the given json metadata, if it exists:
