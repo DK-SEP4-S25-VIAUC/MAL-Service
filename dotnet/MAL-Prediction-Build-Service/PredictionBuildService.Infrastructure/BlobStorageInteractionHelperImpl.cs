@@ -33,14 +33,6 @@ public class BlobStorageInteractionHelperImpl : IBlobStorageInteractionHelper
     }
 
     
-    // TODO Tests?
-    // What if conversion to json fails?
-    // What if download fails?
-    // What if download takes forever?
-    // What if there are zero models in the blob?
-    // What if containerName is rubbish?
-    // What if modelFormat is rubbish?
-    // What if modelMetaDataFormat is rubbish?
     public async Task LoadAllModelsIntoCacheAsync(BlobServiceClient blobServiceClient, CancellationToken token, string containerName, string modelMetaDataFormat, string modelFormat) {
         _logger.LogInformation("Loading existing models from Azure Blob Storage into local cache");
 
@@ -51,8 +43,7 @@ public class BlobStorageInteractionHelperImpl : IBlobStorageInteractionHelper
         await Parallel.ForEachAsync(blobNames,
             new ParallelOptions { MaxDegreeOfParallelism = 4, CancellationToken = token },
             async (blobName, cancellationToken) => {
-                try
-                {
+                try {
                     if (blobName.Contains(modelMetaDataFormat)) {
                         // Create the client connection to interact with this specific azure blob:
                         BlobClient blobClient = blobServiceClient.GetBlobContainerClient(containerName).GetBlobClient(blobName);
@@ -70,7 +61,7 @@ public class BlobStorageInteractionHelperImpl : IBlobStorageInteractionHelper
                 } catch (JsonException jx) {
                     _logger.LogError(jx, "Could not deserialize into ModelDTO: {blobName}", blobName);
                 } catch (Exception ex) {
-                    _logger.LogError(ex, "Error occured while downloading: {blobName}", blobName);
+                    _logger.LogError(ex, "Error occurred while downloading: {blobName}", blobName);
                 }
             });
 
@@ -78,9 +69,6 @@ public class BlobStorageInteractionHelperImpl : IBlobStorageInteractionHelper
     }
 
     
-    // TODO Tests:
-    // What happens if the container is empty?
-    // What happens if the containerName is invalid?
     public async Task<List<string>> ListAllBlobsAsync(BlobServiceClient blobServiceClient, string containerName, CancellationToken token) {
         _logger.LogInformation("Listing blobs in container: {ContainerName}", containerName);
 
@@ -107,18 +95,7 @@ public class BlobStorageInteractionHelperImpl : IBlobStorageInteractionHelper
         }
     }
     
-    
-    /// <summary>
-    /// Converts a received blob Uri pointing towards a metadata file into a ModelDTO class containing all available model metadata information.
-    /// </summary>
-    /// <param name="jsonMetaData">The jsonMetadata file contents downloaded from blob storage.</param>
-    /// <param name="modelMetaDataFormat">The format that the metadata file is in (i.e. .metadata.json), set in appsettings / environment variable.</param>
-    /// <param name="modelFormat">The format that the prediction model file is in (i.e. .onnx), set in appsettings / environment variable.</param>
-    /// <param name="blobClient">The Azure BlobServiceClient instance that handles interactions with the BlobStorage on Azure.</param>
-    /// <returns>A ModelDTO containing all the model metadata in a class compatible with dotnet.</returns>
-    /// <exception cref="MissingFieldException">Thrown if any of the required fields in the metadata is missing (i.e. "model_type", or other, json keys are missing)</exception>
-    /// <exception cref="JsonException">Thrown if conversion from json to ModelDTO fails, due to json formatting/content issues.</exception>
-    /// <exception cref="FormatException">Thrown if one (or more) of the values associated with each key is unrecognized (i.e. "model_type": "supermanPredictor", where supermanPredictor is not a recognized model type)</exception>
+
     public ModelDTO ConvertFromJsonMetadataToModelDTO(string jsonMetaData, string modelMetaDataFormat, string modelFormat, BlobClient blobClient) {
         
         // Extract model_type from the given json metadata, if it exists:
