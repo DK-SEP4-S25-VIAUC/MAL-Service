@@ -91,31 +91,40 @@ public class BuildServiceImpl : IBuildService
     // Re-direct each EventArgs type to a specific overloaded implementation of HandleEventAsync method.
     // This allows for future scalability in the number of events this class can handle!
     private async Task HandleEventAsync(object? sender, EvaluatedAllSoilHumidityPredictionModelsEventArgs e) {
-        try {
-            _logger.LogInformation("BuildService received EvaluatedAllSoilHumidityPredictionModelsEventArgs event. Building and deploying updated Linear Model to Azure Functions App");
-            
-            // Get the Function App resource:
-            var resourceGroup = _armClient.GetResourceGroupResource(ResourceGroupResource.CreateResourceIdentifier(_settings.SubscriptionId, _settings.ResourceGroupName));
-            
-            var functionApp = await resourceGroup.GetWebSiteAsync(_settings.FunctionAppName);
 
-            // Get the current Application Settings:
-            var appSettingsResponse = await functionApp.Value.GetApplicationSettingsAsync();
+        // Deploy updated SoilHumidityPrediction model to Azure Functions:
+        if (e.GetType() == typeof(EvaluatedAllSoilHumidityPredictionModelsEventArgs)) {
+            try {
+                _logger.LogInformation("BuildService received EvaluatedAllSoilHumidityPredictionModelsEventArgs event. Building and deploying updated Linear Model to Azure Functions App");
             
-            // Get the application settings dictionary:
-            var appSettings = appSettingsResponse.Value;
+                // Get the Function App resource:
+                var resourceGroup = _armClient.GetResourceGroupResource(ResourceGroupResource.CreateResourceIdentifier(_settings.SubscriptionId, _settings.ResourceGroupName));
+            
+                var functionApp = await resourceGroup.GetWebSiteAsync(_settings.FunctionAppName);
 
-            // Update the OnnxModelUri setting:
-            appSettings.Properties["OnnxModelUri"] = e.BestModel.DownloadUrl;
+                // Get the current Application Settings:
+                var appSettingsResponse = await functionApp.Value.GetApplicationSettingsAsync();
+            
+                // Get the application settings dictionary:
+                var appSettings = appSettingsResponse.Value;
 
-            // Apply the updated settings:
-            await functionApp.Value.UpdateApplicationSettingsAsync(appSettings);
+                // Update the OnnxModelUri setting:
+                appSettings.Properties[_settings.EnvironmentVariableName_OnnxBestSoilPredictionModelUri] = e.BestModel.DownloadUrl;
+
+                // Apply the updated settings:
+                await functionApp.Value.UpdateApplicationSettingsAsync(appSettings);
             
-            _logger.LogInformation("Deployed updated azure function reference.\nUpdated OnnxModelUri to {BestModelUrl}", e.BestModel.DownloadUrl);
+                _logger.LogInformation("Deployed updated azure function reference.\nUpdated OnnxModelUri to {BestModelUrl}", e.BestModel.DownloadUrl);
             
-        } catch (Exception ex) {
-            _logger.LogError(ex, "Failed to build and deploy updated model to Azure Functions.");
-            throw;
+            } catch (Exception ex) {
+                _logger.LogError(ex, "Failed to build and deploy updated model to Azure Functions.");
+                throw;
+            }
         }
+
+        // Deploy other prediction types to Azure functions:
+        // TODO: If expanding with other prediction types (i.e. PredictAirHumidityLevel), please add pattern checking
+        // if/else statements here targeting the events fired by associated evaluation workflow.
+
     }
 }

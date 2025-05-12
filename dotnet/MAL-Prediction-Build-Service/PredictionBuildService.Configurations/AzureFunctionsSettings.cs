@@ -9,4 +9,5 @@ public class AzureFunctionsSettings
     public string SubscriptionId { get; set; } = string.Empty;
     public string ResourceGroupName { get; set; } = string.Empty;
     public string FunctionAppName { get; set; } = string.Empty;
+    public string EnvironmentVariableName_OnnxBestSoilPredictionModelUri { get; set; } = string.Empty;
 }
