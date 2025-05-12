@@ -87,7 +87,6 @@ public class SensorDataService : ISensorDataService
 
     public async Task<IActionResult> getSamples(DateTime? from, DateTime? to)
     {
-        Console.WriteLine("getSamples called");
         try
         {
             var uriBuilder = new UriBuilder(new Uri(_httpClient.BaseAddress!, "sample"));
@@ -101,15 +100,12 @@ public class SensorDataService : ISensorDataService
 
             uriBuilder.Query = query.ToString();
             var finalUri = uriBuilder.ToString();
-
-            Console.WriteLine(finalUri);
+            
             var response = await _httpClient.GetAsync(finalUri);
 
             response.EnsureSuccessStatusCode(); // throws for 404, 500, etc.
-            Console.WriteLine("getSamples called again");
 
             var result = await response.Content.ReadFromJsonAsync<List<SampleDTO>>();
-            Console.WriteLine(result);
             if (result != null && result.Count >= 2)
             {
                 return new OkObjectResult(result);
