@@ -20,6 +20,8 @@ from skl2onnx.common.data_types import FloatTensorType
 
 from upload_model import upload_to_blob
 
+logger = logging.getLogger(__name__)
+
 # Helper: derive the target variable
 def add_minutes_to_dry(df: pd.DataFrame, threshold: float) -> pd.DataFrame:
     """
@@ -64,6 +66,9 @@ def train_model(json_samples: str, json_threshold: str) -> dict:
     else:
         raise ValueError("Unexpected JSON structure from /sensor/data")
 
+    logger.info("Received %d samples", len(sample_data))
+    logger.debug("First sample keys: %s", list(sample_data[0].keys()) if sample_data else "n/a")
+
     df = pd.DataFrame(sample_data)
 
     rename_map = {
@@ -75,8 +80,17 @@ def train_model(json_samples: str, json_threshold: str) -> dict:
     }
     df.rename(columns=rename_map, inplace=True)
 
+    logger.debug("Dataframe columns after rename: %s", df.columns.tolist())
+
+    required_cols = ["soil_humidity", "air_humidity", "temperature", "light", "timestamp"]
+    missing = set(required_cols) - set(df.columns)
+    if missing:
+        raise ValueError(f"Missing required columns in sample data: {missing}")
+
+
     # Parse incoming JSON threshold
     threshold = json.loads(json_threshold)
+    logger.info("Threshold value received: %s", threshold)
 
     # Data pre-processing
     df["timestamp"] = pd.to_datetime(df["timestamp"])
@@ -165,6 +179,8 @@ def train_model(json_samples: str, json_threshold: str) -> dict:
     # Upload to Azure Blob Storage
     upload_to_blob(model_path,  model_fname)
     upload_to_blob(meta_path,   meta_fname)
+
+    logger.info("Model and metadata uploaded: %s, %s", model_fname, meta_fname)
 
     # Return a short summary to caller
     return {
