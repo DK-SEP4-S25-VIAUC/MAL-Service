@@ -1,3 +1,5 @@
+# training.py
+
 """
 Train a linear (Ridge) regression baseline that predicts
 “minutes until soil humidity drops below a certain threshold %”.

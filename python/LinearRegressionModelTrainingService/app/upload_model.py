@@ -1,6 +1,9 @@
 # upload_model.py
 import os
+import logging
 from azure.storage.blob import BlobServiceClient
+
+logger = logging.getLogger(__name__)
 
 def upload_to_blob(local_path: str, blob_name: str):
     try:
@@ -12,8 +15,8 @@ def upload_to_blob(local_path: str, blob_name: str):
 
         with open(local_path, "rb") as data:
             blob_client.upload_blob(data, overwrite=True)
-
-        print(f"Uploaded '{blob_name}' to Azure Blob Storage in container '{container_name}'")
+            logger.info("Uploaded %s (%s bytes)", blob_name, os.path.getsize(local_path))
     except Exception as e:
-        print(f"Upload failed: {e}")
+        logger.exception("Upload failed for %s", blob_name)
+        raise
 
