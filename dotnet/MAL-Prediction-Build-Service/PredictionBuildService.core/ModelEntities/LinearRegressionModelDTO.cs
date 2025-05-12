@@ -78,7 +78,7 @@ public class LinearRegressionModelDTO : ModelDTO
             TypeNameHandling = TypeNameHandling.Auto
         });
 
-        var copy = JsonConvert.DeserializeObject<ModelDTO>(serialized, new JsonSerializerSettings {
+        var copy = JsonConvert.DeserializeObject<LinearRegressionModelDTO>(serialized, new JsonSerializerSettings {
             TypeNameHandling = TypeNameHandling.Auto
         });
 
