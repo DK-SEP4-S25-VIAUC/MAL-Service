@@ -71,9 +71,8 @@ public class LinearRegressionModelDTO : ModelDTO
         // Validated successfully.
         return true;
     }
-
-    // TODO: Unit test that this copy method works as intended
-    public override ModelDTO Copy() {
+    
+    public override LinearRegressionModelDTO Copy() {
         var serialized = JsonConvert.SerializeObject(this, new JsonSerializerSettings {
             TypeNameHandling = TypeNameHandling.Auto
         });
