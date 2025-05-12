@@ -1,13 +1,14 @@
 import json
+import logging
+import sys
 import threading
-import logging, sys
 import time
 from datetime import datetime
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 import requests
-from pytz import timezone
 from apscheduler.schedulers.background import BackgroundScheduler
+from pytz import timezone
 
 from training import train_model
 
@@ -68,7 +69,8 @@ def job():
             json.dumps(resp_threshold.json())
         )
 
-        logger.info(f"[{datetime.now()}] Done. RMSE={result['rmse']} R2={result['r2']}")
+        logger.info(
+            f"[{datetime.now()}] Done. RMSE={result.get('rmse_cv', 'N/A')} R2={result.get('r2_insample', 'N/A')}")
     except Exception as e:
         logger.exception(f"[{datetime.now()}] Error during training: {e}")
 
