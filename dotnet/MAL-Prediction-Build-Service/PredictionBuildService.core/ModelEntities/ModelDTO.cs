@@ -27,6 +27,8 @@ public abstract class ModelDTO
     /// </summary>
     /// <returns></returns>
     public abstract bool ValidateSelf();
+
+    public abstract ModelDTO Copy();
     
     
     public override string ToString() {

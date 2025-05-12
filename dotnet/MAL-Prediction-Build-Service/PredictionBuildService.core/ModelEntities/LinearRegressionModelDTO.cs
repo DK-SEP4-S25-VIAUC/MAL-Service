@@ -72,6 +72,22 @@ public class LinearRegressionModelDTO : ModelDTO
         return true;
     }
 
+    // TODO: Unit test that this copy method works as intended
+    public override ModelDTO Copy() {
+        var serialized = JsonConvert.SerializeObject(this, new JsonSerializerSettings {
+            TypeNameHandling = TypeNameHandling.Auto
+        });
+
+        var copy = JsonConvert.DeserializeObject<ModelDTO>(serialized, new JsonSerializerSettings {
+            TypeNameHandling = TypeNameHandling.Auto
+        });
+
+        if (copy == null)
+            throw new InvalidOperationException("Failed to copy LinearRegressionModelDTO.");
+
+        return copy;
+    }
+
     public override string ToString() {
         return (
             "Type: " + Type + 
