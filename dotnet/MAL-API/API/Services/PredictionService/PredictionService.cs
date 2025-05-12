@@ -114,6 +114,6 @@ public class PredictionService : IPredictionService
         }
 
         double minutes = minutesToken.Value<double>();
-        return new ForecastDTO(minutes, input.Timestamp);
+        return new ForecastDTO(minutes, DateTime.Now);
     }
 }
