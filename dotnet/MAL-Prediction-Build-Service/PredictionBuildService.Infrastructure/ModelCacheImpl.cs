@@ -44,7 +44,7 @@ public class ModelCacheImpl : IModelCache
             }
         
             // return result:
-            return _modelCache.TryAdd(key, newModelDto);
+            return _modelCache.TryAdd(key, newModelDto.Copy());
         });
     }
 
@@ -87,7 +87,7 @@ public class ModelCacheImpl : IModelCache
 
             // Remove old model (if exists):
             if (_modelCache.TryRemove(oldKey, out _)) {
-                return _modelCache.TryAdd(newKey, newModelDto);
+                return _modelCache.TryAdd(newKey, newModelDto.Copy());
             }
 
             _logger.LogError("In method UpdateModelAsync(), the model to update was not found in cache.");
