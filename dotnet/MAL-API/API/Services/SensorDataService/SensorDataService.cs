@@ -11,7 +11,7 @@ namespace API.Services.SensorDataService;
 public class SensorDataService : ISensorDataService
 {
     private readonly HttpClient _httpClient;
-    private readonly List<Dictionary<string, SampleDTO>> _fallbackList = new();
+    private readonly List<SampleDTO> _fallbackList = new();
     private readonly ILogger<SensorDataService> _logger;
 
     public SensorDataService(HttpClient httpClient, ILogger<SensorDataService> logger)
@@ -25,34 +25,33 @@ public class SensorDataService : ISensorDataService
     {
         try
         {
-            var response = await _httpClient.GetFromJsonAsync<Dictionary<string, CreateManualThresholdDTO>>(
-                "soilhumidity/threshold"
-            );
+            var dto = await _httpClient.GetFromJsonAsync<CreateManualThresholdDTO>("soilhumidity/threshold");
 
-            if (response != null && response.TryGetValue("CreateManualThresholdDTO", out var dto))
+            if (dto != null)
             {
                 return dto.lowerbound;
             }
+
+            _logger.LogWarning("Threshold response was null. Using fallback.");
         }
         catch (HttpRequestException ex)
         {
-            _logger.LogError(ex, "HTTP request to soil humidity API failed.");
+            _logger.LogError(ex, "HTTP request to soil humidity API failed. Using fallback threshold.");
         }
-        catch (NotSupportedException ex) // Content type is not valid
+        catch (JsonException ex)
         {
-            _logger.LogError(ex, "The content type of the response is not supported.");
-        }
-        catch (JsonException ex) // JSON parsing error
-        {
-            _logger.LogError(ex, "Error parsing JSON response.");
+            _logger.LogError(ex, "Error parsing JSON response. Using fallback threshold.");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while fetching soil humidity threshold.");
+            _logger.LogError(ex, "Unexpected error occurred. Using fallback threshold.");
         }
-        
-        return null;
+
+        return 20.0;
     }
+
+
+
     
     public async Task<double?> GetLatestSoilHumidityValueAsync()
     {
@@ -88,6 +87,7 @@ public class SensorDataService : ISensorDataService
 
     public async Task<IActionResult> getSamples(DateTime? from, DateTime? to)
     {
+        Console.WriteLine("getSamples called");
         try
         {
             var uriBuilder = new UriBuilder(new Uri(_httpClient.BaseAddress!, "Sample"));
@@ -105,20 +105,40 @@ public class SensorDataService : ISensorDataService
             var response = await _httpClient.GetAsync(finalUri);
 
             response.EnsureSuccessStatusCode(); // throws for 404, 500, etc.
+            Console.WriteLine("getSamples called again");
 
             var result = await response.Content.ReadFromJsonAsync<Dictionary<string, List<Dictionary<string, SampleDTO>>>>();
 
-            if (result != null && result.TryGetValue("list", out var list))
-                return new OkObjectResult(new { list });
+            if (result != null && result.TryGetValue("list", out var listOfWrappedSamples))
+            {
+                // Flatten each dictionary and extract SampleDTOs
+                var flattenedList = listOfWrappedSamples
+                    .SelectMany(dict => dict.Values)
+                    .ToList();
+                
+                if (flattenedList.Count < 2)
+                {
+                    return new NotFoundObjectResult("Not enough samples found.");
+                }
 
-            return new NotFoundObjectResult("No sample data found.");
+                return new OkObjectResult(flattenedList);
+            }
+
+            throw new Exception ();
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            // Return preloaded fallback data
-            return new OkObjectResult(new { list = _fallbackList });
+            Console.WriteLine("API failed, using fallback list.");
+    
+            if (_fallbackList == null || _fallbackList.Count < 2)
+            {
+                return new NotFoundObjectResult("Fallback list does not contain enough samples.");
+            }
+
+            return new OkObjectResult(_fallbackList); // This is a List<SampleDTO>
         }
     }
+
 
     private void LoadFallbackData()
     {
@@ -147,7 +167,7 @@ public class SensorDataService : ISensorDataService
                     Light_Value = double.Parse(parts[4])
                 };
 
-                _fallbackList.Add(new Dictionary<string, SampleDTO> { { "SampleDTO", sample } });
+                _fallbackList.Add(sample);
             }
         }
         catch (Exception ex)

@@ -4,11 +4,10 @@
 name: CI/CD Pipeline (AzureFunction - SoilHumidityPrediction)
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'dotnet/MAL-Prediction-Build-Service/AzureFunctions/AzureFunction.SoilHumidityPrediction/**'
+  workflow_run:
+    workflows: ["Run Tests with Coverage (MAL-Microservice)"]
+    types:
+      - completed
   workflow_dispatch:
 
 env:
@@ -17,27 +16,64 @@ env:
 
 jobs:
   build-and-deploy:
+    # Ensure this workflow only runs when changes to the main branch happen, and after the dotnet tests execution workflow has passed.
+    if: >
+      (github.event_name == 'workflow_dispatch') ||
+      (
+        github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.head_branch == 'main'
+      )
     runs-on: ubuntu-latest
     permissions:
       id-token: write
       contents: read
 
     steps:
+      # Checkout the repository
       - name: 'Checkout GitHub Action'
         uses: actions/checkout@v4
 
+
+      # Detect if relevant files were changed (only for workflow_run trigger)
+      - name: Detect changes to Azure Function (only for workflow_run)
+        if: github.event_name != 'workflow_dispatch'
+        id: changes
+        run: |
+          echo "CHANGED=$(git diff-tree --no-commit-id --name-only -r ${{ github.event.workflow_run.head_sha }} | grep '^dotnet/MAL-Prediction-Build-Service/AzureFunctions/AzureFunction.SoilHumidityPrediction/' || true)" >> "$GITHUB_OUTPUT"
+
+
+      # Exit if no relevant changes
+      - name: Stop if no relevant changes (only for workflow_run)
+        if: github.event_name != 'workflow_dispatch' && steps.changes.outputs.CHANGED == ''
+        run: echo "No relevant changes to Azure Function. Skipping deployment." && exit 0
+
+
+      # Setup .NET
       - name: Setup DotNet ${{ env.DOTNET_VERSION }} Environment
         uses: actions/setup-dotnet@v3
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
+      # Cache NuGet packages
+      - name: Cache NuGet packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      # Restore dependencies
       - name: 'Resolve Project Dependencies Using Dotnet'
         shell: bash
         run: dotnet restore ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}/AzureFunction.SoilHumidityPrediction.csproj
 
+
+      # Build the Azure Function
       - name: Build Azure Function project
         run: dotnet build ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}/AzureFunction.SoilHumidityPrediction.csproj --configuration Release --output ./output
-      
+
+      # Azure login
       - name: Login to Azure
         uses: azure/login@v2
         with:
@@ -45,6 +81,8 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_21FD5CE33F2B4B62A79E44720F82C3DC }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_0BD12108B0464774A124DF13BD380AAF }}
 
+
+      # Deploy to Azure Functions
       - name: 'Run Azure Functions Action'
         uses: Azure/functions-action@v1
         id: fa

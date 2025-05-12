@@ -2,36 +2,20 @@
   "name": "dotnet Dev Environment",
   "build": {
     "dockerfile": "../Dockerfile",
-    "context": "..",
-    "args": {
-      "GIT_USER_NAME": "${localEnv:GIT_USER_NAME}",
-      "GIT_USER_EMAIL": "${localEnv:GIT_USER_EMAIL}"
-    }
+    "context": ".."
   },
   "workspaceFolder": "/src",
   "forwardPorts": [8080, 8081],
-  "postCreateCommand": "echo 'export PATH=\"$PATH:/root/.dotnet/tools\"' >> ~/.bashrc",
-  "remoteEnv": {
-    "GIT_USER_NAME": "${localEnv:GIT_USER_NAME}",
-    "GIT_USER_EMAIL": "${localEnv:GIT_USER_EMAIL}"
-  },
-  "containerEnv": {
-    "AZURE_AUTH_USE_KEYCHAIN": "false"
-  },
-  "features": {
-    "ghcr.io/devcontainers/features/azure-cli:1": {
-      "version": "latest"
-    }
-  },
+  "postCreateCommand": "echo 'export PATH=\"$PATH:/root/.dotnet/tools\"' >> ~/.bashrc && . ~/.bashrc",
   "remoteUser": "root",
   "customizations": {
     "jetbrains": {
-      "backend": "Rider:2024.3",
+      "backend": "Rider",
       "plugins": [
         "org.jetbrains.plugins.github",
         "com.intellij.resharper.azure"
       ]
     }
-  }
+  },
 }
 

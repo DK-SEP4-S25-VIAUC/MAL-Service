@@ -28,4 +28,9 @@
         <Using Include="Xunit"/>
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\PredictionBuildService.core\PredictionBuildService.core.csproj" />
+      <ProjectReference Include="..\PredictionBuildService\PredictionBuildService.csproj" />
+    </ItemGroup>
+
 </Project>

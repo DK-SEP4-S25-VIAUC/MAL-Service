@@ -1,6 +1,0 @@
-bin/
-obj/
-*.user
-*.db
-*.log
-*.cache

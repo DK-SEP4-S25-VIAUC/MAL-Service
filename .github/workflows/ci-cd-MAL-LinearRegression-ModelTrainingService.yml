@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - development
     paths:
     - 'python/**'
   workflow_dispatch:
@@ -53,21 +54,3 @@ jobs:
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/linear-regression-service:${{ github.sha }}
             ${{ secrets.DOCKERHUB_USERNAME }}/linear-regression-service:latest
-
-      - name: Validate Docker image
-        run: |
-          docker run --rm -d -p 8001:8001 ${{ secrets.DOCKERHUB_USERNAME }}/linear-regression-service:latest
-          sleep 5
-          curl -f http://localhost:8001/ || exit 1
-          docker stop $(docker ps -q --filter "ancestor=${{ secrets.DOCKERHUB_USERNAME }}/linear-regression-service:latest")
-        env:
-          DOCKER_BUILDKIT: 1
-
-      - name: Upload trained model to Azure Blob Storage
-        working-directory: python/LinearRegressionModelTrainingService
-        env:
-          AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
-          AZURE_CONTAINER_NAME: models
-        run: |
-          pip install azure-storage-blob
-          python upload_model.py

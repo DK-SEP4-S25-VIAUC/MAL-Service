@@ -76,7 +76,9 @@ jobs:
 
       - name: Deploy to Container App
         run: |
-          az containerapp update \
-            --name mal-api \
-            --resource-group SEP4_MAL_team \
-            --image ${{ secrets.DOCKERHUB_USERNAME }}/api:latest
+         az containerapp update \
+          --name mal-api \
+          --resource-group SEP4_MAL_team \
+          --image ${{ secrets.DOCKERHUB_USERNAME }}/api:${{ github.sha }} \
+          --revision-suffix ${{ github.run_number }}-${{ github.run_attempt }}
+
