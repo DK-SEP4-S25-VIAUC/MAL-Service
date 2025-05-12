@@ -4,7 +4,7 @@
 Train a linear (Ridge) regression baseline that predicts
 “minutes until soil humidity drops below a certain threshold %”.
 """
-
+import logging
 import os
 import json
 from datetime import datetime
