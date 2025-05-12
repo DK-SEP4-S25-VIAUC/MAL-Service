@@ -24,7 +24,7 @@ public class Program
         });
         builder.Services.AddHttpClient<ISensorDataService, SensorDataService>(client =>
         {
-            client.BaseAddress = new Uri("https://sep4api.azure-api.net/api/IoT/");
+            client.BaseAddress = new Uri("https://sep4api.azure-api.net/api/iot/");
             client.DefaultRequestHeaders.Add("Accept", "application/json");
             // Add API keys or headers here if needed
         });

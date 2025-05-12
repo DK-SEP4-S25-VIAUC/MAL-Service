@@ -90,7 +90,7 @@ public class SensorDataService : ISensorDataService
         Console.WriteLine("getSamples called");
         try
         {
-            var uriBuilder = new UriBuilder(new Uri(_httpClient.BaseAddress!, "Sample"));
+            var uriBuilder = new UriBuilder(new Uri(_httpClient.BaseAddress!, "sample"));
             var query = HttpUtility.ParseQueryString(string.Empty);
 
             if (from.HasValue)
@@ -102,27 +102,19 @@ public class SensorDataService : ISensorDataService
             uriBuilder.Query = query.ToString();
             var finalUri = uriBuilder.ToString();
 
+            Console.WriteLine(finalUri);
             var response = await _httpClient.GetAsync(finalUri);
 
             response.EnsureSuccessStatusCode(); // throws for 404, 500, etc.
             Console.WriteLine("getSamples called again");
 
-            var result = await response.Content.ReadFromJsonAsync<Dictionary<string, List<Dictionary<string, SampleDTO>>>>();
-
-            if (result != null && result.TryGetValue("list", out var listOfWrappedSamples))
+            var result = await response.Content.ReadFromJsonAsync<List<SampleDTO>>();
+            Console.WriteLine(result);
+            if (result != null && result.Count >= 2)
             {
-                // Flatten each dictionary and extract SampleDTOs
-                var flattenedList = listOfWrappedSamples
-                    .SelectMany(dict => dict.Values)
-                    .ToList();
-                
-                if (flattenedList.Count < 2)
-                {
-                    return new NotFoundObjectResult("Not enough samples found.");
-                }
-
-                return new OkObjectResult(flattenedList);
+                return new OkObjectResult(result);
             }
+
 
             throw new Exception ();
         }

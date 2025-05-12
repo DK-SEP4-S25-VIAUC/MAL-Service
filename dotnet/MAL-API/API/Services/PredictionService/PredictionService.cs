@@ -1,7 +1,9 @@
+using System.Text.Json;
 using API.DataEntities;
 using API.Services.SensorDataService;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
+using System.Text.Json.Serialization;
 
 namespace API.Services.PredictionService;
 
@@ -41,11 +43,20 @@ public class PredictionService : IPredictionService
             return null;
         }
 
+        foreach (var s in samples)
+        {
+            Console.WriteLine($"Sample at {s.Timestamp}");
+        }
         // Sort samples descending to get the latest first
         var sortedSamples = samples.OrderByDescending(s => s.Timestamp).Take(2).ToList();
+        
+        
+
 
         var latest = sortedSamples[0];
         var previous = sortedSamples[1];
+        Console.WriteLine(latest.Timestamp);
+        Console.WriteLine(previous.Timestamp);
 
         try
         {
@@ -84,18 +95,24 @@ public class PredictionService : IPredictionService
         {
             inputs = new Dictionary<string, double[]>
             {
-                {"soil_humidity", new[] {input.SoilHumidity}},
+                {"soil_humidity", new[] {input.SoilHumidity ?? 0.0}},
                 {"soil_delta", new[] {input.SoilDelta}},
-                {"air_humidity", new[] {input.AirHumidity}},
-                {"temperature", new[] {input.Temperature}},
-                {"light", new[] {input.Light}},
+                {"air_humidity", new[] {input.AirHumidity ?? 0.0}},
+                {"temperature", new[] {input.Temperature ?? 0.0}},
+                {"light", new[] {input.Light ?? 0.0}},
                 {"hour_sin", new[] {input.HourSin}},
                 {"hour_cos", new[] {input.HourCos}},
                 {"threshold", new[] {input.Threshold ?? 0.0}}
             }
         };
         
-        Console.WriteLine(body);
+        string Json = JsonSerializer.Serialize(body, new JsonSerializerOptions
+        {
+            WriteIndented = true, // for pretty-printing
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull // optional: skip nulls
+        });
+
+        Console.WriteLine(Json);
 
         var response = await _httpClient.PostAsJsonAsync(endpoint, body);
 
@@ -114,6 +131,6 @@ public class PredictionService : IPredictionService
         }
 
         double minutes = minutesToken.Value<double>();
-        return new ForecastDTO(minutes, input.Timestamp);
+        return new ForecastDTO(minutes, DateTime.UtcNow.AddHours(2));
     }
 }
