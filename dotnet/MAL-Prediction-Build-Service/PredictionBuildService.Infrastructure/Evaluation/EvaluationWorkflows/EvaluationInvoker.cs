@@ -19,9 +19,6 @@ public class EvaluationInvoker
     /// <br />
     /// With a workflow class called 'EvaluateSoilHumidityWorkflow' the corresponding command to get this workflow is 'EvaluateSoilHumidity'.
     /// </summary>
-    // TODO: Tests?
-    // Check that evaluatesoilhumiditymodel is properly added to the dictionary!
-    // What if we try to add a evaluation model without a corresponding class implementation (or a typo)?
     public EvaluationInvoker() {
         var assembly = Assembly.GetExecutingAssembly();
 
