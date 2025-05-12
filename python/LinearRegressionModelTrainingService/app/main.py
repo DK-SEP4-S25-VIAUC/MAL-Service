@@ -1,4 +1,6 @@
+import json
 import threading
+import logging, sys
 import time
 from datetime import datetime
 import os
@@ -11,19 +13,39 @@ from apscheduler.schedulers.background import BackgroundScheduler
 
 from training import train_model
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    handlers=[logging.StreamHandler(sys.stdout)],
+)
+logger = logging.getLogger(__name__)
+logging.getLogger("apscheduler").setLevel(logging.WARNING)
+logging.getLogger("azure").setLevel(logging.WARNING)
+
 # Get endpoints
 SENSOR_BASE_URL = "https://mal-api.whitebush-734a9017.northeurope.azurecontainerapps.io"
-DATA_ENDPOINT      = SENSOR_BASE_URL.rstrip("/") + "/sensor/data"
+DATA_ENDPOINT = SENSOR_BASE_URL.rstrip("/") + "/sensor/data"
 THRESHOLD_ENDPOINT = SENSOR_BASE_URL.rstrip("/") + "/sensor/soilhumiditythreshold"
 
 HEALTH_PORT = 8081
 
+
 # --- Health endpoint setup ---
 class HealthHandler(BaseHTTPRequestHandler):
+    LOG_EVERY = 600
+    _last_log = 0.0
+
     def do_GET(self):
         self.send_response(200)
         self.end_headers()
         self.wfile.write(b"OK")
+
+    def log_message(self, _format, *args):
+        now = time.time()
+        if now - HealthHandler._last_log >= self.LOG_EVERY:
+            logger.info("Health probe OK  (client %s)", self.client_address[0])
+            HealthHandler._last_log = now
+
 
 def start_health_server(port: int | str = HEALTH_PORT):
     port = int(port)
@@ -31,34 +53,26 @@ def start_health_server(port: int | str = HEALTH_PORT):
     print(f"[{datetime.now()}] Health endpoint listening on port {port}")
     server.serve_forever()
 
-def job():
-    # Defining parameters for period of time
-    from_ts = "2025-04-30T00:00:00Z"
-    now_utc = datetime.now(timezone("UTC")).isoformat(timespec="seconds")
-    to_ts = now_utc.replace("+00:00", "Z")
-    params = {"from" : from_ts, "to" : to_ts}
 
+def job():
     start = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    print(f"[{start}] starting model training")
+    logger.info(f"[{start}] starting model training")
 
     try:
         url = DATA_ENDPOINT
-        print("DEBUG URL:", url, flush=True)
+        logger.debug("Requesting sensor data from %s", DATA_ENDPOINT)
 
-        # Get samples
         resp_data = requests.get(DATA_ENDPOINT, timeout=120)
-        resp_data.raise_for_status()
-        json_data = resp_data.json()
-
-        # Get threshold
         resp_threshold = requests.get(THRESHOLD_ENDPOINT, timeout=120)
-        resp_threshold.raise_for_status()
-        json_thr = resp_threshold.json()
 
-        result = train_model(json_data, json_thr)
-        print(f"[{datetime.now()}] Done. RMSE={result['rmse']} R2={result['r2']}")
+        result = train_model(
+            json.dumps(resp_data.json()),
+            json.dumps(resp_threshold.json())
+        )
+
+        logger.info(f"[{datetime.now()}] Done. RMSE={result['rmse']} R2={result['r2']}")
     except Exception as e:
-        print(f"[{datetime.now()}] Error during training: {e}")
+        logger.exception(f"[{datetime.now()}] Error during training: {e}")
 
 
 def main():
@@ -72,25 +86,19 @@ def main():
     # Scheduling daily job
     scheduler.add_job(job, trigger="cron", hour=0, minute=0)
     scheduler.start()
-    print("Scheduler is running, next training begins at kl. 00.00 Copenhagen-time")
-
+    logger.info("Scheduler is running, next training at 00:00 CET")
 
     # Manual test-call
-    print("Testing job() manually")
+    logger.info("Running manual job")
     job()
-
-    print(f"[{datetime.now()}] Scheduler is running. Health endpoint at port {HEALTH_PORT}.")
 
     try:
         while True:
             time.sleep(1)
     except (KeyboardInterrupt, SystemExit):
         scheduler.shutdown()
-        print("Shutdown scheduler og exit.")
+        logger.info("Shutting down scheduler and exits")
+
 
 if __name__ == "__main__":
     main()
-
-
-
-
