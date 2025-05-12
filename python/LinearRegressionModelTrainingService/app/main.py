@@ -46,12 +46,12 @@ def job():
         print("DEBUG URL:", url, flush=True)
 
         # Get samples
-        resp_data = requests.get(DATA_ENDPOINT, timeout=60)
+        resp_data = requests.get(DATA_ENDPOINT, timeout=120)
         resp_data.raise_for_status()
         json_data = resp_data.json()
 
         # Get threshold
-        resp_threshold = requests.get(THRESHOLD_ENDPOINT, timeout=60)
+        resp_threshold = requests.get(THRESHOLD_ENDPOINT, timeout=120)
         resp_threshold.raise_for_status()
         json_thr = resp_threshold.json()
 

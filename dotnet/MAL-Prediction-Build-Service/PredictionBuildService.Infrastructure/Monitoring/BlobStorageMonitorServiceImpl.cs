@@ -111,8 +111,9 @@ public class BlobStorageMonitorServiceImpl : IBlobStorageMonitorService
                 } else {
                     // Queue is empty...
                     // Sleep for 1 hour (or whatever is set in the settings) to minimize CPU usage:
-                    _logger.LogInformation("Finished processing changes at: {time}.\nSleeping for {delay} minutes...", DateTimeOffset.Now, _workerSettings.SleepBetweenChecksInterval);
+                    _logger.LogInformation("Going to sleep at: {time}.\nSleeping for {delay} hours...", DateTimeOffset.Now, _workerSettings.SleepBetweenChecksInterval);
                     await Task.Delay(TimeSpan.FromHours(int.Parse(_workerSettings.SleepBetweenChecksInterval)), token);
+                    _logger.LogInformation("Woke up from sleep at: {time}", DateTimeOffset.Now);
                 }
                 
             } catch (JsonException ex) {
