@@ -18,6 +18,7 @@ RUN dotnet build MAL-Prediction-Build-Service/PredictionBuildService/PredictionB
 RUN dotnet test MAL-Prediction-Build-Service/PredictionBuildService.Tests/PredictionBuildService.Tests.csproj -c Release --verbosity normal
 RUN dotnet test MAL-Prediction-Build-Service/PredictionBuildService.Infrastructure.Tests/PredictionBuildService.Infrastructure.Tests.csproj -c Release --verbosity normal
 RUN dotnet test MAL-Prediction-Build-Service/PredictionBuildService.core.Tests/PredictionBuildService.core.Tests.csproj -c Release --verbosity normal
+RUN dotnet test MAL-Prediction-Build-Service/AzureFunctions/AzureFunction.SoilHumidityPrediction.tests/AzureFunction.SoilHumidityPrediction.tests.csproj -c Release --verbosity normal
 
 # Stage 2: Publish
 FROM build AS publish
