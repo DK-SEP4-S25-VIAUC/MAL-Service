@@ -114,17 +114,16 @@ public class BuildServiceImpl : IBuildService
                 // Apply the updated settings:
                 await functionApp.Value.UpdateApplicationSettingsAsync(appSettings);
             
-                _logger.LogInformation("Deployed updated azure function reference.\nUpdated OnnxModelUri to {BestModelUrl}", e.BestModel.DownloadUrl);
+                _logger.LogInformation("Deployed updated azure function reference.\nUpdated {envVar} to {BestModelUrl}", _settings.EnvironmentVariableName_OnnxBestSoilPredictionModelUri, e.BestModel.DownloadUrl);
             
             } catch (Exception ex) {
                 _logger.LogError(ex, "Failed to build and deploy updated model to Azure Functions.");
                 throw;
             }
         }
-
-        // Deploy other prediction types to Azure functions:
-        // TODO: If expanding with other prediction types (i.e. PredictAirHumidityLevel), please add pattern checking
-        // if/else statements here targeting the events fired by associated evaluation workflow.
-
     }
+    
+    // HandleEventAsync methods to handle deployment of other prediction types to Azure functions:
+    // TODO: If expanding with other prediction types (i.e. PredictAirHumidityLevel), please add methods
+    // here targeting the events fired by associated evaluation workflow.
 }

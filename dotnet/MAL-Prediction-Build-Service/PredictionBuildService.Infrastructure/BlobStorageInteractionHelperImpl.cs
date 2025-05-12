@@ -133,6 +133,8 @@ public class BlobStorageInteractionHelperImpl : IBlobStorageInteractionHelper
                 }
                 break;
             
+            // TODO: Add other possible model types below (i.e. RandomForestDTO).
+            
             default:
                 _logger.LogError("In method ConvertFromJsonMetadataToModelDTO(), 'model_type' = {modelType} is not a recognized/implemented model type.", modelType);
                 throw new FormatException("'model_type' is unrecognized. Unable to continue.");
