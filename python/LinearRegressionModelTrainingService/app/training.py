@@ -54,13 +54,14 @@ def add_minutes_to_dry(df: pd.DataFrame, threshold: float) -> pd.DataFrame:
 def train_model(json_samples: str, json_threshold: str) -> dict:
     # Parse the incoming JSON
     parsed_samples = json.loads(json_samples)
-    samples = parsed_samples["response"]["list"]
-    sample_data = [item["SampleDTO"] for item in samples]
+    if not isinstance(parsed_samples, list):
+        raise ValueError("Expected a JSON array of samples from /sensor/data")
+
+    sample_data = [item["SampleDTO"] for item in parsed_samples]
     df = pd.DataFrame(sample_data)
 
     # Parse incoming JSON threshold
-    parsed_threshold = json.loads(json_threshold)
-    threshold = parsed_threshold["threshold"]
+    threshold = json.loads(json_threshold)["threshold"]
 
     # Data pre-processing
     df["timestamp"] = pd.to_datetime(df["timestamp"])
