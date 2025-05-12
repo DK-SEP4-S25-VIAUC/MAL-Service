@@ -112,10 +112,24 @@ public class BlobStorageInteractionHelperImpl : IBlobStorageInteractionHelper
             // TODO: If other model type are added in the future, ensure to add them below in this switch for proper deserialization during model load.
             
             case "ridge (linear)":
+                // Convert json metadata to model dto:
                 model = JsonConvert.DeserializeObject<LinearRegressionModelDTO>(jsonMetaData);
-                if (model == null) {
-                    _logger.LogError("In method ConvertFromJsonMetadataToModelDTO(), could not convert LinearRegression model metadata into proper DTO.");
-                    throw new JsonException("Could not convert LinearRegression model metadata into proper DTO");
+                
+                // Validate the created dto:
+                try {
+                    if (model == null) {
+                        throw new JsonException("json metadata was deserialized into null object.");
+                    }
+                    
+                    // Fill out common, non-serialized fields:
+                    model.DownloadUrl = ConvertMetaDataUriToModelUri(blobClient.Uri, modelMetaDataFormat, modelFormat);
+                    
+                    // Validate model contents:
+                    model.ValidateSelf();
+                    
+                } catch (Exception ex) {
+                    _logger.LogError("In method ConvertFromJsonMetadataToModelDTO(), could not convert LinearRegression model metadata into proper DTO.\nCause: {}", ex.Message);
+                    throw new JsonException($"Could not convert LinearRegression model metadata into proper DTO\nCause: {ex.Message}");
                 }
                 break;
             
@@ -123,9 +137,6 @@ public class BlobStorageInteractionHelperImpl : IBlobStorageInteractionHelper
                 _logger.LogError("In method ConvertFromJsonMetadataToModelDTO(), 'model_type' = {modelType} is not a recognized/implemented model type.", modelType);
                 throw new FormatException("'model_type' is unrecognized. Unable to continue.");
         }
-        
-        // Fill out common, non-serialized fields:
-        model.DownloadUrl = ConvertMetaDataUriToModelUri(blobClient.Uri, modelMetaDataFormat, modelFormat);
         
         return model;
     }

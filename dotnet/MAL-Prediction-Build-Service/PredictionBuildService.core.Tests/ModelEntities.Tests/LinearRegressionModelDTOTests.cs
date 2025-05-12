@@ -21,7 +21,7 @@ public class LinearRegressionModelDTOTests
             TrainingTimestamp = trainingTimestamp,
             Alpha = alpha,
             CrossValSplits = crossValSplits,
-            FeaturesNames = featuresNames,
+            FeatureNames = featuresNames,
             R2 = r2,
             RmseCv = rmseCv,
             Target = target

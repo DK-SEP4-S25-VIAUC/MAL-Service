@@ -16,11 +16,17 @@ public abstract class ModelDTO
     public string? Target { get; set; }
     
     [JsonProperty("feature_names")]
-    public string[]? FeaturesNames { get; set; }
+    public string[]? FeatureNames { get; set; }
     
     
     // Programmatically set variables:
     public string? DownloadUrl { get; set; }
+
+    /// <summary>
+    /// Performs self-validation, ensuring that all model metadata values are properly set.
+    /// </summary>
+    /// <returns></returns>
+    public abstract bool ValidateSelf();
     
     
     public override string ToString() {
@@ -29,7 +35,7 @@ public abstract class ModelDTO
             "\n, Training_timestamp_utc: " + TrainingTimestamp + 
             "\n, DownloadUrl: " + DownloadUrl +
             "\n, target: " + Target + 
-            "\n, feature_names: " + FeaturesNames
+            "\n, feature_names: " + FeatureNames
             );
     }
 };
