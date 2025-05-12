@@ -25,23 +25,16 @@ logger = logging.getLogger(__name__)
 
 # Helper: derive the target variable
 def add_minutes_to_dry(df: pd.DataFrame, threshold: float) -> pd.DataFrame:
-    """
-    Adds a 'minutes_to_dry' column to *df*.
-
-    For every row i, the value is the number of minutes until the next
-    measurement where soil_humidity < `threshold`.
-    If that never happens, NaN is returned (row will be dropped later).
-
-    """
     soil = df["soil_humidity"].to_numpy()
 
-    # Convert timestamps to a NumPy datetime64[m] array *then* to ints
-    # so that each entry is "minutes since epoch".
-
     ts_minutes = df["timestamp"].values.astype("datetime64[m]").view("int")
-
     below = np.where(soil < threshold)[0]
-    next_idx = np.full(len(df), np.nan, dtype=float) # handle NaNs
+
+    if below.size == 0:
+        logger.warning("No samples below threshold %.2f found in data. minutes_to_dry cannot be calculated.", threshold)
+        return df.assign(minutes_to_dry=np.nan, threshold=threshold)
+
+    next_idx = np.full(len(df), np.nan, dtype=float)
 
     for i in range(len(df) - 1):
         j = below[below > i]
@@ -52,6 +45,7 @@ def add_minutes_to_dry(df: pd.DataFrame, threshold: float) -> pd.DataFrame:
     df["threshold"] = threshold
 
     return df
+
 
 # Main training entry point
 def train_model(json_samples: str, json_threshold: str) -> dict:
@@ -107,6 +101,17 @@ def train_model(json_samples: str, json_threshold: str) -> dict:
     # Create target variable
     df = add_minutes_to_dry(df, threshold)
     df.dropna(subset=["minutes_to_dry"], inplace=True)
+
+    # Early exit if no data remains
+    if df.empty:
+        logger.error("No data remains after filtering minutes_to_dry. Skipping model training.")
+        return {
+            "message": "No valid training samples found after applying threshold.",
+            "model_file": None,
+            "metadata_file": None,
+            "rmse_cv": None,
+            "r2_insample": None
+        }
 
     # Feature engineering
     df["soil_delta"] = df["soil_humidity"].diff().fillna(0) # Calculating the slope (Hældningskoefficient) between the soil-humidity and the one immediately before.
