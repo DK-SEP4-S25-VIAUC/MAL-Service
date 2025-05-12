@@ -94,6 +94,15 @@ def train_model(json_samples: str, json_threshold: str) -> dict:
     threshold = json.loads(json_threshold)
     logger.info("Threshold value received: %s", threshold)
 
+    # Auto-fix threshold if unreachable
+    if df["soil_humidity"].min() >= threshold:
+        new_threshold = df["soil_humidity"].quantile(0.10)
+        logger.warning(
+            "Threshold %.2f is too low (min soil_humidity = %.2f). Adjusting threshold to 10th percentile: %.2f",
+            threshold, df["soil_humidity"].min(), new_threshold
+        )
+        threshold = new_threshold
+
     # Data pre-processing
     df["timestamp"] = pd.to_datetime(df["timestamp"])
     df.sort_values("timestamp", inplace=True)
