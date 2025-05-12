@@ -76,7 +76,7 @@ def train_model(json_samples: str, json_threshold: str) -> dict:
     df = pd.DataFrame(sample_data)
 
     rename_map = {
-        "soilhidity": "soil_humidity",
+        "soilhumidity": "soil_humidity",
         "airhumidity": "air_humidity",
         "airtemperature": "temperature",
         "lightvalue": "light",
