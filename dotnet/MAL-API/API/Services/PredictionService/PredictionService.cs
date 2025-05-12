@@ -42,11 +42,7 @@ public class PredictionService : IPredictionService
             Console.WriteLine("Not enough samples in fallback data.");
             return null;
         }
-
-        foreach (var s in samples)
-        {
-            Console.WriteLine($"Sample at {s.Timestamp}");
-        }
+        
         // Sort samples descending to get the latest first
         var sortedSamples = samples.OrderByDescending(s => s.Timestamp).Take(2).ToList();
         
@@ -55,8 +51,8 @@ public class PredictionService : IPredictionService
 
         var latest = sortedSamples[0];
         var previous = sortedSamples[1];
-        Console.WriteLine(latest.Timestamp);
-        Console.WriteLine(previous.Timestamp);
+        Console.WriteLine("Latest timestamp:" + latest.Timestamp);
+        Console.WriteLine("Second latest timestamp:" + previous.Timestamp);
 
         try
         {
@@ -106,14 +102,6 @@ public class PredictionService : IPredictionService
             }
         };
         
-        string Json = JsonSerializer.Serialize(body, new JsonSerializerOptions
-        {
-            WriteIndented = true, // for pretty-printing
-            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull // optional: skip nulls
-        });
-
-        Console.WriteLine(Json);
-
         var response = await _httpClient.PostAsJsonAsync(endpoint, body);
 
         if (!response.IsSuccessStatusCode)
