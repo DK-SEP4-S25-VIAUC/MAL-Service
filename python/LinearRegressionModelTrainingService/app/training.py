@@ -66,6 +66,15 @@ def train_model(json_samples: str, json_threshold: str) -> dict:
 
     df = pd.DataFrame(sample_data)
 
+    rename_map = {
+        "soilHumidity": "soil_humidity",
+        "airHumidity": "air_humidity",
+        "temperature": "temperature",
+        "light": "light",
+        "timestamp": "timestamp"
+    }
+    df.rename(columns=rename_map, inplace=True)
+
     # Parse incoming JSON threshold
     threshold = json.loads(json_threshold)
 
