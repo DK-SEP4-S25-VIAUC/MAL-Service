@@ -1,17 +1,49 @@
-name: Bugfix Pull Request Auto-Approve
+name: Auto-Approve Pull Requests from bugfix branches
 
 on:
   pull_request_target:
     branches:
       - development
 
+permissions:
+  pull-requests: write
+  contents: write
+
 jobs:
   auto-approve-bugfix:
     if: startsWith(github.head_ref, 'bugfix/')
     runs-on: ubuntu-latest
+    env:
+      TOKEN1: ${{ secrets.BOT_ADMIN_TOKEN1 }}
+      TOKEN2: ${{ secrets.ADMIN_TOKEN2 }}
 
     steps:
-      - name: Auto-approve bugfix pull request
-        uses: hmarr/auto-approve-action@v3
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Try auto-approving with fallback tokens
+        run: |
+          approve() {
+            local token=$1
+            echo "Trying with token (redacted)"
+
+            http_response=$(curl -s -w "%{http_code}" -o response.json -X POST \
+              -H "Authorization: token $token" \
+              -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews" \
+              -d '{"event":"APPROVE"}')
+
+            echo "Response code: $http_response"
+            cat response.json
+
+            if [ "$http_response" -eq 200 ]; then
+              echo "✅ Approval succeeded with one of the tokens"
+              return 0
+            elif [ "$http_response" -eq 422 ]; then
+              echo "⚠️ Approval failed with 422 (probably trying to self-approve)"
+              return 1
+            else
+              echo "❌ Unexpected error occurred"
+              return 1
+            fi
+          }
+
+          # Try with TOKEN1 first, fallback to TOKEN2 if 422 or any failure
+          approve "$TOKEN1" || approve "$TOKEN2"

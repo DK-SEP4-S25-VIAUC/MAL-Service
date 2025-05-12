@@ -1,0 +1,98 @@
+name: Run Tests with Coverage (MAL-Microservice)
+
+on:
+  push:
+    branches:
+      - main
+      - development
+    paths:
+      - 'dotnet/**'
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      contents: read
+    steps:
+    
+      # Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+
+      # Set up .NET environment
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '8.0.x'
+
+
+      # Cache any NuGet Packages for improved workflow run-time.
+      - name: Cache NuGet packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+
+      # Restore dependencies
+      - name: Restore dependencies
+        run: dotnet restore dotnet/MAL-Microservice.sln
+
+
+      # Run test project-wise and collect results
+      - name: Run tests with per-project results
+        run: |
+          mkdir -p test-results
+          mkdir -p coverage-results
+
+          for proj in $(find dotnet -type f -name '*.csproj' ! -path "*/bin/*" ! -path "*/obj/*"); do
+            projName=$(basename "$proj" .csproj)
+            resultsDir="test-results/$projName"
+            coverageDir="coverage-results/$projName"
+            mkdir -p "$resultsDir" "$coverageDir"
+
+            echo "🔍 Running tests for project: $proj"
+
+            dotnet test "$proj" \
+              --configuration Release \
+              --logger "trx;LogFileName=${projName}.trx" \
+              --results-directory "$resultsDir" \
+              --collect:"XPlat Code Coverage" \
+              -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura
+
+            coverageFile=$(find "$resultsDir" -name 'coverage.cobertura.xml' | head -n 1)
+            if [ -f "$coverageFile" ]; then
+              mv "$coverageFile" "$coverageDir/coverage.cobertura.xml"
+            fi
+          done
+
+
+      # Publish test results to GitHub UI (pass/fail overview)
+      - name: Publish test results
+        if: always()
+        uses: dorny/test-reporter@v1
+        with:
+          name: Combined Test Results
+          path: test-results/**/*.trx
+          reporter: dotnet-trx
+
+
+      # Install reportgenerator to process coverage data
+      - name: Install reportgenerator
+        run: dotnet tool install -g dotnet-reportgenerator-globaltool
+
+
+      # Generate and display coverage report in GitHub UI
+      - name: Generate combined coverage report
+        run: |
+          reportgenerator \
+            -reports:"coverage-results/**/coverage.cobertura.xml" \
+            -targetdir:"coverage-report" \
+            -reporttypes:"MarkdownSummary"
+
+          cat coverage-report/Summary.md >> $GITHUB_STEP_SUMMARY
