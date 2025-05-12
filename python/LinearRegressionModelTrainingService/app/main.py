@@ -12,14 +12,11 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from training import train_model
 
 # Get endpoints
-SENSOR_BASE_URL = os.environ.get("SENSOR_API_BASE_URL")
-if not SENSOR_BASE_URL:
-    raise RuntimeError("Du skal sætte miljø‐variablen SENSOR_API_BASE_URL")
-
+SENSOR_BASE_URL = "https://mal-api.whitebush-734a9017.northeurope.azurecontainerapps.io"
 DATA_ENDPOINT      = SENSOR_BASE_URL.rstrip("/") + "/sensor/data"
-THRESHOLD_ENDPOINT = SENSOR_BASE_URL.rstrip("/") + "/sensor/threshold"
+THRESHOLD_ENDPOINT = SENSOR_BASE_URL.rstrip("/") + "/sensor/soilhumiditythreshold"
 
-HEALTH_PORT = int(os.getenv("HEALTH_PORT", "8081"))
+HEALTH_PORT = 8081
 
 # --- Health endpoint setup ---
 class HealthHandler(BaseHTTPRequestHandler):
@@ -28,7 +25,8 @@ class HealthHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(b"OK")
 
-def start_health_server(port: int = 80):
+def start_health_server(port: int | str = HEALTH_PORT):
+    port = int(port)
     server = HTTPServer(('', port), HealthHandler)
     print(f"[{datetime.now()}] Health endpoint listening on port {port}")
     server.serve_forever()
@@ -44,8 +42,11 @@ def job():
     print(f"[{start}] starting model training")
 
     try:
+        url = DATA_ENDPOINT
+        print("DEBUG URL:", url, flush=True)
+
         # Get samples
-        resp_data = requests.get(DATA_ENDPOINT, params=params, timeout=60)
+        resp_data = requests.get(DATA_ENDPOINT, timeout=60)
         resp_data.raise_for_status()
         json_data = resp_data.json()
 
