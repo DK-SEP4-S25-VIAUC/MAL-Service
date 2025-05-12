@@ -50,7 +50,7 @@ public class ModelEvaluationServiceImpl : IModelEvaluationService
     /// Fires an 'EvaluatedAllSoilHumidityPredictionModelsEventArgs' event when all the identified LinearRegressionModels have been evaluated.
     /// Allows for listeners to react to this and do stuff, such as build the best the model and if needed, redeploy.
     /// </summary>
-    private async Task OnAllSoilPredictionModelsEvaluated(ModelDTO bestModel) {
+    private async Task OnAllSoilPredictionModelsEvaluatedAsync(ModelDTO bestModel) {
         // Fire the event if there are more than null subscribers.
         if (AllSoilHumidityModelsEvaluated != null) {
             await AllSoilHumidityModelsEvaluated.Invoke(this, new EvaluatedAllSoilHumidityPredictionModelsEventArgs(bestModel));
@@ -114,10 +114,10 @@ public class ModelEvaluationServiceImpl : IModelEvaluationService
         
         // Handle all SoilPrediction models:
         try {
-            await HandleSoilPredictionEvaluation();
+            await HandleSoilPredictionEvaluationAsync();
         } catch (Exception ex) {
+            _logger.LogError("Exception occured while evaluation for best SoilPredictionModel.\nCause: {}", ex.Message);
             throw new Exception(ex.Message);
-            // TODO Improve this.
         }
         
         // Add more evaluation methods below for other prediction types,
@@ -125,7 +125,7 @@ public class ModelEvaluationServiceImpl : IModelEvaluationService
     }
 
     
-    private async Task HandleSoilPredictionEvaluation() {
+    private async Task HandleSoilPredictionEvaluationAsync() {
 
         var soilPredictionModels = new List<ModelDTO>();
 
@@ -142,6 +142,6 @@ public class ModelEvaluationServiceImpl : IModelEvaluationService
         
         // Notify Subscribers:
         _logger.LogInformation("Now notifying subscribers...");
-        await OnAllSoilPredictionModelsEvaluated(bestSoilPredictionModel);
+        await OnAllSoilPredictionModelsEvaluatedAsync(bestSoilPredictionModel);
     }
 }
