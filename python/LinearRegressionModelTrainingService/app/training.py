@@ -67,7 +67,7 @@ def train_model(json_samples: str, json_threshold: str) -> dict:
     df = pd.DataFrame(sample_data)
 
     # Parse incoming JSON threshold
-    threshold = json.loads(json_threshold)["threshold"]
+    threshold = json.loads(json_threshold)
 
     # Data pre-processing
     df["timestamp"] = pd.to_datetime(df["timestamp"])
