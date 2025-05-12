@@ -3,8 +3,6 @@ import threading
 import logging, sys
 import time
 from datetime import datetime
-import os
-import asyncio
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 import requests
