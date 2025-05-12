@@ -6,6 +6,7 @@ Train a linear (Ridge) regression baseline that predicts
 """
 import logging
 import os
+import re
 import json
 from datetime import datetime
 import numpy as np
@@ -67,20 +68,27 @@ def train_model(json_samples: str, json_threshold: str) -> dict:
         raise ValueError("Unexpected JSON structure from /sensor/data")
 
     logger.info("Received %d samples", len(sample_data))
-    logger.debug("First sample keys: %s", list(sample_data[0].keys()) if sample_data else "n/a")
 
+    unique_keys = set()
+    for sample in sample_data:
+        unique_keys.update(sample.keys())
+    logger.debug("Unique keys in sample data: %s", unique_keys)
     df = pd.DataFrame(sample_data)
 
     rename_map = {
-        "soilHumidity": "soil_humidity",
-        "airHumidity": "air_humidity",
-        "temperature": "temperature",
-        "light": "light",
+        "soilhumidity": "soil_humidity",
+        "airhumidity": "air_humidity",
+        "airtemperature": "temperature",
+        "lightvalue": "light",
         "timestamp": "timestamp"
     }
-    df.rename(columns=rename_map, inplace=True)
 
-    logger.debug("Dataframe columns after rename: %s", df.columns.tolist())
+    def normalize_col(col: str) -> str:
+        return re.sub(r"[^a-z0-9]", "", col.lower())
+
+    df.rename(columns={col: rename_map.get(normalize_col(col), col) for col in df.columns}, inplace=True)
+
+    logger.debug("DataFrame columns after rename: %s", df.columns.tolist())
 
     required_cols = ["soil_humidity", "air_humidity", "temperature", "light", "timestamp"]
     missing = set(required_cols) - set(df.columns)
