@@ -52,12 +52,18 @@ def add_minutes_to_dry(df: pd.DataFrame, threshold: float) -> pd.DataFrame:
 
 # Main training entry point
 def train_model(json_samples: str, json_threshold: str) -> dict:
-    # Parse the incoming JSON
-    parsed_samples = json.loads(json_samples)
-    if not isinstance(parsed_samples, list):
-        raise ValueError("Expected a JSON array of samples from /sensor/data")
 
-    sample_data = [item["SampleDTO"] for item in parsed_samples]
+    # Parse the incoming JSON samples
+    parsed_samples = json.loads(json_samples)
+
+    if parsed_samples and isinstance(parsed_samples[0], dict):
+        if "SampleDTO" in parsed_samples[0]:
+            sample_data = [item["SampleDTO"] for item in parsed_samples]
+        else:
+            sample_data = parsed_samples
+    else:
+        raise ValueError("Unexpected JSON structure from /sensor/data")
+
     df = pd.DataFrame(sample_data)
 
     # Parse incoming JSON threshold
