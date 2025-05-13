@@ -1,5 +1,8 @@
 namespace Sep4.PredictionApp.Interfaces;
 
+/// <summary>
+/// Interface for the ModelLoader Helper class that handles loading a specified prediction model from Azure Blob Storage.
+/// </summary>
 public interface IModelLoader
 {
     /// <summary>

@@ -93,7 +93,7 @@ jobs:
           file: dotnet/MAL-Prediction-Build-Service/Dockerfile
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/mal-prediction-build-service:${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/mal-prediction-build-service:latest
 
       # Log in to Azure.
       - name: Azure Login
@@ -110,5 +110,5 @@ jobs:
           az containerapp update \
             --name mal-prediction-build-service \
             --resource-group SEP4_MAL_team \
-            --image ${{ secrets.DOCKERHUB_USERNAME }}/mal-prediction-build-service:${{ github.sha }}
+            --image ${{ secrets.DOCKERHUB_USERNAME }}/mal-prediction-build-service:latest
 
