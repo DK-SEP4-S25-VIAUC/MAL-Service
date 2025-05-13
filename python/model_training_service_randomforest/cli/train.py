@@ -1,6 +1,6 @@
 import json
 import pandas as pd
-from randomforest import train_model_rf
+from models.randomforest import train_model_rf
 
 df = pd.read_csv("src_rf/testdata.csv", parse_dates=["timestamp"])
 threshold = 20

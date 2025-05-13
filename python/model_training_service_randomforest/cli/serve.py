@@ -6,8 +6,8 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 import onnx
 import onnxconverter_common
 import skl2onnx
-from src_rf.config_rf import HEALTH_PORT
-from src_rf.scheduler import start_scheduler
+from config_rf import HEALTH_PORT
+from scheduler import start_scheduler
 
 logger = logging.getLogger(__name__)
 

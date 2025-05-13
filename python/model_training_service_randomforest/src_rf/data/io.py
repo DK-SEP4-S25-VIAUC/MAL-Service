@@ -1,5 +1,5 @@
 import requests
-from src_rf.config_rf import DATA_ENDPOINT, THRESHOLD_ENDPOINT
+from config_rf import DATA_ENDPOINT, THRESHOLD_ENDPOINT
 
 
 def fetch_sensor_data(timeout=120):

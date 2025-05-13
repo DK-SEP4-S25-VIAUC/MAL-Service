@@ -13,9 +13,9 @@ from sklearn.model_selection import TimeSeriesSplit, GridSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
-from src_rf.data.cleaning import clean_sensor_data
-from src_rf.features.target import add_minutes_to_dry
-from src_rf.services.blob_uploader import upload_to_blob
+from data.cleaning import (clean_sensor_data)
+from features.target import add_minutes_to_dry
+from services.blob_uploader import upload_to_blob
 
 logger = logging.getLogger(__name__)
 

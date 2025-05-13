@@ -6,9 +6,9 @@ from datetime import datetime
 from apscheduler.schedulers.background import BackgroundScheduler
 from pytz import timezone
 
-from src_rf.config_rf import TIMEZONE, SCHEDULE_CRON
-from src_rf.data.io import fetch_sensor_data, fetch_threshold
-from src_rf.models.randomforest import train_model_rf
+from config_rf import TIMEZONE, SCHEDULE_CRON
+from data.io import fetch_sensor_data, fetch_threshold
+from models.randomforest import train_model_rf
 
 logger = logging.getLogger(__name__)
 

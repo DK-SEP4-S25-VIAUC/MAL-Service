@@ -1,5 +1,5 @@
-from src_rf.data.io import fetch_sensor_data, fetch_threshold
-from src_rf.scheduler import job
+from data.io import fetch_sensor_data, fetch_threshold
+from scheduler import job
 
 if __name__ == "__main__":
     data = fetch_sensor_data()

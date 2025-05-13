@@ -3,7 +3,7 @@ name = "randomforest_model_training_service"
 version = "0.1.0"
 description = "RandomForest training service for SEP4"
 authors = [
-    { name = "Your Name", email = "your.email@example.com" }
+    { name = "marcusgrone", email = "marcusgrone@gmail.com" }
 ]
 readme = "README.md"
 requires-python = ">=3.9"
@@ -24,9 +24,9 @@ dependencies = [
     "pytz"
 ]
 
-[tool.setuptools]
-packages = ["src_rf"]
-package-dir = { "" = "src_rf" }
+[tool.setuptools.packages.find]
+where = ["src_rf"]
+include = ["*"]
 
 [build-system]
 requires = ["setuptools>=61.0"]
