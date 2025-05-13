@@ -1,70 +1,29 @@
+import json
 import logging
 import os
 import re
-import json
 from datetime import datetime
 
 import numpy as np
 import pandas as pd
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.model_selection import TimeSeriesSplit, GridSearchCV
-from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import r2_score
 from skl2onnx import convert_sklearn
 from skl2onnx.common.data_types import FloatTensorType
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.model_selection import TimeSeriesSplit, GridSearchCV
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
 
-from upload_model import upload_to_blob
+from data.cleaning import (clean_sensor_data)
+from features.target import add_minutes_to_dry
+from services.blob_uploader import upload_to_blob
 
 logger = logging.getLogger(__name__)
 
-def add_minutes_to_dry(df: pd.DataFrame, threshold: float) -> pd.DataFrame:
-    soil = df["soil_humidity"].to_numpy()
-    ts_minutes = df["timestamp"].values.astype("datetime64[m]").view("int")
-    below = np.where(soil < threshold)[0]
-    next_idx = np.full(len(df), np.nan, dtype=float)
 
-    for i in range(len(df) - 1):
-        j = below[below > i]
-        if j.size:
-            next_idx[i] = ts_minutes[j[0]] - ts_minutes[i]
-
-    df["minutes_to_dry"] = next_idx
-    df["threshold"] = threshold
-    return df
-
-def clean_sensor_data(df: pd.DataFrame, expected_interval_minutes=10, gap_drop_threshold=60) -> pd.DataFrame:
-    logger.info("Starting sensor data cleaning. Initial samples: %d", len(df))
-
-    df_clean = df[
-        (df["soil_humidity"].between(0, 100)) &
-        (df["air_humidity"].between(0, 100)) &
-        (df["temperature"].between(-30, 60)) &
-        (df["light"] >= 0)
-    ].copy()
-
-    logger.info("Samples after hard limits filter: %d", len(df_clean))
-
-    df_clean.sort_values("timestamp", inplace=True)
-
-    df_clean["gap_minutes"] = df_clean["timestamp"].diff().dt.total_seconds() / 60
-    df_clean["gap_minutes"].fillna(0, inplace=True)
-
-    rows_before = len(df_clean)
-    df_clean = df_clean[df_clean["gap_minutes"] <= gap_drop_threshold]
-    logger.info("Dropped %d samples after large gaps (> %d min). Remaining: %d",
-                rows_before - len(df_clean), gap_drop_threshold, len(df_clean))
-
-    df_clean["soil_delta"] = df_clean["soil_humidity"].diff().fillna(0)
-    df_clean.loc[df_clean["gap_minutes"] > expected_interval_minutes, "soil_delta"] = 0
-    df_clean.drop(columns=["gap_minutes"], inplace=True)
-
-    logger.info("Data cleaning complete. Final samples: %d", len(df_clean))
-    return df_clean
-
-def train_model(json_samples: str, json_threshold: str) -> dict:
+def train_model_rf(json_samples: str, json_threshold: str) -> dict:
     parsed_samples = json.loads(json_samples)
 
+    sample_data = None
     if isinstance(parsed_samples, dict) and "response" in parsed_samples and "list" in parsed_samples["response"]:
         logger.info("Detected nested response/list/SampleDTO structure.")
         sample_data = [item["SampleDTO"] for item in parsed_samples["response"]["list"]]
@@ -75,13 +34,13 @@ def train_model(json_samples: str, json_threshold: str) -> dict:
         else:
             logger.info("Detected direct list of SampleDTO dicts.")
             sample_data = parsed_samples
-    else:
-        raise ValueError("Unexpected JSON structure from /sensor/data")
 
-    logger.info("Parsed %d samples", len(sample_data))
+    if sample_data is None:
+        raise ValueError("Unexpected JSON structure from /sensor/data")
 
     df = pd.DataFrame(sample_data)
 
+    # Normalize column names
     rename_map = {
         "soilhumidity": "soil_humidity",
         "airhumidity": "air_humidity",
@@ -101,13 +60,12 @@ def train_model(json_samples: str, json_threshold: str) -> dict:
         raise ValueError(f"Missing required columns in sample data: {missing}")
 
     df["timestamp"] = pd.to_datetime(df["timestamp"])
-
-    df = clean_sensor_data(df)
+    df = clean_sensor_data(df, expected_interval_minutes=10, gap_drop_threshold=60)
 
     if df.empty:
-        logger.error("No valid samples after data cleaning. Skipping model training.")
+        logger.error("No valid samples after data cleaning.")
         return {
-            "message": "No valid training samples found after cleaning.",
+            "message": "No valid training samples after cleaning.",
             "model_file": None,
             "metadata_file": None,
             "rmse_cv": None,
@@ -119,19 +77,16 @@ def train_model(json_samples: str, json_threshold: str) -> dict:
 
     if df["soil_humidity"].min() >= threshold:
         new_threshold = df["soil_humidity"].quantile(0.10)
-        logger.warning(
-            "Threshold %.2f is too low (min soil_humidity = %.2f). Adjusting threshold to 10th percentile: %.2f",
-            threshold, df["soil_humidity"].min(), new_threshold
-        )
+        logger.warning("Adjusting low threshold %.2f to 10th percentile: %.2f", threshold, new_threshold)
         threshold = new_threshold
 
     df = add_minutes_to_dry(df, threshold)
     df.dropna(subset=["minutes_to_dry"], inplace=True)
 
     if df.empty:
-        logger.error("No data remains after filtering minutes_to_dry. Skipping model training.")
+        logger.error("No data remains after filtering minutes_to_dry.")
         return {
-            "message": "No valid training samples found after threshold filtering.",
+            "message": "No valid training samples after threshold filtering.",
             "model_file": None,
             "metadata_file": None,
             "rmse_cv": None,
@@ -142,45 +97,37 @@ def train_model(json_samples: str, json_threshold: str) -> dict:
     df["hour_cos"] = np.cos(df["timestamp"].dt.hour / 24 * 2 * np.pi)
 
     feature_cols = [
-        "soil_humidity",
-        "soil_delta",
-        "air_humidity",
-        "temperature",
-        "light",
-        "hour_sin",
-        "hour_cos",
-        "threshold",
+        "soil_humidity", "soil_delta", "air_humidity", "temperature", "light",
+        "hour_sin", "hour_cos", "threshold"
     ]
 
     X = df[feature_cols].astype(float)
     y = df["minutes_to_dry"].astype(float)
 
-    pipe = make_pipeline(StandardScaler(), RandomForestRegressor(random_state=42))
+    pipeline = Pipeline([
+        ("scaler", StandardScaler()),
+        ("rf", RandomForestRegressor(n_estimators=100, random_state=42))
+    ])
 
     tscv = TimeSeriesSplit(n_splits=5)
     param_grid = {
-        "randomforestregressor__n_estimators": [100, 200],
-        "randomforestregressor__max_depth": [None, 10, 20]
+        "rf__n_estimators": [50, 100],
+        "rf__max_depth": [5, 10, None]
     }
 
-    gscv = GridSearchCV(
-        estimator=pipe,
-        param_grid=param_grid,
-        cv=tscv,
-        scoring="neg_root_mean_squared_error",
-        n_jobs=-1,
-    )
-    gscv.fit(X, y)
+    grid = GridSearchCV(pipeline, param_grid, cv=tscv, scoring="neg_root_mean_squared_error", n_jobs=-1)
+    grid.fit(X, y)
 
-    rmse = -gscv.best_score_
-    r2 = r2_score(y, gscv.predict(X))
+    rmse = -grid.best_score_
+    r2 = grid.best_estimator_.score(X, y)
 
+    # Export model to ONNX
     initial_type = [("input", FloatTensorType([None, len(feature_cols)]))]
-    onnx_model = convert_sklearn(gscv.best_estimator_, initial_types=initial_type)
+    onnx_model = convert_sklearn(grid.best_estimator_, initial_types=initial_type)
 
     now = datetime.now()
     ts_str = now.strftime("%Y%m%d%H%M%S")
-    base_name = "soil_humidity_rf"
+    base_name = "soil_humidity_randomforest"
     model_fname = f"{base_name}_{ts_str}.onnx"
     meta_fname = f"{base_name}_{ts_str}.metadata.json"
 
@@ -192,14 +139,15 @@ def train_model(json_samples: str, json_threshold: str) -> dict:
         f.write(onnx_model.SerializeToString())
 
     metadata = {
-        "model_type": "RandomForest (nonlinear)",
+        "model_type": "RandomForest",
         "target": f"minutes_to_dry (<{threshold}% soil humidity)",
         "feature_names": feature_cols,
-        "best_params": gscv.best_params_,
+        "n_estimators": grid.best_params_["rf__n_estimators"],
+        "max_depth": grid.best_params_["rf__max_depth"],
         "cross_val_splits": tscv.n_splits,
         "training_timestamp_utc": now.isoformat(),
         "rmse_cv": round(rmse, 2),
-        "r2_insample": round(r2, 2),
+        "r2_insample": round(r2, 2)
     }
 
     meta_path = os.path.join(local_models_dir, meta_fname)
@@ -208,7 +156,6 @@ def train_model(json_samples: str, json_threshold: str) -> dict:
 
     upload_to_blob(model_path, model_fname)
     upload_to_blob(meta_path, meta_fname)
-
     logger.info("Model and metadata uploaded: %s, %s", model_fname, meta_fname)
 
     return {
@@ -216,5 +163,5 @@ def train_model(json_samples: str, json_threshold: str) -> dict:
         "model_file": model_fname,
         "metadata_file": meta_fname,
         "rmse_cv": round(rmse, 2),
-        "r2_insample": round(r2, 2),
+        "r2_insample": round(r2, 2)
     }
