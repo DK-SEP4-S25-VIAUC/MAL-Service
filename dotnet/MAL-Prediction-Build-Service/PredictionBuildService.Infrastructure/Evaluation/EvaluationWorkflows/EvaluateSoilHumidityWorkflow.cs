@@ -46,9 +46,6 @@ public class EvaluateSoilHumidityWorkflow : IEvaluationWorkflow
     }
     
     
-    // TODO: Test
-    // 1. Does it actually pick the 'best' model?
-    // 2. What if it couldn't pick a model? (I.e. maybe there isn't a model available?)
     public async Task<ModelDTO> ExecuteEvaluationAsync(List<ModelDTO> soilPredictionModels) {
         return await Task.Run(() => {
             // Uses scoring to evaluate the best SoilPredictionModel on multiple parameters.
@@ -65,7 +62,7 @@ public class EvaluateSoilHumidityWorkflow : IEvaluationWorkflow
 
             ModelDTO bestLinearRegressionModel = FindBestLinearRegressionSoilPredictionModel(linearRegressionModels);
 
-            // ComputedScore other model types below:
+            // ComputedScore other model types below:3
             // TODO: Implement another step that evaluates which model, from several different model types, is the best.
             // i.e. if we add a RandomForest prediction model, which is better? The Linear Model or the RandomForest?
             // They both have different performance metrics that must be evaluated against each other.
