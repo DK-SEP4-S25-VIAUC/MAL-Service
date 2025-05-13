@@ -4,20 +4,21 @@
 Train a linear (Ridge) regression baseline that predicts
 “minutes until soil humidity drops below a certain threshold %”.
 """
+import json
 import logging
 import os
 import re
-import json
 from datetime import datetime
+
 import numpy as np
 import pandas as pd
+from skl2onnx import convert_sklearn
+from skl2onnx.common.data_types import FloatTensorType
 from sklearn.linear_model import Ridge
+from sklearn.metrics import r2_score
 from sklearn.model_selection import TimeSeriesSplit, GridSearchCV
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import r2_score
-from skl2onnx import convert_sklearn
-from skl2onnx.common.data_types import FloatTensorType
 
 from upload_model import upload_to_blob
 
@@ -47,28 +48,88 @@ def add_minutes_to_dry(df: pd.DataFrame, threshold: float) -> pd.DataFrame:
     return df
 
 
+def clean_sensor_data(df: pd.DataFrame, expected_interval_minutes=10, gap_drop_threshold=60) -> pd.DataFrame:
+    """
+    Cleans sensor data by:
+    - Filtering out physically impossible values
+    - Detecting and handling gaps in data
+    - Adjusting soil_delta where needed
+    """
+
+    logger.info("Starting sensor data cleaning. Initial samples: %d", len(df))
+
+    # Outliers and spikes filter
+    df_clean = df[
+        (df["soil_humidity"].between(0, 100)) &
+        (df["air_humidity"].between(0, 100)) &
+        (df["temperature"].between(-30, 60)) &
+        (df["light"] >= 0)
+        ].copy()
+
+    logger.info("Samples after hard limits filter: %d", len(df_clean))
+
+    # Sort by timestamp
+    df_clean.sort_values("timestamp", inplace=True)
+
+    # Compute time gaps
+    df_clean["gap_minutes"] = df_clean["timestamp"].diff().dt.total_seconds() / 60
+    df_clean["gap_minutes"].fillna(0, inplace=True)
+
+    # Drop rows after large gaps (e.g., sensor offline > gap_drop_threshold minutes)
+    rows_before = len(df_clean)
+    df_clean = df_clean[df_clean["gap_minutes"] <= gap_drop_threshold]
+    logger.info("Dropped %d samples after large gaps (> %d min). Remaining: %d",
+                rows_before - len(df_clean), gap_drop_threshold, len(df_clean))
+
+    # Compute soil_delta (slope)
+    df_clean["soil_delta"] = df_clean["soil_humidity"].diff().fillna(0)
+
+    # Set soil_delta to 0 if gap is too large (above expected_interval_minutes)
+    df_clean.loc[df_clean["gap_minutes"] > expected_interval_minutes, "soil_delta"] = 0
+
+    # Drop helper columns if you don't want them in features later
+    df_clean.drop(columns=["gap_minutes"], inplace=True)
+
+    logger.info("Data cleaning complete. Final samples: %d", len(df_clean))
+
+    return df_clean
+
 # Main training entry point
 def train_model(json_samples: str, json_threshold: str) -> dict:
 
     # Parse the incoming JSON samples
     parsed_samples = json.loads(json_samples)
 
-    if parsed_samples and isinstance(parsed_samples[0], dict):
+    sample_data = None
+
+    if isinstance(parsed_samples, dict) and "response" in parsed_samples and "list" in parsed_samples["response"]:
+        # Format 1: {"response": {"list": [{"SampleDTO": {...}}]}}
+        logger.info("Detected nested response/list/SampleDTO structure.")
+        sample_data = [item["SampleDTO"] for item in parsed_samples["response"]["list"]]
+
+    elif isinstance(parsed_samples, list) and parsed_samples and isinstance(parsed_samples[0], dict):
         if "SampleDTO" in parsed_samples[0]:
+            # Format 2: [{"SampleDTO": {...}}]
+            logger.info("Detected list of SampleDTO wrappers.")
             sample_data = [item["SampleDTO"] for item in parsed_samples]
         else:
+            # Format 3: Clean list of SampleDTO dicts
+            logger.info("Detected direct list of SampleDTO dicts.")
             sample_data = parsed_samples
-    else:
+
+    if sample_data is None:
         raise ValueError("Unexpected JSON structure from /sensor/data")
 
-    logger.info("Received %d samples", len(sample_data))
+    logger.info("Parsed %d samples", len(sample_data))
 
     unique_keys = set()
     for sample in sample_data:
         unique_keys.update(sample.keys())
     logger.debug("Unique keys in sample data: %s", unique_keys)
+
     df = pd.DataFrame(sample_data)
 
+    # Normalize column names
     rename_map = {
         "soilhumidity": "soil_humidity",
         "airhumidity": "air_humidity",
@@ -89,12 +150,26 @@ def train_model(json_samples: str, json_threshold: str) -> dict:
     if missing:
         raise ValueError(f"Missing required columns in sample data: {missing}")
 
+    # Convert timestamp column
+    df["timestamp"] = pd.to_datetime(df["timestamp"])
 
-    # Parse incoming JSON threshold
+    # --- Data Cleaning Pipeline ---
+    df = clean_sensor_data(df, expected_interval_minutes=10, gap_drop_threshold=60)
+
+    if df.empty:
+        logger.error("No valid samples after data cleaning. Skipping model training.")
+        return {
+            "message": "No valid training samples found after cleaning.",
+            "model_file": None,
+            "metadata_file": None,
+            "rmse_cv": None,
+            "r2_insample": None
+        }
+
+    # Threshold handling
     threshold = json.loads(json_threshold)
     logger.info("Threshold value received: %s", threshold)
 
-    # Auto-fix threshold if unreachable
     if df["soil_humidity"].min() >= threshold:
         new_threshold = df["soil_humidity"].quantile(0.10)
         logger.warning(
@@ -103,19 +178,14 @@ def train_model(json_samples: str, json_threshold: str) -> dict:
         )
         threshold = new_threshold
 
-    # Data pre-processing
-    df["timestamp"] = pd.to_datetime(df["timestamp"])
-    df.sort_values("timestamp", inplace=True)
-
-    # Create target variable
+    # Target variable creation
     df = add_minutes_to_dry(df, threshold)
     df.dropna(subset=["minutes_to_dry"], inplace=True)
 
-    # Early exit if no data remains
     if df.empty:
         logger.error("No data remains after filtering minutes_to_dry. Skipping model training.")
         return {
-            "message": "No valid training samples found after applying threshold.",
+            "message": "No valid training samples found after threshold filtering.",
             "model_file": None,
             "metadata_file": None,
             "rmse_cv": None,
@@ -123,11 +193,8 @@ def train_model(json_samples: str, json_threshold: str) -> dict:
         }
 
     # Feature engineering
-    df["soil_delta"] = df["soil_humidity"].diff().fillna(0) # Calculating the slope (Hældningskoefficient) between the soil-humidity and the one immediately before.
-    # Using Sin and Cos, while linear regression would view 0 and 23, as being far away from each other,
-    # while it is actually "close" to each other in the cycle of the day. By using the unit circle, we don't get a leap in "time" at midnight
-    df["hour_sin"]   = np.sin(df["timestamp"].dt.hour / 24 * 2 * np.pi)
-    df["hour_cos"]   = np.cos(df["timestamp"].dt.hour / 24 * 2 * np.pi)
+    df["hour_sin"] = np.sin(df["timestamp"].dt.hour / 24 * 2 * np.pi)
+    df["hour_cos"] = np.cos(df["timestamp"].dt.hour / 24 * 2 * np.pi)
 
     feature_cols = [
         "soil_humidity",
@@ -161,20 +228,19 @@ def train_model(json_samples: str, json_threshold: str) -> dict:
     )
     gscv.fit(X, y)
 
-    # Evaluate baseline performance
     rmse = -gscv.best_score_
-    r2   = r2_score(y, gscv.predict(X))
+    r2 = r2_score(y, gscv.predict(X))
 
-    # ONNX export
+    # Export to ONNX
     initial_type = [("input", FloatTensorType([None, len(feature_cols)]))]
     onnx_model = convert_sklearn(gscv.best_estimator_, initial_types=initial_type)
 
-    # Build timestamped filename
+    # Save model & metadata
     now = datetime.now()
     ts_str = now.strftime("%Y%m%d%H%M%S")
     base_name = "soil_humidity_baseline_ridge"
     model_fname = f"{base_name}_{ts_str}.onnx"
-    meta_fname  = f"{base_name}_{ts_str}.metadata.json"
+    meta_fname = f"{base_name}_{ts_str}.metadata.json"
 
     local_models_dir = os.path.join(os.path.dirname(__file__), "models")
     os.makedirs(local_models_dir, exist_ok=True)
@@ -183,7 +249,6 @@ def train_model(json_samples: str, json_threshold: str) -> dict:
     with open(model_path, "wb") as f:
         f.write(onnx_model.SerializeToString())
 
-    # Produce metadata
     metadata = {
         "model_type": "Ridge (linear)",
         "target": f"minutes_to_dry (<{threshold}% soil humidity)",
@@ -206,9 +271,9 @@ def train_model(json_samples: str, json_threshold: str) -> dict:
 
     # Return a short summary to caller
     return {
-        "message":        "Model and metadata uploaded successfully.",
-        "model_file":     model_fname,
-        "metadata_file":  meta_fname,
-        "rmse_cv":        round(rmse, 2),
-        "r2_insample":    round(r2, 2),
+        "message": "Model and metadata uploaded successfully.",
+        "model_file": model_fname,
+        "metadata_file": meta_fname,
+        "rmse_cv": round(rmse, 2),
+        "r2_insample": round(r2, 2),
     }
