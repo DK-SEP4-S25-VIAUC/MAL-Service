@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "model_training_service"
+version = "0.1.0"
+description = "Greenhouse soil-humidity ridge model trainer"
+authors = [{ name = "KatAamand", email = "344848@via.dk" }]
+dependencies = [
+    "pytest",
+    "requests",
+    "apscheduler",
+    "pytz",
+    "numpy",
+    "pandas",
+    "scikit-learn",
+    "onnx>=1.13.0,<1.16.0",
+    "skl2onnx>=1.14.0,<1.16.0",
+    "azure-identity",
+    "azure-storage-blob"
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["*"]
