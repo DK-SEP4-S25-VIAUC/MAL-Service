@@ -1,6 +1,5 @@
 using Azure.Identity;
 using Azure.ResourceManager;
-using Azure.ResourceManager.Resources.Models;
 using Azure.Storage.Queues;
 using Azure.Storage.Blobs;
 using PredictionBuildService.core.Interfaces;
@@ -30,15 +29,8 @@ public class Program
     /// </remarks>
     public static async Task Main(string[] args)
     {
-        // TODO: Update the appsettings.json and appsettings.devevelopment.json files to include the proper Azure data, i.e. replace these values:
-        //"ContainerName": "models",
-        //"StorageAccountUri": "https://onnx1storage1test.blob.core.windows.net",
-        //"QueueUri": "https://onnx1storage1test.queue.core.windows.net/blob-events",
-        //"ModelFileType": ".onnx",
-        //"ModelMetaDataFormat": ".metadata.json".
         
         var builder = Host.CreateApplicationBuilder(args);
-        
         
         // Configure logging:
         builder.Services.AddLogging(logging => {
@@ -50,6 +42,7 @@ public class Program
         // Load configuration settings from appsettings.json to respective configuration classes, to enable project wide access to settings through dependency injection:
         builder.Services.Configure<AzureBlobStorageSettings>(builder.Configuration.GetSection("AzureBlobStorage"));
         builder.Services.Configure<AzureFunctionsSettings>(builder.Configuration.GetSection("AzureFunctions"));
+        builder.Services.Configure<WorkerSettings>(builder.Configuration.GetSection("WorkerSettings"));
         
         
         // Register Azure clients as singletons:
@@ -69,7 +62,7 @@ public class Program
         
         
         // Register internal services as Singletons, for dependency injection in the entire project:
-        builder.Services.AddSingleton<IModelCache, ModelCache>();
+        builder.Services.AddSingleton<IModelCache, ModelCacheImpl>();
         builder.Services.AddSingleton<IBlobStorageInteractionHelper, BlobStorageInteractionHelperImpl>();
         builder.Services.AddSingleton<IBlobStorageMonitorService, BlobStorageMonitorServiceImpl>();
         builder.Services.AddSingleton<IModelEvaluationService, ModelEvaluationServiceImpl>();

@@ -6,8 +6,11 @@ using PredictionBuildService.core.Interfaces;
 namespace PredictionBuildService;
 
 /// <summary>
-/// https://learn.microsoft.com/en-us/azure/storage/blobs/storage-blob-download
+/// Main worker thread, responsible to instantiating and running all services, as well as responsible for shutting these services down gracefully.
 /// </summary>
+/// <remarks>
+/// https://learn.microsoft.com/en-us/azure/storage/blobs/storage-blob-download
+/// </remarks>
 public class Worker : BackgroundService
 {
     private readonly IBlobStorageMonitorService _monitorService;
@@ -15,7 +18,7 @@ public class Worker : BackgroundService
     private readonly AzureBlobStorageSettings _settings;
     private readonly IModelCache _modelCache;
     private readonly BlobServiceClient _blobServiceClient;
-    private readonly IBlobStorageInteractionHelper _blobBlobStorageInteractionHelper;
+    private readonly IBlobStorageInteractionHelper _blobStorageInteractionHelper;
     private readonly IModelEvaluationService _modelEvaluationService;
     private readonly IBuildService _buildService;
 
@@ -25,7 +28,7 @@ public class Worker : BackgroundService
         IOptions<AzureBlobStorageSettings> settings,
         IModelCache modelCache,
         BlobServiceClient blobServiceClient,
-        IBlobStorageInteractionHelper blobBlobStorageInteractionHelper,
+        IBlobStorageInteractionHelper blobStorageInteractionHelper,
         IModelEvaluationService modelEvaluationService,
         IBuildService buildService) {
         _monitorService = monitorService;
@@ -33,7 +36,7 @@ public class Worker : BackgroundService
         _settings = settings.Value;
         _modelCache = modelCache;
         _blobServiceClient = blobServiceClient;
-        _blobBlobStorageInteractionHelper = blobBlobStorageInteractionHelper;
+        _blobStorageInteractionHelper = blobStorageInteractionHelper;
         _modelEvaluationService = modelEvaluationService;
         _buildService = buildService;
     }
@@ -49,7 +52,7 @@ public class Worker : BackgroundService
         // Check if the ModelDTO Cache is empty. If so, first read all models available from Azure Blob Storage into the in-memory cache.
         // This is necessary upon service initialization, to ensure existing models are properly loaded:
         if (_modelCache.CacheSize() == 0) {
-            await _blobBlobStorageInteractionHelper.LoadAllModelsIntoCacheAsync(_blobServiceClient, stoppingToken, 
+            await _blobStorageInteractionHelper.LoadAllModelsIntoCacheAsync(_blobServiceClient, stoppingToken, 
                 _settings.ContainerName, 
                 _settings.ModelMetaDataFormat, 
                 _settings.ModelFileType);
@@ -58,7 +61,7 @@ public class Worker : BackgroundService
         var models = _modelCache.ListModelsAsync();
         var modelsAsString = "Loaded these models:\n";
         await foreach (var model in models) {
-            modelsAsString += "type: " + model.Type + ", version: " + model.Version + "\n";
+            modelsAsString += "type: " + model.Type + ", version: " + model.TrainingTimestamp + "\n";
         }
         _logger.LogInformation("{modelsAsString}", modelsAsString);
         

@@ -1,0 +1,29 @@
+name: Validate that PR originates from Development Branch
+
+on:
+  pull_request:
+    branches:
+      - main
+  merge_group:
+
+jobs:
+  check-source-branch:
+    name: check-source-branch
+    runs-on: ubuntu-latest
+    steps:
+      - name: Bypass check if in merge queue
+        if: github.event_name == 'merge_group'
+        run: |
+          echo "✅ In merge queue – skipping branch validation."
+          exit 0
+
+      - name: Fail if PR is not from 'development' branch'
+        if: github.event_name != 'merge_group'
+        run: |
+          echo "Source branch: ${{ github.head_ref }}"
+          if [ "${{ github.head_ref }}" != "development" ]; then
+            echo "❌ Pull requests to main are only allowed from the 'development' branch."
+            exit 1
+          else
+            echo "✅ Source branch is 'development'."
+          fi

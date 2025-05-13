@@ -1,6 +1,0 @@
-@MAL_Api_Service_HostAddress = http://localhost:8080
-
-GET {{MAL_Api_Service_HostAddress}}/testEndpoint/
-Accept: application/json
-
-###
