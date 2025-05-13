@@ -8,17 +8,19 @@ version = "0.1.0"
 description = "soil-humidity ridge model trainer"
 authors = [{ name = "KatAamand", email = "344848@via.dk" }]
 dependencies = [
-    "pytest",
     "requests",
-    "apscheduler",
-    "pytz",
-    "numpy",
+    "pydantic",
     "scikit-learn",
     "pandas",
-    "onnx",
-    "skl2onnx",
+    "numpy",
+    "python-dotenv",
+    "skl2onnx==1.18.0",
+    "onnx==1.17.0",
+    "azure-storage-blob",
     "azure-identity",
-    "azure-storage-blob"
+    "pytest",
+    "pytz",
+    "apscheduler"
 ]
 
 [tool.setuptools.packages.find]
