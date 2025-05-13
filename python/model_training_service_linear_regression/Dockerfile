@@ -1,5 +1,5 @@
 # model_training_service_linear_regression/Dockerfile
-FROM python:3.11-sl
+FROM python:3.11-slim
 ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
