@@ -1,12 +1,13 @@
-# serve.py
 import logging
+import threading
 import time
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
 import onnx
 import onnxconverter_common
 import skl2onnx
-from src.config import HEALTH_PORT, TIMEZONE
+from src.config import HEALTH_PORT
+from src.scheduler import start_scheduler
 
 logger = logging.getLogger(__name__)
 
@@ -27,14 +28,22 @@ class HealthHandler(BaseHTTPRequestHandler):
             HealthHandler._last_log = now
 
 
-if __name__ == "__main__":
-    server = HTTPServer(("", HEALTH_PORT), HealthHandler)
-    print(f"Health endpoint listening on port {HEALTH_PORT}")
+def run_scheduler():
+    logger.info("Starting scheduler in background thread...")
+    start_scheduler()  # <- Denne kører med while True + sleep
 
+if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
-    logging.info(f"ONNX version: {onnx.__version__}")
-    logging.info(f"skl2onnx version: {skl2onnx.__version__}")
-    logging.info(f"onnxconverter_common version: {onnxconverter_common.__version__}")
+    logger.info(f"ONNX version: {onnx.__version__}")
+    logger.info(f"skl2onnx version: {skl2onnx.__version__}")
+    logger.info(f"onnxconverter_common version: {onnxconverter_common.__version__}")
 
+    # Start scheduler i en baggrundstråd
+    scheduler_thread = threading.Thread(target=run_scheduler, daemon=True)
+    scheduler_thread.start()
+
+    # Start HTTP-server (main thread)
+    server = HTTPServer(("", HEALTH_PORT), HealthHandler)
+    logger.info(f"Health endpoint listening on port {HEALTH_PORT}")
     server.serve_forever()
