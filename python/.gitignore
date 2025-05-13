@@ -48,3 +48,7 @@ Thumbs.db
 # === Git og config ===
 *.swp
 *.swo
+
+# === Secrets ===
+python/RandomForestModelTrainingService/.env
+python/LinearRegressionModelTrainingService/.env
