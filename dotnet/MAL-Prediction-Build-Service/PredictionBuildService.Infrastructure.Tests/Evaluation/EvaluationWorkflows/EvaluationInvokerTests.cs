@@ -3,7 +3,8 @@ using PredictionBuildService.Infrastructure.Evaluation.EvaluationWorkflows;
 
 namespace PredictionBuildService.Infrastructure.Tests.Evaluation.EvaluationWorkflows;
 
-public class EvaluationInvokerTests {
+public class EvaluationInvokerTests : IDisposable
+{
     
     /// <summary>
     /// In XUnit, the constructor is run before each test, acting as a "SetUp()" method. 
