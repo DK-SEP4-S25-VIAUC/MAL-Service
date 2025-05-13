@@ -161,11 +161,11 @@ namespace API.Tests
             {
                 new SampleDTO
                 {
-                    Timestamp = DateTime.UtcNow,
-                    Soil_Humidity = 45.5,
-                    Air_Humidity = 55.2,
-                    Air_Temperature = 22.3,
-                    Light_Value = 3000.0
+                    timestamp = DateTime.UtcNow,
+                    soil_humidity = 45.5,
+                    air_humidity = 55.2,
+                    air_temperature = 22.3,
+                    light_value = 3000.0
                 }
             });
 

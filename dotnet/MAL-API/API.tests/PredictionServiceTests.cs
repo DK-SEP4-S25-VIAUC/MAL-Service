@@ -63,8 +63,8 @@ public class PredictionServiceTests
     {
         var samples = new List<SampleDTO>
         {
-            new() { Timestamp = DateTime.UtcNow, Soil_Humidity = 30, Air_Humidity = 40, Air_Temperature = 20, Light_Value = 100 },
-            new() { Timestamp = DateTime.UtcNow.AddMinutes(-1), Soil_Humidity = 31, Air_Humidity = 41, Air_Temperature = 21, Light_Value = 105 }
+            new() { timestamp = DateTime.UtcNow, soil_humidity = 30, air_humidity = 40, air_temperature = 20, light_value = 100 },
+            new() { timestamp = DateTime.UtcNow.AddMinutes(-1), soil_humidity = 31, air_humidity = 41, air_temperature = 21, light_value = 105 }
         };
 
         _mockSensorDataService.Setup(s => s.getSamples(It.IsAny<DateTime>(), It.IsAny<DateTime>()))
@@ -91,8 +91,8 @@ public class PredictionServiceTests
     {
         var samples = new List<SampleDTO>
         {
-            new() { Timestamp = DateTime.UtcNow, Soil_Humidity = 30, Air_Humidity = 40, Air_Temperature = 20, Light_Value = 100 },
-            new() { Timestamp = DateTime.UtcNow.AddMinutes(-1), Soil_Humidity = 31, Air_Humidity = 41, Air_Temperature = 21, Light_Value = 105 }
+            new() { timestamp = DateTime.UtcNow, soil_humidity = 30, air_humidity = 40, air_temperature = 20, light_value = 100 },
+            new() { timestamp = DateTime.UtcNow.AddMinutes(-1), soil_humidity = 31, air_humidity = 41, air_temperature = 21, light_value = 105 }
         };
 
         _mockSensorDataService.Setup(s => s.getSamples(It.IsAny<DateTime>(), It.IsAny<DateTime>()))

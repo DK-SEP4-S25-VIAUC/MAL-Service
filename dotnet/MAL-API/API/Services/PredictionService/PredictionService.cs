@@ -44,25 +44,25 @@ public class PredictionService : IPredictionService
         }
         
         // Sort samples descending to get the latest first
-        var sortedSamples = samples.OrderByDescending(s => s.Timestamp).Take(2).ToList();
+        var sortedSamples = samples.OrderByDescending(s => s.timestamp).Take(2).ToList();
         
         
 
 
         var latest = sortedSamples[0];
         var previous = sortedSamples[1];
-        Console.WriteLine("Latest timestamp:" + latest.Timestamp);
-        Console.WriteLine("Second latest timestamp:" + previous.Timestamp);
+        Console.WriteLine("Latest timestamp:" + latest.timestamp);
+        Console.WriteLine("Second latest timestamp:" + previous.timestamp);
 
         try
         {
             return PredictionInput.FromValues(
-                soilHumidity: latest.Soil_Humidity,
-                previousSoilHumidity: previous.Soil_Humidity,
-                airHumidity: latest.Air_Humidity,
-                temperature: latest.Air_Temperature,
-                light: latest.Light_Value,
-                timestamp: latest.Timestamp,
+                soilHumidity: latest.soil_humidity,
+                previousSoilHumidity: previous.soil_humidity,
+                airHumidity: latest.air_humidity,
+                temperature: latest.air_temperature,
+                light: latest.light_value,
+                timestamp: latest.timestamp,
                 threshold: await _sensorDataService.getSoilHumiLowerThresholdAsync()
             );
         }
