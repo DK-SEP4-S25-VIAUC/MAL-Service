@@ -15,7 +15,7 @@ public class ModelEvaluationServiceImpl : IModelEvaluationService
     private readonly ILogger<ModelEvaluationServiceImpl> _logger;
     private readonly IModelCache _modelCache;
     private readonly IBlobStorageMonitorService _blobStorageMonitorService;
-    private readonly EvaluationInvoker _evaluationInvoker = new();
+    private readonly EvaluationInvoker _evaluationInvoker = new ();
     
     // Events this class subscribes to:
     private Func<object, AddedNewModelsEventArgs, Task>? _newModelsAddedEventHandler;
@@ -61,16 +61,12 @@ public class ModelEvaluationServiceImpl : IModelEvaluationService
     
     
     // Implement the IEventSubscriber interface:
-    // TODO: Test
-    // Is the class properly subscribed to NewModelsAdded, after this has run?
     public void Subscribe() {
         _newModelsAddedEventHandler = async (sender, e) => await HandleEventAsync(sender, e);
         _blobStorageMonitorService.NewModelsAdded += _newModelsAddedEventHandler;
         _logger.LogInformation("ModelEvaluationService subscribed to events from BlobStorageMonitorService");
     }
 
-    // TODO: Test
-    // Is the class properly unsubscribed to NewModelsAdded, after this has run?
     public void Unsubscribe() {
         if (_newModelsAddedEventHandler != null) {
             _blobStorageMonitorService.NewModelsAdded -= _newModelsAddedEventHandler;
@@ -79,9 +75,7 @@ public class ModelEvaluationServiceImpl : IModelEvaluationService
         _logger.LogInformation("ModelEvaluationService unsubscribed to events from BlobStorageMonitorService");
     }
 
-    // TODO: Test
-    // Are LinearRegressionModels properly evaluated when AddedNewModelsEventArgs are fired/received?
-    // What if an unknown Event is registered?
+
     public async Task HandleEventAsync(object? sender, EventArgs e) {
         switch (e) {
             case AddedNewModelsEventArgs eventArgs:
@@ -100,13 +94,13 @@ public class ModelEvaluationServiceImpl : IModelEvaluationService
         
         // Read Models from Cache:
         var models = _modelCache.ListModelsAsync();
-        ModelDTO firstModel = null;
+        ModelDTO? firstModel = null;
         await foreach (var model in models) {
             firstModel = model;
             break;
         }
 
-        // Validate read models:
+        // Validate the read models list:
         if (firstModel == null) {
             _logger.LogWarning("No models found in the cache.");
             return;
@@ -117,10 +111,10 @@ public class ModelEvaluationServiceImpl : IModelEvaluationService
             await HandleSoilPredictionEvaluationAsync();
         } catch (Exception ex) {
             _logger.LogError("Exception occured while evaluation for best SoilPredictionModel.\nCause: {}", ex.Message);
-            throw new Exception(ex.Message);
+            throw new Exception(ex.Message + ex.StackTrace);
         }
         
-        // Add more evaluation methods below for other prediction types,
+        // TODO: Add more evaluation methods below for other prediction types,
         // with corresponding private method implementations (i.e. handleAirTemperaturePredictionEvaluation(), etc.)
     }
 
