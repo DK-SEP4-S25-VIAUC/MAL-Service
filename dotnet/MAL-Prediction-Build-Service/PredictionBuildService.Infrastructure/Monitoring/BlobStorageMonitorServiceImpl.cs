@@ -68,7 +68,7 @@ public class BlobStorageMonitorServiceImpl : IBlobStorageMonitorService
     /// Fires an 'AddedNewModelsEventArgs' event when new models are registered in the BlobStorage.
     /// Allows for listeners to react to this and do stuff, such as evaluate the model and if needed, redeploy.
     /// </summary>
-    private async Task OnNewModelsAdded() {
+    private async Task OnNewModelsAddedAsync() {
         // Fire the event if there are more than null subscribers.
         if (NewModelsAdded != null) {
             await NewModelsAdded.Invoke(this, new AddedNewModelsEventArgs());
@@ -91,7 +91,7 @@ public class BlobStorageMonitorServiceImpl : IBlobStorageMonitorService
                 var response = await _queueClient.ReceiveMessagesAsync(maxMessages: 1, cancellationToken: token);
                 if (response?.Value != null && response.Value.Length > 0) {
                     // There's something in the event queue. Let's handle it.
-                    await HandleQueueResponse(response, token);
+                    await HandleQueueResponseAsync(response, token);
                     // Check if there are more messages waiting to be processed:
                     bool moreMessagesWaiting = false;
                     try {
@@ -132,12 +132,12 @@ public class BlobStorageMonitorServiceImpl : IBlobStorageMonitorService
     
     public async Task NotifySubscribersAsync() {
         _logger.LogInformation("Notifying subscribers of changes...");
-        await OnNewModelsAdded();
+        await OnNewModelsAddedAsync();
     }
 
 
     // Define private methods supporting the above code execution:
-    private async Task HandleQueueResponse(Response<QueueMessage[]> response, CancellationToken token) {
+    private async Task HandleQueueResponseAsync(Response<QueueMessage[]> response, CancellationToken token) {
         // Pick the first response from the received messages. This is necessary because the method 'ReceiveMessagesAsync'
         // returns an array of messages (delimited by maxMessages).
         var msg = response.Value[0];

@@ -1,9 +1,12 @@
+# training.py
+
 """
 Train a linear (Ridge) regression baseline that predicts
 “minutes until soil humidity drops below a certain threshold %”.
 """
-
+import logging
 import os
+import re
 import json
 from datetime import datetime
 import numpy as np
@@ -18,25 +21,20 @@ from skl2onnx.common.data_types import FloatTensorType
 
 from upload_model import upload_to_blob
 
+logger = logging.getLogger(__name__)
+
 # Helper: derive the target variable
 def add_minutes_to_dry(df: pd.DataFrame, threshold: float) -> pd.DataFrame:
-    """
-    Adds a 'minutes_to_dry' column to *df*.
-
-    For every row i, the value is the number of minutes until the next
-    measurement where soil_humidity < `threshold`.
-    If that never happens, NaN is returned (row will be dropped later).
-
-    """
     soil = df["soil_humidity"].to_numpy()
 
-    # Convert timestamps to a NumPy datetime64[m] array *then* to ints
-    # so that each entry is "minutes since epoch".
-
     ts_minutes = df["timestamp"].values.astype("datetime64[m]").view("int")
-
     below = np.where(soil < threshold)[0]
-    next_idx = np.full(len(df), np.nan, dtype=float) # handle NaNs
+
+    if below.size == 0:
+        logger.warning("No samples below threshold %.2f found in data. minutes_to_dry cannot be calculated.", threshold)
+        return df.assign(minutes_to_dry=np.nan, threshold=threshold)
+
+    next_idx = np.full(len(df), np.nan, dtype=float)
 
     for i in range(len(df) - 1):
         j = below[below > i]
@@ -48,17 +46,62 @@ def add_minutes_to_dry(df: pd.DataFrame, threshold: float) -> pd.DataFrame:
 
     return df
 
+
 # Main training entry point
 def train_model(json_samples: str, json_threshold: str) -> dict:
-    # Parse the incoming JSON
+
+    # Parse the incoming JSON samples
     parsed_samples = json.loads(json_samples)
-    samples = parsed_samples["response"]["list"]
-    sample_data = [item["SampleDTO"] for item in samples]
+
+    if parsed_samples and isinstance(parsed_samples[0], dict):
+        if "SampleDTO" in parsed_samples[0]:
+            sample_data = [item["SampleDTO"] for item in parsed_samples]
+        else:
+            sample_data = parsed_samples
+    else:
+        raise ValueError("Unexpected JSON structure from /sensor/data")
+
+    logger.info("Received %d samples", len(sample_data))
+
+    unique_keys = set()
+    for sample in sample_data:
+        unique_keys.update(sample.keys())
+    logger.debug("Unique keys in sample data: %s", unique_keys)
     df = pd.DataFrame(sample_data)
 
+    rename_map = {
+        "soilhumidity": "soil_humidity",
+        "airhumidity": "air_humidity",
+        "airtemperature": "temperature",
+        "lightvalue": "light",
+        "timestamp": "timestamp"
+    }
+
+    def normalize_col(col: str) -> str:
+        return re.sub(r"[^a-z0-9]", "", col.lower())
+
+    df.rename(columns={col: rename_map.get(normalize_col(col), col) for col in df.columns}, inplace=True)
+
+    logger.debug("DataFrame columns after rename: %s", df.columns.tolist())
+
+    required_cols = ["soil_humidity", "air_humidity", "temperature", "light", "timestamp"]
+    missing = set(required_cols) - set(df.columns)
+    if missing:
+        raise ValueError(f"Missing required columns in sample data: {missing}")
+
+
     # Parse incoming JSON threshold
-    parsed_threshold = json.loads(json_threshold)
-    threshold = parsed_threshold["threshold"]
+    threshold = json.loads(json_threshold)
+    logger.info("Threshold value received: %s", threshold)
+
+    # Auto-fix threshold if unreachable
+    if df["soil_humidity"].min() >= threshold:
+        new_threshold = df["soil_humidity"].quantile(0.10)
+        logger.warning(
+            "Threshold %.2f is too low (min soil_humidity = %.2f). Adjusting threshold to 10th percentile: %.2f",
+            threshold, df["soil_humidity"].min(), new_threshold
+        )
+        threshold = new_threshold
 
     # Data pre-processing
     df["timestamp"] = pd.to_datetime(df["timestamp"])
@@ -67,6 +110,17 @@ def train_model(json_samples: str, json_threshold: str) -> dict:
     # Create target variable
     df = add_minutes_to_dry(df, threshold)
     df.dropna(subset=["minutes_to_dry"], inplace=True)
+
+    # Early exit if no data remains
+    if df.empty:
+        logger.error("No data remains after filtering minutes_to_dry. Skipping model training.")
+        return {
+            "message": "No valid training samples found after applying threshold.",
+            "model_file": None,
+            "metadata_file": None,
+            "rmse_cv": None,
+            "r2_insample": None
+        }
 
     # Feature engineering
     df["soil_delta"] = df["soil_humidity"].diff().fillna(0) # Calculating the slope (Hældningskoefficient) between the soil-humidity and the one immediately before.
@@ -147,6 +201,8 @@ def train_model(json_samples: str, json_threshold: str) -> dict:
     # Upload to Azure Blob Storage
     upload_to_blob(model_path,  model_fname)
     upload_to_blob(meta_path,   meta_fname)
+
+    logger.info("Model and metadata uploaded: %s, %s", model_fname, meta_fname)
 
     # Return a short summary to caller
     return {

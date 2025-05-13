@@ -109,7 +109,7 @@ public class EvaluateSoilHumidityWorkflow : IEvaluationWorkflow
     private double ComputeLinearRegressionSoilPredictionModelScore(
         double rmse, 
         double r2,
-        double crossValSplits,
+        int crossValSplits,
         double maxRealisticMinutesUntilDry,
         double rmseUpperPenaltyLimit,
         double r2OptimalUpperBoundary,

@@ -14,7 +14,7 @@ public class ModelLoader : IModelLoader {
     /// </summary>
     private static string? _cachedUri;
     
-    // Interfaces / Injected cclasses:
+    // Interfaces / Injected classes:
     private readonly ILogger<ModelLoader> _logger;
     private readonly IBlobDownloader _blobDownloader;
     private readonly IEnvironmentService _envService;
@@ -56,16 +56,16 @@ public class ModelLoader : IModelLoader {
     /// </remarks>
     public async Task<IInferenceSession> GetOrLoadModelAsync() {
         try {
-            string? onnxUri = _envService.GetEnvironmentVariable("OnnxModelUri");
+            string? onnxUri = _envService.GetEnvironmentVariable(_envService.GetEnvVarNameForBestOnnxSoilPredictionModelUri());
             if (string.IsNullOrEmpty(onnxUri))
-                throw new InvalidOperationException("OnnxModelUri is not set in configuration.");
+                throw new InvalidOperationException($"{_envService.GetEnvVarNameForBestOnnxSoilPredictionModelUri()} is not set in configuration.");
 
             // Download the specified model to a temp directory:
             if (_cachedSession == null || _cachedUri != onnxUri) {
                 _logger.LogInformation("Loading ONNX model...");
 
                 // Downloads to a temporary directory, with the name 'model.onnx'.
-                string tempFilePath = Path.Combine(Path.GetTempPath(), "model.onnx");
+                string tempFilePath = Path.Combine(Path.GetTempPath(), "soilPredictionModel.onnx");
                 await _blobDownloader.DownloadAsync(onnxUri, tempFilePath);
 
                 _cachedSession = _sessionFactory.Create(tempFilePath);
@@ -79,7 +79,7 @@ public class ModelLoader : IModelLoader {
         }
         catch (InvalidOperationException ex) {
             _logger.LogCritical(
-                "OnnxModelUri is not set in configuration. Set it in Azure Function configuration (environment variables).");
+                "{_envService.GetEnvVarNameForBestOnnxSoilPredictionModelUri()} is not set in configuration. Set it in Azure Function configuration (environment variables).", _envService.GetEnvVarNameForBestOnnxSoilPredictionModelUri());
             throw new InvalidOperationException(ex.Message);
         } catch (FileNotFoundException ex) {
             _logger.LogError(

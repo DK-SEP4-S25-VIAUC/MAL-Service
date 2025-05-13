@@ -87,10 +87,9 @@ public class SensorDataService : ISensorDataService
 
     public async Task<IActionResult> getSamples(DateTime? from, DateTime? to)
     {
-        Console.WriteLine("getSamples called");
         try
         {
-            var uriBuilder = new UriBuilder(new Uri(_httpClient.BaseAddress!, "Sample"));
+            var uriBuilder = new UriBuilder(new Uri(_httpClient.BaseAddress!, "sample"));
             var query = HttpUtility.ParseQueryString(string.Empty);
 
             if (from.HasValue)
@@ -101,32 +100,21 @@ public class SensorDataService : ISensorDataService
 
             uriBuilder.Query = query.ToString();
             var finalUri = uriBuilder.ToString();
-
+            
             var response = await _httpClient.GetAsync(finalUri);
 
             response.EnsureSuccessStatusCode(); // throws for 404, 500, etc.
-            Console.WriteLine("getSamples called again");
 
-            var result = await response.Content.ReadFromJsonAsync<Dictionary<string, List<Dictionary<string, SampleDTO>>>>();
-
-            if (result != null && result.TryGetValue("list", out var listOfWrappedSamples))
+            var result = await response.Content.ReadFromJsonAsync<List<SampleDTO>>();
+            if (result != null && result.Count >= 2)
             {
-                // Flatten each dictionary and extract SampleDTOs
-                var flattenedList = listOfWrappedSamples
-                    .SelectMany(dict => dict.Values)
-                    .ToList();
-                
-                if (flattenedList.Count < 2)
-                {
-                    return new NotFoundObjectResult("Not enough samples found.");
-                }
-
-                return new OkObjectResult(flattenedList);
+                return new OkObjectResult(result);
             }
+
 
             throw new Exception ();
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             Console.WriteLine("API failed, using fallback list.");
     
@@ -160,11 +148,11 @@ public class SensorDataService : ISensorDataService
 
                 var sample = new SampleDTO
                 {
-                    Timestamp = DateTime.Parse(parts[0]),
-                    Soil_Humidity = double.Parse(parts[1]),
-                    Air_Humidity = double.Parse(parts[2]),
-                    Air_Temperature = double.Parse(parts[3]),
-                    Light_Value = double.Parse(parts[4])
+                    timestamp = DateTime.Parse(parts[0]),
+                    soil_humidity = double.Parse(parts[1]),
+                    air_humidity = double.Parse(parts[2]),
+                    air_temperature = double.Parse(parts[3]),
+                    light_value = double.Parse(parts[4])
                 };
 
                 _fallbackList.Add(sample);

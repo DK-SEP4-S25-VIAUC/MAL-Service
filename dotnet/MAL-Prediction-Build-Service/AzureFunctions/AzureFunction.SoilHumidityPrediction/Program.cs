@@ -9,6 +9,7 @@ var builder = FunctionsApplication.CreateBuilder(args);
 
 // Register dependencies for dependency injection:
 builder.Services.AddSingleton<IEnvironmentService, EnvironmentService>();
+builder.Services.AddSingleton<IEnvironmentService>(e => new EnvironmentService("OnnxBestSoilPredictionModelUri"));
 builder.Services.AddSingleton<IBlobDownloader, BlobDownloader>();
 builder.Services.AddSingleton<IModelSessionFactory, ModelSessionFactory>();
 builder.Services.AddSingleton<IModelLoader, ModelLoader>();
