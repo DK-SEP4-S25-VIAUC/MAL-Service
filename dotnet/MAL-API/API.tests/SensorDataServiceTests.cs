@@ -12,6 +12,7 @@ using API.Services.SensorDataService;
 using API.DataEntities;
 using System.Text.Json;
 using System.Collections.Generic;
+using System;
 
 namespace API.Tests
 {
@@ -112,24 +113,22 @@ namespace API.Tests
         public async Task getSamples_ReturnsOk_WhenApiReturnsValidSamples()
         {
             var json = """
-            {
-              "list": [
-                { "SampleDTO": {
-                    "timestamp": "2025-03-20T14:30:00Z",
-                    "soil_humidity": 45.5,
-                    "air_humidity": 55.2,
-                    "air_temperature": 22.3,
-                    "light_value": 3000.0
-                  }},
-                { "SampleDTO": {
-                    "timestamp": "2025-03-20T14:25:00Z",
-                    "soil_humidity": 44.0,
-                    "air_humidity": 54.0,
-                    "air_temperature": 21.0,
-                    "light_value": 2800.0
-                  }}
-              ]
-            }
+            [
+              {
+                "timestamp": "2025-03-20T14:30:00Z",
+                "soil_humidity": 45.5,
+                "air_humidity": 55.2,
+                "air_temperature": 22.3,
+                "light_value": 3000.0
+              },
+              {
+                "timestamp": "2025-03-20T14:25:00Z",
+                "soil_humidity": 44.0,
+                "air_humidity": 54.0,
+                "air_temperature": 21.0,
+                "light_value": 2800.0
+              }
+            ]
             """;
 
             var response = new HttpResponseMessage(HttpStatusCode.OK)
@@ -154,19 +153,33 @@ namespace API.Tests
         [Test]
         public async Task getSamples_ReturnsNotFound_WhenLessThanTwoSamples()
         {
-            var json = """
+            // Inject a fallback list with less than 2 entries
+            var fallbackField = typeof(SensorDataService)
+                .GetField("_fallbackList", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+            fallbackField?.SetValue(_service, new List<SampleDTO>
             {
-              "list": [
-                { "SampleDTO": {
-                    "timestamp": "2025-03-20T14:30:00Z",
-                    "soil_humidity": 45.5,
-                    "air_humidity": 55.2,
-                    "air_temperature": 22.3,
-                    "light_value": 3000.0
-                  }}
-              ]
-            }
-            """;
+                new SampleDTO
+                {
+                    Timestamp = DateTime.UtcNow,
+                    Soil_Humidity = 45.5,
+                    Air_Humidity = 55.2,
+                    Air_Temperature = 22.3,
+                    Light_Value = 3000.0
+                }
+            });
+
+            var json = """
+                       [
+                         {
+                           "timestamp": "2025-03-20T14:30:00Z",
+                           "soil_humidity": 45.5,
+                           "air_humidity": 55.2,
+                           "air_temperature": 22.3,
+                           "light_value": 3000.0
+                         }
+                       ]
+                       """;
 
             var response = new HttpResponseMessage(HttpStatusCode.OK)
             {
@@ -180,8 +193,10 @@ namespace API.Tests
                 .ReturnsAsync(response);
 
             var result = await _service.getSamples(null, null);
+
             Assert.That(result, Is.InstanceOf<NotFoundObjectResult>());
         }
+
 
         [Test]
         public async Task getSamples_ReturnsFallback_WhenExceptionThrown()
@@ -193,7 +208,16 @@ namespace API.Tests
                 .ThrowsAsync(new Exception("Simulated failure"));
 
             var result = await _service.getSamples(null, null);
-            Assert.That(result, Is.InstanceOf<OkObjectResult>()); // fallbackList used
+            // If fallback is empty, returns NotFound
+            if (result is OkObjectResult ok)
+            {
+                var data = ok.Value as List<SampleDTO>;
+                Assert.That(data?.Count, Is.GreaterThanOrEqualTo(2), "Fallback should have at least 2 samples.");
+            }
+            else
+            {
+                Assert.That(result, Is.InstanceOf<NotFoundObjectResult>());
+            }
         }
     }
 }

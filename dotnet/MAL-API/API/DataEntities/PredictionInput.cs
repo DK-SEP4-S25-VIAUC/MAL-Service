@@ -21,7 +21,7 @@ namespace API.DataEntities
             DateTime timestamp,
             double? threshold)
         {
-            double soilDelta = soilHumidity ?? 0.0 - previousSoilHumidity ?? 0.0;
+            double soilDelta = (soilHumidity ?? 0.0) - (previousSoilHumidity ?? 0.0);
 
             double angle = timestamp.Hour / 24.0 * 2 * Math.PI;
             double hourSin = Math.Sin(angle);

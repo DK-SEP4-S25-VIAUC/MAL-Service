@@ -114,7 +114,7 @@ public class SensorDataService : ISensorDataService
 
             throw new Exception ();
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             Console.WriteLine("API failed, using fallback list.");
     
