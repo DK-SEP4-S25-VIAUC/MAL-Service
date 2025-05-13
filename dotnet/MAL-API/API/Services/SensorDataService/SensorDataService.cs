@@ -114,7 +114,7 @@ public class SensorDataService : ISensorDataService
 
             throw new Exception ();
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             Console.WriteLine("API failed, using fallback list.");
     
@@ -148,11 +148,11 @@ public class SensorDataService : ISensorDataService
 
                 var sample = new SampleDTO
                 {
-                    Timestamp = DateTime.Parse(parts[0]),
-                    Soil_Humidity = double.Parse(parts[1]),
-                    Air_Humidity = double.Parse(parts[2]),
-                    Air_Temperature = double.Parse(parts[3]),
-                    Light_Value = double.Parse(parts[4])
+                    timestamp = DateTime.Parse(parts[0]),
+                    soil_humidity = double.Parse(parts[1]),
+                    air_humidity = double.Parse(parts[2]),
+                    air_temperature = double.Parse(parts[3]),
+                    light_value = double.Parse(parts[4])
                 };
 
                 _fallbackList.Add(sample);
