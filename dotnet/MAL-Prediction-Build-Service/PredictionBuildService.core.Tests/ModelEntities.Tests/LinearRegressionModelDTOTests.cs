@@ -35,7 +35,8 @@ public class LinearRegressionModelDTOTests
                                        "\n, alpha: " + alpha +
                                        "\n, CrossValSplits: " + crossValSplits +
                                        "\n, RmseCV: " + rmseCv +
-                                       "\n, R2: " + r2;
+                                       "\n, R2: " + r2 +
+                                       "\n, ComputedScore: " + null;
         
         // Act + Assert:
         Assert.Equal(expectedToStringValue, modelDto.ToString());

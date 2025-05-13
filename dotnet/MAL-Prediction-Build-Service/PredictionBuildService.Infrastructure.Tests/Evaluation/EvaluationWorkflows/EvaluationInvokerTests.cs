@@ -3,6 +3,9 @@ using PredictionBuildService.Infrastructure.Evaluation.EvaluationWorkflows;
 
 namespace PredictionBuildService.Infrastructure.Tests.Evaluation.EvaluationWorkflows;
 
+/// <summary>
+/// Automated Unit Testing for the class with the same name (with the 'Tests' part).
+/// </summary>
 public class EvaluationInvokerTests : IDisposable
 {
     

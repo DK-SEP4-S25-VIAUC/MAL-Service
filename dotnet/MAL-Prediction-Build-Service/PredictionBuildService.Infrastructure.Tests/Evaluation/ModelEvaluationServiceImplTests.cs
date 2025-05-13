@@ -13,6 +13,9 @@ using PredictionBuildService.Infrastructure.Tests.HelperClasses;
 
 namespace PredictionBuildService.Infrastructure.Tests.Evaluation;
 
+/// <summary>
+/// Automated Unit Testing for the class with the same name (with the 'Tests' part).
+/// </summary>
 public class ModelEvaluationServiceImplTests : IDisposable
 {
     private readonly Mock<ILogger<ModelEvaluationServiceImpl>> _mockLogger = new ();
