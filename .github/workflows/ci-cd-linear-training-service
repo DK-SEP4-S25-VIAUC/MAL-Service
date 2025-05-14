@@ -26,6 +26,7 @@ jobs:
         working-directory: python/model_training_service_linear_regression
         run: |
           python -m pip install --upgrade pip
+          # Installer din pakke inkl. dev-deps (hvor pytest er angivet)
           pip install -e .[dev]
 
       - name: Run tests (unit & integration)

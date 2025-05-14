@@ -33,7 +33,7 @@ public class PredictionController : ControllerBase
                 return NotFound("Not enough recent samples available to make a prediction.");
             }
 
-            return Ok(forecast);
+            return Ok(new { forecastDTO = forecast }); // ✅ wrap it here
         }
         catch (Exception ex)
         {
@@ -41,5 +41,6 @@ public class PredictionController : ControllerBase
             return StatusCode(500, "An internal server error occurred.");
         }
     }
+
 
 }

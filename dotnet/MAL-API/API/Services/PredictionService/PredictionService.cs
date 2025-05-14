@@ -1,7 +1,9 @@
+using System.Text.Json;
 using API.DataEntities;
 using API.Services.SensorDataService;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
+using System.Text.Json.Serialization;
 
 namespace API.Services.PredictionService;
 
@@ -40,22 +42,27 @@ public class PredictionService : IPredictionService
             Console.WriteLine("Not enough samples in fallback data.");
             return null;
         }
-
+        
         // Sort samples descending to get the latest first
-        var sortedSamples = samples.OrderByDescending(s => s.Timestamp).Take(2).ToList();
+        var sortedSamples = samples.OrderByDescending(s => s.timestamp).Take(2).ToList();
+        
+        
+
 
         var latest = sortedSamples[0];
         var previous = sortedSamples[1];
+        Console.WriteLine("Latest timestamp:" + latest.timestamp);
+        Console.WriteLine("Second latest timestamp:" + previous.timestamp);
 
         try
         {
             return PredictionInput.FromValues(
-                soilHumidity: latest.Soil_Humidity,
-                previousSoilHumidity: previous.Soil_Humidity,
-                airHumidity: latest.Air_Humidity,
-                temperature: latest.Air_Temperature,
-                light: latest.Light_Value,
-                timestamp: latest.Timestamp,
+                soilHumidity: latest.soil_humidity,
+                previousSoilHumidity: previous.soil_humidity,
+                airHumidity: latest.air_humidity,
+                temperature: latest.air_temperature,
+                light: latest.light_value,
+                timestamp: latest.timestamp,
                 threshold: await _sensorDataService.getSoilHumiLowerThresholdAsync()
             );
         }
@@ -84,19 +91,17 @@ public class PredictionService : IPredictionService
         {
             inputs = new Dictionary<string, double[]>
             {
-                {"soil_humidity", new[] {input.SoilHumidity}},
+                {"soil_humidity", new[] {input.SoilHumidity ?? 0.0}},
                 {"soil_delta", new[] {input.SoilDelta}},
-                {"air_humidity", new[] {input.AirHumidity}},
-                {"temperature", new[] {input.Temperature}},
-                {"light", new[] {input.Light}},
+                {"air_humidity", new[] {input.AirHumidity ?? 0.0}},
+                {"temperature", new[] {input.Temperature ?? 0.0}},
+                {"light", new[] {input.Light ?? 0.0}},
                 {"hour_sin", new[] {input.HourSin}},
                 {"hour_cos", new[] {input.HourCos}},
                 {"threshold", new[] {input.Threshold ?? 0.0}}
             }
         };
         
-        Console.WriteLine(body);
-
         var response = await _httpClient.PostAsJsonAsync(endpoint, body);
 
         if (!response.IsSuccessStatusCode)
@@ -114,6 +119,6 @@ public class PredictionService : IPredictionService
         }
 
         double minutes = minutesToken.Value<double>();
-        return new ForecastDTO(minutes, DateTime.Now);
+        return new ForecastDTO(minutes, DateTime.UtcNow.AddHours(2));
     }
 }

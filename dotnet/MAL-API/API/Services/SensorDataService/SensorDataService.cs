@@ -87,10 +87,9 @@ public class SensorDataService : ISensorDataService
 
     public async Task<IActionResult> getSamples(DateTime? from, DateTime? to)
     {
-        Console.WriteLine("getSamples called");
         try
         {
-            var uriBuilder = new UriBuilder(new Uri(_httpClient.BaseAddress!, "Sample"));
+            var uriBuilder = new UriBuilder(new Uri(_httpClient.BaseAddress!, "sample"));
             var query = HttpUtility.ParseQueryString(string.Empty);
 
             if (from.HasValue)
@@ -103,41 +102,40 @@ public class SensorDataService : ISensorDataService
             var finalUri = uriBuilder.ToString();
 
             var response = await _httpClient.GetAsync(finalUri);
+            response.EnsureSuccessStatusCode();
 
-            response.EnsureSuccessStatusCode(); // throws for 404, 500, etc.
-            Console.WriteLine("getSamples called again");
+            using var stream = await response.Content.ReadAsStreamAsync();
+            using var doc = await JsonDocument.ParseAsync(stream);
 
-            var result = await response.Content.ReadFromJsonAsync<Dictionary<string, List<Dictionary<string, SampleDTO>>>>();
+            var root = doc.RootElement;
+            var list = root
+                .GetProperty("response")
+                .GetProperty("list")
+                .EnumerateArray()
+                .Select(item => item.GetProperty("SampleDTO").Deserialize<SampleDTO>())
+                .Where(dto => dto != null)
+                .ToList();
 
-            if (result != null && result.TryGetValue("list", out var listOfWrappedSamples))
+            if (list.Count >= 2)
             {
-                // Flatten each dictionary and extract SampleDTOs
-                var flattenedList = listOfWrappedSamples
-                    .SelectMany(dict => dict.Values)
-                    .ToList();
-                
-                if (flattenedList.Count < 2)
-                {
-                    return new NotFoundObjectResult("Not enough samples found.");
-                }
-
-                return new OkObjectResult(flattenedList);
+                return new OkObjectResult(list);
             }
 
-            throw new Exception ();
+            throw new Exception();
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             Console.WriteLine("API failed, using fallback list.");
-    
+
             if (_fallbackList == null || _fallbackList.Count < 2)
             {
                 return new NotFoundObjectResult("Fallback list does not contain enough samples.");
             }
 
-            return new OkObjectResult(_fallbackList); // This is a List<SampleDTO>
+            return new OkObjectResult(_fallbackList);
         }
     }
+
 
 
     private void LoadFallbackData()
@@ -160,11 +158,11 @@ public class SensorDataService : ISensorDataService
 
                 var sample = new SampleDTO
                 {
-                    Timestamp = DateTime.Parse(parts[0]),
-                    Soil_Humidity = double.Parse(parts[1]),
-                    Air_Humidity = double.Parse(parts[2]),
-                    Air_Temperature = double.Parse(parts[3]),
-                    Light_Value = double.Parse(parts[4])
+                    timestamp = DateTime.Parse(parts[0]),
+                    soil_humidity = double.Parse(parts[1]),
+                    air_humidity = double.Parse(parts[2]),
+                    air_temperature = double.Parse(parts[3]),
+                    light_value = double.Parse(parts[4])
                 };
 
                 _fallbackList.Add(sample);

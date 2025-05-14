@@ -49,8 +49,16 @@ namespace API.Tests
             var okResult = result as OkObjectResult;
             Assert.That(okResult, Is.Not.Null);
             Assert.That(okResult.StatusCode, Is.EqualTo(200));
-            Assert.That(okResult.Value, Is.EqualTo(forecast));
+
+            // Extract the anonymous wrapper object
+            var value = okResult.Value;
+            var property = value?.GetType().GetProperty("forecastDTO");
+            Assert.That(property, Is.Not.Null);
+
+            var forecastValue = property?.GetValue(value) as ForecastDTO;
+            Assert.That(forecastValue, Is.EqualTo(forecast));
         }
+
 
         [Test]
         public async Task GetForecast_ReturnsNotFound_WhenForecastIsNull()
