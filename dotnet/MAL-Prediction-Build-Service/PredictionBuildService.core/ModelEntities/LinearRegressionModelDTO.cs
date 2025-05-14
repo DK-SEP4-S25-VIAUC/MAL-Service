@@ -18,6 +18,8 @@ public class LinearRegressionModelDTO : ModelDTO
     [JsonProperty("r2_insample")]
     public double? R2 { get; set; }
     
+    public double? ComputedScore { get; set; }
+    
     private readonly string[] _validLinearRegressionModelTypes = ["Ridge (linear)"];
 
     public override bool ValidateSelf() {
@@ -71,9 +73,8 @@ public class LinearRegressionModelDTO : ModelDTO
         // Validated successfully.
         return true;
     }
-
-    // TODO: Unit test that this copy method works as intended
-    public override ModelDTO Copy() {
+    
+    public override LinearRegressionModelDTO Copy() {
         var serialized = JsonConvert.SerializeObject(this, new JsonSerializerSettings {
             TypeNameHandling = TypeNameHandling.Auto
         });
@@ -98,7 +99,8 @@ public class LinearRegressionModelDTO : ModelDTO
             "\n, alpha: " + Alpha + 
             "\n, CrossValSplits: " + CrossValSplits + 
             "\n, RmseCV: " + RmseCv + 
-            "\n, R2: " + R2
+            "\n, R2: " + R2 +
+            "\n, ComputedScore: " + ComputedScore
         );
     }
 };

@@ -46,9 +46,6 @@ public class EvaluateSoilHumidityWorkflow : IEvaluationWorkflow
     }
     
     
-    // TODO: Test
-    // 1. Does it actually pick the 'best' model?
-    // 2. What if it couldn't pick a model? (I.e. maybe there isn't a model available?)
     public async Task<ModelDTO> ExecuteEvaluationAsync(List<ModelDTO> soilPredictionModels) {
         return await Task.Run(() => {
             // Uses scoring to evaluate the best SoilPredictionModel on multiple parameters.
@@ -56,7 +53,7 @@ public class EvaluateSoilHumidityWorkflow : IEvaluationWorkflow
             // and scores each based on their metrics compared to each other.
             // Then compares the best model from each main category, to find the overall best one.
         
-            // Score LinearRegressionModel:
+            // ComputedScore LinearRegressionModel:
             // Extract all LinearRegressionModels and score these individually:
             var linearRegressionModels = soilPredictionModels
                 .Where(m => m is LinearRegressionModelDTO)
@@ -65,7 +62,7 @@ public class EvaluateSoilHumidityWorkflow : IEvaluationWorkflow
 
             ModelDTO bestLinearRegressionModel = FindBestLinearRegressionSoilPredictionModel(linearRegressionModels);
 
-            // Score other model types below:
+            // ComputedScore other model types below:3
             // TODO: Implement another step that evaluates which model, from several different model types, is the best.
             // i.e. if we add a RandomForest prediction model, which is better? The Linear Model or the RandomForest?
             // They both have different performance metrics that must be evaluated against each other.
@@ -78,21 +75,24 @@ public class EvaluateSoilHumidityWorkflow : IEvaluationWorkflow
         var scoredLinearRegressionModels = new Dictionary<LinearRegressionModelDTO, double>();
 
         foreach (var linearRegressionModel in linearRegressionModels) {
-            // Score the model and add to scored models list:
+            // ComputedScore the model and add to scored models list:
+            linearRegressionModel.ComputedScore = ComputeLinearRegressionSoilPredictionModelScore(
+                linearRegressionModel.RmseCv!.Value,
+                linearRegressionModel.R2!.Value,
+                linearRegressionModel.CrossValSplits!.Value,
+                _maxRealisticMinutesUntilDry,
+                _rmseUpperPenaltyLimit,
+                _r2OptimalUpperBoundary,
+                _r2OptimalLowerBoundary,
+                _weightRmse,
+                _weightR2,
+                _lowCrossValidationPenalty
+            );
+            
             scoredLinearRegressionModels.Add(
                 linearRegressionModel, 
-                ComputeLinearRegressionSoilPredictionModelScore(
-                    linearRegressionModel.RmseCv!.Value,
-                    linearRegressionModel.R2!.Value,
-                    linearRegressionModel.CrossValSplits!.Value,
-                    _maxRealisticMinutesUntilDry,
-                    _rmseUpperPenaltyLimit,
-                    _r2OptimalUpperBoundary,
-                    _r2OptimalLowerBoundary,
-                    _weightRmse,
-                    _weightR2,
-                    _lowCrossValidationPenalty
-                ));
+                linearRegressionModel.ComputedScore.Value
+            );
         }
         
         // Order models by score:
@@ -166,7 +166,11 @@ public class EvaluateSoilHumidityWorkflow : IEvaluationWorkflow
         
         // Heavily penalize low cross validation splits, since this is indicative of potential unstable validation metrics:
         if (crossValSplits < 5) {
-            score *= lowCrossValidationPenalty;
+            if (score < 0) {
+                score *= 1 + lowCrossValidationPenalty;
+            } else {
+                score *= lowCrossValidationPenalty;
+            }
         }
         
         return score;

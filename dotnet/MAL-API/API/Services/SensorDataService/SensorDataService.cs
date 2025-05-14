@@ -100,32 +100,42 @@ public class SensorDataService : ISensorDataService
 
             uriBuilder.Query = query.ToString();
             var finalUri = uriBuilder.ToString();
-            
+
             var response = await _httpClient.GetAsync(finalUri);
+            response.EnsureSuccessStatusCode();
 
-            response.EnsureSuccessStatusCode(); // throws for 404, 500, etc.
+            using var stream = await response.Content.ReadAsStreamAsync();
+            using var doc = await JsonDocument.ParseAsync(stream);
 
-            var result = await response.Content.ReadFromJsonAsync<List<SampleDTO>>();
-            if (result != null && result.Count >= 2)
+            var root = doc.RootElement;
+            var list = root
+                .GetProperty("response")
+                .GetProperty("list")
+                .EnumerateArray()
+                .Select(item => item.GetProperty("SampleDTO").Deserialize<SampleDTO>())
+                .Where(dto => dto != null)
+                .ToList();
+
+            if (list.Count >= 2)
             {
-                return new OkObjectResult(result);
+                return new OkObjectResult(list);
             }
 
-
-            throw new Exception ();
+            throw new Exception();
         }
         catch (Exception)
         {
             Console.WriteLine("API failed, using fallback list.");
-    
+
             if (_fallbackList == null || _fallbackList.Count < 2)
             {
                 return new NotFoundObjectResult("Fallback list does not contain enough samples.");
             }
 
-            return new OkObjectResult(_fallbackList); // This is a List<SampleDTO>
+            return new OkObjectResult(_fallbackList);
         }
     }
+
 
 
     private void LoadFallbackData()

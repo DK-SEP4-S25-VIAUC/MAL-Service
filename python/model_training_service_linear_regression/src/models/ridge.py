@@ -1,9 +1,3 @@
-# training.py
-
-"""
-Train a linear (Ridge) regression baseline that predicts
-“minutes until soil humidity drops below a certain threshold %”.
-"""
 import json
 import logging
 import os
@@ -19,82 +13,12 @@ from sklearn.metrics import r2_score
 from sklearn.model_selection import TimeSeriesSplit, GridSearchCV
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
-
-from upload_model import upload_to_blob
+from src.data.cleaning import clean_sensor_data
+from src.features.target import add_minutes_to_dry
+from src.services.blob_uploader import upload_to_blob
 
 logger = logging.getLogger(__name__)
 
-# Helper: derive the target variable
-def add_minutes_to_dry(df: pd.DataFrame, threshold: float) -> pd.DataFrame:
-    soil = df["soil_humidity"].to_numpy()
-
-    ts_minutes = df["timestamp"].values.astype("datetime64[m]").view("int")
-    below = np.where(soil < threshold)[0]
-
-    if below.size == 0:
-        logger.warning("No samples below threshold %.2f found in data. minutes_to_dry cannot be calculated.", threshold)
-        return df.assign(minutes_to_dry=np.nan, threshold=threshold)
-
-    next_idx = np.full(len(df), np.nan, dtype=float)
-
-    for i in range(len(df) - 1):
-        j = below[below > i]
-        if j.size:
-            next_idx[i] = ts_minutes[j[0]] - ts_minutes[i]
-
-    df["minutes_to_dry"] = next_idx
-    df["threshold"] = threshold
-
-    return df
-
-
-def clean_sensor_data(df: pd.DataFrame, expected_interval_minutes=10, gap_drop_threshold=60) -> pd.DataFrame:
-    """
-    Cleans sensor data by:
-    - Filtering out physically impossible values
-    - Detecting and handling gaps in data
-    - Adjusting soil_delta where needed
-    """
-
-    logger.info("Starting sensor data cleaning. Initial samples: %d", len(df))
-
-    # Outliers and spikes filter
-    df_clean = df[
-        (df["soil_humidity"].between(0, 100)) &
-        (df["air_humidity"].between(0, 100)) &
-        (df["temperature"].between(-30, 60)) &
-        (df["light"] >= 0)
-        ].copy()
-
-    logger.info("Samples after hard limits filter: %d", len(df_clean))
-
-    # Sort by timestamp
-    df_clean.sort_values("timestamp", inplace=True)
-
-    # Compute time gaps
-    df_clean["gap_minutes"] = df_clean["timestamp"].diff().dt.total_seconds() / 60
-    df_clean["gap_minutes"].fillna(0, inplace=True)
-
-    # Drop rows after large gaps (e.g., sensor offline > gap_drop_threshold minutes)
-    rows_before = len(df_clean)
-    df_clean = df_clean[df_clean["gap_minutes"] <= gap_drop_threshold]
-    logger.info("Dropped %d samples after large gaps (> %d min). Remaining: %d",
-                rows_before - len(df_clean), gap_drop_threshold, len(df_clean))
-
-    # Compute soil_delta (slope)
-    df_clean["soil_delta"] = df_clean["soil_humidity"].diff().fillna(0)
-
-    # Set soil_delta to 0 if gap is too large (above expected_interval_minutes)
-    df_clean.loc[df_clean["gap_minutes"] > expected_interval_minutes, "soil_delta"] = 0
-
-    # Drop helper columns if you don't want them in features later
-    df_clean.drop(columns=["gap_minutes"], inplace=True)
-
-    logger.info("Data cleaning complete. Final samples: %d", len(df_clean))
-
-    return df_clean
-
-# Main training entry point
 def train_model(json_samples: str, json_threshold: str) -> dict:
 
     # Parse the incoming JSON samples

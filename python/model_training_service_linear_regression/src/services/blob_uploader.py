@@ -1,4 +1,3 @@
-# upload_model.py
 import logging
 
 from azure.identity import DefaultAzureCredential

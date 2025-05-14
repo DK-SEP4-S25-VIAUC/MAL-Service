@@ -1,3 +1,4 @@
+using System.Data;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Microsoft.Extensions.Logging;
@@ -54,9 +55,17 @@ public class BlobStorageInteractionHelperImpl : IBlobStorageInteractionHelper
                         // Convert from json to ModelDTO:
                         var model = ConvertFromJsonMetadataToModelDTO(jsonMetaData, modelMetaDataFormat, modelFormat, blobClient);
                         _logger.LogInformation("Downloaded metadata for model: {blobName}, metadata is: \n{metadata}", blobName, model.ToString());
-                        
-                        // Add this new ModelDTO to the ModelCache:
-                        await _modelCache.AddModelAsync(model);
+
+                        try {
+                            // Add this new ModelDTO to the ModelCache:
+                            await _modelCache.AddModelAsync(model);
+                        } catch (DuplicateNameException ex) {
+                            // ModelDTO already exists. Remove the old one and add this one instead:
+                            if (model.Type != null && model.TrainingTimestamp != null) {
+                                await _modelCache.RemoveModelAsync(model.Type, model.TrainingTimestamp);
+                                await _modelCache.AddModelAsync(model);
+                            }
+                        }
                     }
                 } catch (JsonException jx) {
                     _logger.LogError(jx, "Could not deserialize into ModelDTO: {blobName}", blobName);

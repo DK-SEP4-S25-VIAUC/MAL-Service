@@ -53,8 +53,6 @@ public class BuildServiceImpl : IBuildService
     
     
     // Implement the IEventSubscriber interface:
-    // TODO: Test
-    // Is the class properly subscribed to NewModelsAdded, after this has run?
     public void Subscribe() {
         _evaluatedAllSoilHumidityModelsEventHandler = async (sender, e) => await HandleEventAsync(sender, e);
         _modelEvaluationService.AllSoilHumidityModelsEvaluated += _evaluatedAllSoilHumidityModelsEventHandler;
@@ -62,8 +60,6 @@ public class BuildServiceImpl : IBuildService
     }
 
     
-    // TODO: Test
-    // Is the class properly unsubscribed to NewModelsAdded, after this has run?
     public void Unsubscribe() {
         if (_evaluatedAllSoilHumidityModelsEventHandler != null) {
             _modelEvaluationService.AllSoilHumidityModelsEvaluated -= _evaluatedAllSoilHumidityModelsEventHandler;
@@ -73,9 +69,6 @@ public class BuildServiceImpl : IBuildService
     }
 
     
-    // TODO: Test
-    // Are LinearRegressionModels properly evaluated when EvaluatedAllSoilHumidityPredictionModelsEventArgs are fired/received?
-    // What if an unknown Event is registered?
     public async Task HandleEventAsync(object? sender, EventArgs e) {
         switch (e) {
             case EvaluatedAllSoilHumidityPredictionModelsEventArgs eventArgs:
@@ -99,7 +92,7 @@ public class BuildServiceImpl : IBuildService
             
                 // Get the Function App resource:
                 var resourceGroup = _armClient.GetResourceGroupResource(ResourceGroupResource.CreateResourceIdentifier(_settings.SubscriptionId, _settings.ResourceGroupName));
-            
+
                 var functionApp = await resourceGroup.GetWebSiteAsync(_settings.FunctionAppName);
 
                 // Get the current Application Settings:
