@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - development
     paths:
       - 'python/model_training_service_linear_regression/**'
   workflow_dispatch:
@@ -51,3 +50,17 @@ jobs:
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/linear-regression-service:${{ github.sha }}
             ${{ secrets.DOCKERHUB_USERNAME }}/linear-regression-service:latest
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.MALAPI_AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.MALAPI_AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.MALAPI_AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy to Container App
+        run: |
+         az containerapp update \
+          --name mal-training-linear-regression \
+          --resource-group SEP4_MAL_team \
+          --image ${{ secrets.DOCKERHUB_USERNAME }}/linear-regression-service:${{ github.sha }}
