@@ -1,33 +1,31 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
 [project]
-name = "randomforest_model_training_service"
+name = "model_training_servic"
 version = "0.1.0"
-description = "RandomForest training service for SEP4"
+description = "RandomForest training service"
 authors = [
     { name = "marcusgrone", email = "marcusgrone@gmail.com" }
 ]
-readme = "README.md"
-requires-python = ">=3.9"
 
 dependencies = [
-    "scikit-learn>=1.2.2,<1.3.0",
-    "numpy>=1.24.4,<1.25.0",
+    "requests",
+    "pydantic",
+    "scikit-learn",
     "pandas",
+    "numpy",
+    "python-dotenv",
     "skl2onnx==1.18.0",
     "onnx==1.17.0",
-    "apscheduler",
-    "requests",
-    "azure-identity",
     "azure-storage-blob",
+    "azure-identity",
     "pytest",
-    "pydantic",
-    "python-dotenv",
-    "pytz"
+    "pytz",
+    "apscheduler"
 ]
 
 [tool.setuptools.packages.find]
 where = ["src_rf"]
 include = ["*"]
-
-[build-system]
-requires = ["setuptools>=61.0"]
-build-backend = "setuptools.build_meta"
