@@ -118,7 +118,22 @@ public class BlobStorageInteractionHelperImpl : IBlobStorageInteractionHelper
         // Convert to proper model dto:
         ModelDTO? model;
         switch (modelType.ToLower()) {
-            // TODO: If other model type are added in the future, ensure to add them below in this switch for proper deserialization during model load.
+           
+            case "randomforest":
+                model = JsonConvert.DeserializeObject<RandomForestModelDTO>(jsonMetaData);
+                
+                try {
+                    if (model == null) {
+                        throw new JsonException("json metadata was deserialized into null object.");
+                    }
+
+                    model.DownloadUrl = ConvertMetaDataUriToModelUri(blobClient.Uri, modelMetaDataFormat, modelFormat);
+                    model.ValidateSelf();
+                } catch (Exception ex) {
+                    _logger.LogError("In method ConvertFromJsonMetadataToModelDTO(), could not convert RandomForest model metadata into proper DTO.\nCause: {}", ex.Message);
+                    throw new JsonException($"Could not convert RandomForest model metadata into proper DTO\nCause: {ex.Message}");
+                }
+                break;
             
             case "ridge (linear)":
                 // Convert json metadata to model dto:
@@ -142,7 +157,7 @@ public class BlobStorageInteractionHelperImpl : IBlobStorageInteractionHelper
                 }
                 break;
             
-            // TODO: Add other possible model types below (i.e. RandomForestDTO).
+            // TODO: Add other possible model types below (i.e. Neuralnetwork).
             
             default:
                 _logger.LogError("In method ConvertFromJsonMetadataToModelDTO(), 'model_type' = {modelType} is not a recognized/implemented model type.", modelType);
