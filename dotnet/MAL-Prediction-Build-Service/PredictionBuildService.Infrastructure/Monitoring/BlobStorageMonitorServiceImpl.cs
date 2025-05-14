@@ -1,3 +1,4 @@
+using System.Data;
 using System.Text.Json;
 using Azure;
 using Azure.Messaging.EventGrid;
@@ -184,7 +185,15 @@ public class BlobStorageMonitorServiceImpl : IBlobStorageMonitorService
                         var model = _blobStorageInteractionHelper.ConvertFromJsonMetadataToModelDTO(modelMetaData, _blobStorageSettings.ModelMetaDataFormat, _blobStorageSettings.ModelFileType, blobClient);
                     
                         // Add the newly found model to the ModelCache:
-                        await _modelCache.AddModelAsync(model);
+                        try {
+                            await _modelCache.AddModelAsync(model);
+                        } catch (DuplicateNameException ex) {
+                            var oldModel = await _modelCache.FindModelAsync(model.Type, model.TrainingTimestamp);
+                            if (oldModel != null && oldModel.Type != null && oldModel.TrainingTimestamp != null) {
+                                await _modelCache.RemoveModelAsync(oldModel.Type, oldModel.TrainingTimestamp);
+                                await _modelCache.AddModelAsync(model);
+                            }
+                        }
                     }
                 } else  {
                     _logger.LogWarning("Blob URI not found in event data: {eventData}", eventGridEvent.Data.ToString());
