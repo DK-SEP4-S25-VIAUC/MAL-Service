@@ -54,9 +54,9 @@ jobs:
       - name: Azure Login
         uses: azure/login@v1
         with:
-          client-id: ${{ secrets.MALTRAINING-LIN_AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.MALTRAINING-LIN_AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.MALTRAINING-LIN_AZURE_SUBSCRIPTION_ID }}
+          client-id: ${{ secrets.MALTRAINING_LIN_AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.MALTRAINING_LIN_AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.MALTRAINING_LIN_AZURE_SUBSCRIPTION_ID }}
 
       - name: Deploy to Container App
         run: |
