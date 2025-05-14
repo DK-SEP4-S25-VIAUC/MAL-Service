@@ -31,7 +31,7 @@ jobs:
       - name: Run tests (unit & integration)
         working-directory: python/model_training_service_randomforest
         run: |
-          pytest tests/unit tests/integration --maxfail=1 --disable-warnings -q
+          PYTHONPATH=src_rf pytest tests/unit tests/integration --maxfail=1 --disable-warnings -q
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
