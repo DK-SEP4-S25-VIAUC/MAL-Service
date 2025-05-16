@@ -5,7 +5,7 @@ import pandas as pd
 logger = logging.getLogger(__name__)
 
 
-def clean_sensor_data(df: pd.DataFrame, expected_interval_minutes=10, gap_drop_threshold=60) -> pd.DataFrame:
+def clean_sensor_data(df: pd.DataFrame, expected_interval_minutes=20, gap_drop_threshold=60) -> pd.DataFrame:
     """
     Cleans sensor data by:
     - Filtering out physically impossible values
