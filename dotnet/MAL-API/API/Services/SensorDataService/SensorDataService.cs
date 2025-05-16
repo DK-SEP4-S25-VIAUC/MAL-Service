@@ -109,7 +109,6 @@ public class SensorDataService : ISensorDataService
 
             var root = doc.RootElement;
             var list = root
-                .GetProperty("response")
                 .GetProperty("list")
                 .EnumerateArray()
                 .Select(item => item.GetProperty("SampleDTO").Deserialize<SampleDTO>())
