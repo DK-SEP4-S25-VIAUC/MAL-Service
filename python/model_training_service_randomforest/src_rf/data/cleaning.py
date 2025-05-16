@@ -5,7 +5,7 @@ import pandas as pd
 logger = logging.getLogger(__name__)
 
 
-def clean_sensor_data(df: pd.DataFrame, expected_interval_minutes=10, gap_drop_threshold=60) -> pd.DataFrame:
+def clean_sensor_data(df: pd.DataFrame, expected_interval_minutes=20, gap_drop_threshold=60) -> pd.DataFrame:
     """
     Cleans sensor data by:
     - Filtering out physically impossible values
@@ -18,10 +18,11 @@ def clean_sensor_data(df: pd.DataFrame, expected_interval_minutes=10, gap_drop_t
     # Outliers and spikes filter
     df_clean = df[
         (df["soil_humidity"].between(0, 100)) &
-        (df["air_humidity"].between(0, 100)) &
-        (df["temperature"].between(-30, 60)) &
-        (df["light"] >= 0)
+        (df["air_humidity"].between(20, 90)) &
+        (df["temperature"].between(0, 50)) &
+        (df["light"].between(0, 1023))
         ].copy()
+
 
     logger.info("Samples after hard limits filter: %d", len(df_clean))
 
