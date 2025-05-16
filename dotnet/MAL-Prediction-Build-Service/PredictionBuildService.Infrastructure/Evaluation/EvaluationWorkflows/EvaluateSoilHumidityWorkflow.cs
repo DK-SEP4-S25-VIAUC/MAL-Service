@@ -11,16 +11,16 @@ public class EvaluateSoilHumidityWorkflow : IEvaluationWorkflow
     // _max_realistic_minutes_until_dry defines a realistic timespan in which a humid soil can realistically become dry.
     // It's initially set to: (60 min / hour) * (24 hours / day) * (7 days / week) = 10080 minutes.
     private readonly double _maxRealisticMinutesUntilDry;
-    
+
     // _rmseUpperPenaltyLimit defines the upper limit of reasonable variance in predicted minutes_to_dry.
     // It's initially set to: sqrt(_maxRealisticMinutesUntilDry) = 100.4, meaning mean-variance above 100.4 minutes in
     // prediction error will be penalized.
     private readonly double _rmseUpperPenaltyLimit;
 
     // _r2OptimalLowerBoundary defines the lower limit of reasonable R2 (explained variance) level in percent.
-    // // It's initially set to: 70%, meaning explained variance below 70% will be penalized due to underfitting.
+    // It's initially set to: 70%, meaning explained variance below 70% will be penalized due to underfitting.
     private readonly double _r2OptimalLowerBoundary;
-    
+
     // _r2OptimalUpperBoundary defines the upper limit of reasonable R2 (explained variance) level in percent.
     // It's initially set to: 90%, meaning explained variance above 90% will be penalized due to overfitting.
     private readonly double _r2OptimalUpperBoundary;
@@ -44,135 +44,111 @@ public class EvaluateSoilHumidityWorkflow : IEvaluationWorkflow
         _weightR2 = 0.4;
         _lowCrossValidationPenalty = 0.25;
     }
-    
-    
+
     public async Task<ModelDTO> ExecuteEvaluationAsync(List<ModelDTO> soilPredictionModels) {
         return await Task.Run(() => {
             // Uses scoring to evaluate the best SoilPredictionModel on multiple parameters.
             // Arranges each 'modelType' (i.e. LinearRegressionModel, RandomForestModel, etc.) into ordered lists
             // and scores each based on their metrics compared to each other.
             // Then compares the best model from each main category, to find the overall best one.
-        
-            // ComputedScore LinearRegressionModel:
-            // Extract all LinearRegressionModels and score these individually:
-            var linearRegressionModels = soilPredictionModels
-                .Where(m => m is LinearRegressionModelDTO)
-                .Cast<LinearRegressionModelDTO>()
+
+            // 1. Score linear regression models
+            var linearModels = soilPredictionModels
+                .OfType<LinearRegressionModelDTO>()
                 .ToList();
 
-            ModelDTO bestLinearRegressionModel = FindBestLinearRegressionSoilPredictionModel(linearRegressionModels);
+            LinearRegressionModelDTO? bestLinearModel = null;
 
-            // ComputedScore other model types below:3
-            // TODO: Implement another step that evaluates which model, from several different model types, is the best.
-            // i.e. if we add a RandomForest prediction model, which is better? The Linear Model or the RandomForest?
-            // They both have different performance metrics that must be evaluated against each other.
-        
-            return bestLinearRegressionModel;
+            if (linearModels.Any()) {
+                var scoredLinearRegressionModels = new Dictionary<LinearRegressionModelDTO, double>();
+
+                foreach (var model in linearModels) {
+                    double score = ComputeModelScore(
+                        model.RmseCv!.Value,
+                        model.R2!.Value,
+                        model.CrossValSplits!.Value
+                    );
+                    model.ComputedScore = score;
+                    scoredLinearRegressionModels.Add(model, score);
+                }
+
+                var modelsOrderedByScore = scoredLinearRegressionModels
+                    .OrderByDescending(entry => entry.Value)
+                    .Select(entry => entry.Key)
+                    .ToList();
+
+                bestLinearModel = modelsOrderedByScore.First();
+            }
+
+            // 2. Score random forest models
+            var forestModels = soilPredictionModels
+                .OfType<RandomForestModelDTO>()
+                .ToList();
+
+            RandomForestModelDTO? bestForestModel = null;
+
+            if (forestModels.Any()) {
+                var scoredForestModels = new Dictionary<RandomForestModelDTO, double>();
+
+                foreach (var model in forestModels) {
+                    double score = ComputeModelScore(
+                        model.RmseCv!.Value,
+                        model.R2!.Value,
+                        model.CrossValSplits!.Value
+                    );
+                    model.ComputedScore = score;
+                    scoredForestModels.Add(model, score);
+                }
+
+                var modelsOrderedByScore = scoredForestModels
+                    .OrderByDescending(entry => entry.Value)
+                    .Select(entry => entry.Key)
+                    .ToList();
+
+                bestForestModel = modelsOrderedByScore.First();
+            }
+
+            // 3. After finding bestLinearModel and bestForestModel with known scores:
+            var candidates = new Dictionary<ModelDTO, double>();
+
+            if (bestLinearModel != null)
+                candidates[bestLinearModel] = bestLinearModel.R2!.Value; 
+
+            if (bestForestModel != null)
+                candidates[bestForestModel] = bestForestModel.R2!.Value;  
+
+            return candidates
+                .OrderByDescending(kv => kv.Value)
+                .Select(kv => kv.Key)
+                .FirstOrDefault() ?? throw new InvalidOperationException("No valid models found.");
         });
     }
 
-    private LinearRegressionModelDTO FindBestLinearRegressionSoilPredictionModel(List<LinearRegressionModelDTO> linearRegressionModels) {
-        var scoredLinearRegressionModels = new Dictionary<LinearRegressionModelDTO, double>();
-
-        foreach (var linearRegressionModel in linearRegressionModels) {
-            // ComputedScore the model and add to scored models list:
-            linearRegressionModel.ComputedScore = ComputeLinearRegressionSoilPredictionModelScore(
-                linearRegressionModel.RmseCv!.Value,
-                linearRegressionModel.R2!.Value,
-                linearRegressionModel.CrossValSplits!.Value,
-                _maxRealisticMinutesUntilDry,
-                _rmseUpperPenaltyLimit,
-                _r2OptimalUpperBoundary,
-                _r2OptimalLowerBoundary,
-                _weightRmse,
-                _weightR2,
-                _lowCrossValidationPenalty
-            );
-            
-            scoredLinearRegressionModels.Add(
-                linearRegressionModel, 
-                linearRegressionModel.ComputedScore.Value
-            );
-        }
-        
-        // Order models by score:
-        var modelsOrderedByScore = scoredLinearRegressionModels
-            .OrderByDescending(entry => entry.Value)
-            .Select(entry => entry.Key)
-            .ToList();
-        
-        // Return the best model:
-        return modelsOrderedByScore.First();
-    }
-
-    
-    private double ComputeLinearRegressionSoilPredictionModelScore(
-        double rmse, 
-        double r2,
-        int crossValSplits,
-        double maxRealisticMinutesUntilDry,
-        double rmseUpperPenaltyLimit,
-        double r2OptimalUpperBoundary,
-        double r2OptimalLowerBoundary,
-        double weightRmse,
-        double weightR2,
-        double lowCrossValidationPenalty) {
-        
-        // Reward low root mean squared errors, and penalize large values. Since target is minutes_to_dry, we will
-        // assume that a normal time until soil moisture becomes very dry happens within a week (7 day) period, without watering.
-        // Thus, we assume a very bad RMSE would be (60 min / hour) * (24 hours / day) * (7 days / week) = 10080 minutes.
-        // RSME variance above sqrt(10080) = 100.4 minutes will be penalized (meaning if evaluations are more than
-        // 100 minutes off, on average, a penalty will be applied to the model). Values below this are rewarded, down until a 20-minute accuracy.
+    private double ComputeModelScore(double rmse, double r2, int crossValSplits) {
         double scoreFromRmse = 0;
-        
-        if (rmse > rmseUpperPenaltyLimit ) {
-            // Penalize: (rmse/max_realistic_minutes_until_dry) * 100%
-            // Applies a penalty in a linear increasing manner, based on how much larger RMSE is above the tolerable boundary.
-            scoreFromRmse -= ((rmse/maxRealisticMinutesUntilDry)*100);
-        } else if (rmse <= rmseUpperPenaltyLimit) {
-            // Reward: (100% - (rmse/max_realisctic_minutes_until_dry) * 100%).
-            // Applies a reward in a linear increasing manner, based on how close to 0% variance we get.
-            scoreFromRmse += (100-((rmse/maxRealisticMinutesUntilDry)*100));
+
+        if (rmse > _rmseUpperPenaltyLimit) {
+            scoreFromRmse -= ((rmse / _maxRealisticMinutesUntilDry) * 100);
+        } else {
+            scoreFromRmse += (100 - ((rmse / _maxRealisticMinutesUntilDry) * 100));
         }
-        
-        // Reward higher values of r2, which explains how much of the variance (in percentage), is explained by the model.
-        // The ideal R2 will be estimated to be 90%, striking a balance between underfitting, optimal fitting and overfitting.
-        // Values larger than 90% will be penalized heavily. Values lower than 70% will also be penalized heavily.
+
         double scoreFromR2 = 0;
 
-        if (r2 > .9) {
-            // Penalize: ((r2 - 90% lower boundary) / 10%) * 100% * 2
-            // Applies penalty in a linear increasing manner, based on a spread where r2 = 0.90001 gets the
-            // least penalty and 1.0 gets the largest penalty (0.9 to 1.0 is 10%, but is calculated as 100% of the penalty range).
-            // All penalties are doubled, to heavily penalize overfitting.
-            scoreFromR2 -= ((r2 - r2OptimalUpperBoundary) / (1 - r2OptimalUpperBoundary)) * 100 * 2;
-            
-        } else if (r2 <= r2OptimalUpperBoundary && r2 >= r2OptimalLowerBoundary) {
-            // Reward: ((r2 - 70% lower boundary) / 20%) * 100%
-            // Applies reward in a linear increasing manner, based on a spread where r2 = 0.70001 gets the
-            // least reward and 0.9 gets the largest reward (0.7 to 0.9 is 20%, but is calculated as 100% of the reward range).
-            scoreFromR2 += (r2 - r2OptimalLowerBoundary) / (r2OptimalUpperBoundary - r2OptimalLowerBoundary) * 100;
-            
+        if (r2 > _r2OptimalUpperBoundary) {
+            scoreFromR2 -= ((r2 - _r2OptimalUpperBoundary) / (1 - _r2OptimalUpperBoundary)) * 100 * 2;
+        } else if (r2 >= _r2OptimalLowerBoundary) {
+            scoreFromR2 += (r2 - _r2OptimalLowerBoundary) / (_r2OptimalUpperBoundary - _r2OptimalLowerBoundary) * 100;
         } else {
-            // Penalize: ((70% lower boundary - r2) / 70%) * 100%
-            // Applies penalty in a linear increasing manner, based on a spread where r2 = 0.0001 gets the
-            // least penalty and 0.699999 gets the largest penalty (0.0 to 0.7 is 70%, but is calculated as 100% of the penalty range).
-            // These penalties are NOT doubled, since they are spread over a larger range than value above 0.9.
-            scoreFromR2 -= ((r2OptimalLowerBoundary - r2) / r2OptimalLowerBoundary) * 100;
+            scoreFromR2 -= ((_r2OptimalLowerBoundary - r2) / _r2OptimalLowerBoundary) * 100;
         }
-        
-        // Compute score:
-        double score = (scoreFromRmse * weightRmse) + (scoreFromR2 * weightR2);
-        
-        // Heavily penalize low cross validation splits, since this is indicative of potential unstable validation metrics:
+
+        double score = (scoreFromRmse * _weightRmse) + (scoreFromR2 * _weightR2);
+
         if (crossValSplits < 5) {
-            if (score < 0) {
-                score *= 1 + lowCrossValidationPenalty;
-            } else {
-                score *= lowCrossValidationPenalty;
-            }
+            score = score < 0 ? score * (1 + _lowCrossValidationPenalty) : score * _lowCrossValidationPenalty;
         }
-        
+
         return score;
     }
 }
